@@ -11,6 +11,9 @@ layout: default
       </time>
     </p>
 
+    {%- comment -%}
+    只渲染圖片，不要印出「image: 路徑」這種純文字
+    {%- endcomment -%}
     {% if page.image %}
     <figure class="post-featured" style="margin:1rem 0">
       <img src="{{ page.image | relative_url }}" alt="{{ page.title | escape }}" style="width:100%;height:auto;display:block;border-radius:12px">
