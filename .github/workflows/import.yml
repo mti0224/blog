@@ -1,14 +1,12 @@
 name: Import WordPress WXR → Jekyll
 
 on:
-  # 手動觸發；可指定其他 XML 路徑（留空則自動掃描 import/*.xml）
   workflow_dispatch:
     inputs:
       xml_path:
         description: 'Path to WXR (leave empty to scan import/*.xml)'
         required: false
         default: ''
-  # 只要 import/ 底下的 .xml 有變動就自動匯入
   push:
     branches: [ main ]
     paths:
@@ -45,7 +43,7 @@ jobs:
           XML_INPUT: ${{ github.event.inputs.xml_path }}
         run: |
           set -e
-          # 1) 決定要處理哪些 XML
+          # 決定要處理哪些 XML
           if [ -n "$XML_INPUT" ] && [ -f "$XML_INPUT" ]; then
             XMLS="$XML_INPUT"
           else
@@ -56,21 +54,21 @@ jobs:
             exit 1
           fi
 
-          # 2) 寫一個小 Ruby 腳本，實際呼叫 jekyll-import
+          # Ruby 腳本（注意：正確常數與 .run）
           cat > import.rb <<'RUBY'
           require 'jekyll-import'
+          require 'jekyll-import/importers/wordpressdotcom' # 保險地顯式載入
           src = ENV['SRC']
           abort "Missing SRC" unless src && File.exist?(src)
           puts "Importing #{src}..."
-          JekyllImport::WordPressDotCom.process(
+          JekyllImport::Importers::WordPressDotCom.run(
             'source'          => src,
-            'assets_folder'   => 'assets/uploads', # 圖片下載目錄
-            'no_fetch_images' => false,            # 若想先不抓圖可改 true
+            'assets_folder'   => 'assets/uploads', # 下載媒體
+            'no_fetch_images' => false,            # 若先不抓圖可改 true
             'comments'        => false
           )
           RUBY
 
-          # 3) 逐檔執行
           for X in $XMLS; do
             SRC="$X" ruby import.rb
           done
