@@ -1,0 +1,130 @@
+name: Sanitize asset filenames (strip ?w=… from assets/uploads + fix refs)
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Rename bad filenames in assets/uploads and update post references
+        run: |
+          node - <<'NODE'
+          const fs   = require('fs');
+          const path = require('path');
+
+          function walk(dir) {
+            if (!fs.existsSync(dir)) return [];
+            const out = [];
+            for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+              const p = path.join(dir, ent.name);
+              if (ent.isDirectory()) out.push(...walk(p));
+              else out.push(p);
+            }
+            return out;
+          }
+
+          // --- 1) 先把 assets/uploads 內的奇怪檔名改乾淨 ---
+          const root = 'assets/uploads';
+          const files = walk(root);
+          let renamed = 0, removed = 0;
+
+          for (const f of files) {
+            const dir = path.dirname(f);
+            const base = path.basename(f);
+
+            // 檢查檔名是否含有 ? 或其編碼
+            const hasQ = base.includes('?') || /%3[fF]|%253[fF]/.test(base);
+            if (!hasQ) continue;
+
+            // 嘗試 decode 來找出 '?' 的位置
+            let dec = base;
+            try { dec = decodeURIComponent(base); } catch {}
+
+            // 找第一個 '?'（若 decode 不出來就找 %3F 標記）
+            let cutIdx = dec.indexOf('?');
+            if (cutIdx < 0) {
+              const m1 = base.match(/%253[fF]/); // 雙層編碼
+              const m2 = base.match(/%3[fF]/);
+              const idx = m1?.index ?? m2?.index ?? -1;
+              if (idx >= 0) cutIdx = idx; // 在原字串上的位置
+            }
+
+            if (cutIdx < 0) continue; // 找不到就略過
+
+            // 乾淨檔名：砍掉 '?' 以及其後面全部
+            const cleanBase = (cutIdx >= 0) ? dec.slice(0, cutIdx) : dec;
+
+            // 保險：若 decode 改變了非 ASCII，仍以「砍掉 ? 前」為準
+            // 轉回安全檔名（避免含有 / 或換行）
+            const safeBase = cleanBase.replace(/[\\\/\n\r]/g, '');
+
+            if (!safeBase || safeBase === base) continue;
+
+            const dst = path.join(dir, safeBase);
+
+            // 若目標已存在：預設保留已存在的（通常是之前就有的乾淨檔）
+            if (fs.existsSync(dst)) {
+              try { fs.unlinkSync(path.join(dir, base)); removed++; }
+              catch { /* ignore */ }
+            } else {
+              try { fs.renameSync(path.join(dir, base), dst); renamed++; }
+              catch (e) {
+                // 某些檔名可能含特殊字元無法 rename，當作 skip
+                console.log('rename failed:', base, '→', safeBase, e.message);
+              }
+            }
+          }
+          console.log('assets/uploads renamed:', renamed, 'removed duplicates:', removed);
+
+          // --- 2) 修正 _posts 內所有引用 ---
+          const postFiles = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
+          let changed = 0;
+
+          // 規則：
+          // a) 移除路徑中的 %3F... / %253F...（當初「?」被編碼進檔名的情況）
+          // b) 也移除「副檔名後面的 ?query」情況（雖然你前面已處理，這裡再保險一次）
+          // c) 保留任何引號或 Liquid 不變，只改路徑
+          const reEncQ1 = /(\/assets\/uploads\/[^\s"'()]+?)%253[fF][^"'()\s]*/g; // %253F（雙層）
+          const reEncQ2 = /(\/assets\/uploads\/[^\s"'()]+?)%3[fF][^"'()\s]*/g;   // %3F（單層）
+          const rePlain = /(\.(?:png|jpe?g|gif|webp|svg))\?[^)"'\s>]*/gi;        // 真正的 ?query
+
+          for (const f of postFiles) {
+            const before = fs.readFileSync(f, 'utf8');
+            let after = before
+              .replace(reEncQ1, '$1')
+              .replace(reEncQ2, '$1')
+              .replace(rePlain, '$1')
+              .replace(/&amp;/g, '&'); // 有些會變成 &amp;w=...
+
+            if (after !== before) {
+              fs.writeFileSync(f, after);
+              changed++;
+            }
+          }
+          console.log('posts updated:', changed);
+          NODE
+
+      - name: Commit & push
+        run: |
+          if [ -n "$(git status --porcelain _posts assets)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add _posts assets
+            git commit -m "fix: sanitize asset filenames and update post references"
+            git push
+          else
+            echo "No changes to commit."
+          fi
