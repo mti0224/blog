@@ -4,6 +4,9 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Import WordPress WXR → Jekyll"]  # ← 你的匯入工作流名稱
+    types: [completed]
 
 permissions:
   contents: read
@@ -16,12 +19,11 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # 👇 這步會自動「啟用」這個 repo 的 Pages（避免 404）
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
@@ -32,6 +34,8 @@ jobs:
         with:
           source: ./
           destination: ./_site
+          future: true        # ← 允許日期在未來的文章也輸出
+          verbose: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
