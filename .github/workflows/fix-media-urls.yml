@@ -12,20 +12,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 保險起見，裝一下 node（runner 通常有，但這步可避免環境差異）
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Strip query strings from image URLs in Markdown/HTML
         run: |
-          set -e
-          shopt -s globstar nullglob
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
 
-          # 1) Markdown：把 ) 或 " 前的 ?參數 去掉
-          for f in _posts/**/*.md; do
-            perl -0777 -pe 's/(\.(?:png|jpe?g|gif|webp|svg))\?[^\)\"]+(?=[\)\"])/$1/gi' -i "$f"
-          done
+          function walk(dir, out=[]) {
+            if (!fs.existsSync(dir)) return out;
+            for (const name of fs.readdirSync(dir)) {
+              const p = path.join(dir, name);
+              const st = fs.statSync(p);
+              if (st.isDirectory()) walk(p, out);
+              else if (/\.(md|markdown|html)$/i.test(name)) out.push(p);
+            }
+            return out;
+          }
 
-          # 2) 內嵌 HTML：<img src="...?..."> 也去掉
-          for f in _posts/**/*.{md,html}; do
-            perl -0777 -pe 's/(<img[^>]+src=["\'])([^"\']+?\.(?:png|jpe?g|gif|webp|svg))\?[^"\']+(["\'])/$1$2$3/gi' -i "$f"
-          done
+          const files = walk('_posts');
+          const mdRe  = /(\.(?:png|jpe?g|gif|webp|svg))\?[^)"]*(?=[)"])/gi;
+          // <img src="...?.*"> 或 <img src='...?.*'>
+          const imgRe = /(<img[^>]+src=)(["'])([^"']+?\.(?:png|jpe?g|gif|webp|svg))\?[^"']+(\2)/gi;
+
+          let changed = 0;
+          for (const f of files) {
+            const before = fs.readFileSync(f, 'utf8');
+            let after = before.replace(mdRe, '$1');
+            after = after.replace(imgRe, '$1$2$3$2'); // 把 query 拿掉，保留同樣的引號
+            if (after !== before) {
+              fs.writeFileSync(f, after);
+              changed++;
+            }
+          }
+          console.log('Files fixed:', changed);
+          NODE
 
       - name: Commit changes (if any)
         run: |
@@ -33,7 +59,7 @@ jobs:
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add _posts
-            git commit -m "fix: strip ?w=… etc. from image URLs in posts"
+            git commit -m "fix: strip ?query from image URLs in posts"
             git push
           else
             echo "No changes to commit."
