@@ -1,0 +1,36 @@
+name: Normalize posts (embed images & add front-matter image)
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ main ]
+    paths:
+      - "_posts/**"
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Run fixer
+        run: |
+          node --version
+          mkdir -p scripts
+          cat > scripts/fix_posts.js <<'JS'
+          (paste the same JS from above)
+          JS
+          node scripts/fix_posts.js
+
+      - name: Commit changes
+        run: |
+          if [ -n "$(git status --porcelain _posts)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add _posts
+            git commit -m "fix: embed images & add front-matter image"
+            git push
+          else
+            echo "No changes."
+          fi
