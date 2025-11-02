@@ -1,0 +1,65 @@
+---
+layout: default
+---
+
+<div class="grid">
+  <section class="content">
+    <h1 class="sr-only">{{ page.title | default: '首頁' }}</h1>
+
+    {%- if paginator and paginator.posts -%}
+      {%- assign posts_list = paginator.posts -%}
+    {%- else -%}
+      {%- assign posts_list = site.posts -%}
+    {%- endif -%}
+
+    <div class="cards">
+      {%- for post in posts_list -%}
+        <article class="card">
+          <a class="thumb" href="{{ post.url | relative_url }}" aria-label="{{ post.title }}">
+            {%- if post.image -%}
+              <img src="{{ post.image | relative_url }}" alt="">
+            {%- endif -%}
+          </a>
+          <div class="card-body">
+            <div class="meta">
+              <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%Y-%m-%d" }}</time>
+              {%- if post.categories and post.categories.size > 0 -%}
+                <span class="sep">·</span>
+                <span class="cats">
+                  {%- for c in post.categories -%}
+                    {{ c }}{%- unless forloop.last -%}, {% endunless -%}
+                  {%- endfor -%}
+                </span>
+              {%- endif -%}
+            </div>
+            <h2 class="title"><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
+            <p class="excerpt">
+              {%- if post.excerpt -%}
+                {{ post.excerpt | strip_html | truncate: 120 }}
+              {%- else -%}
+                {{ post.content | strip_html | truncate: 120 }}
+              {%- endif -%}
+            </p>
+            <a class="more" href="{{ post.url | relative_url }}">READ MORE</a>
+          </div>
+        </article>
+      {%- endfor -%}
+    </div>
+
+    {%- if paginator -%}
+      <nav class="pager" aria-label="pagination">
+        {%- if paginator.previous_page -%}
+          <a class="btn" href="{{ paginator.previous_page_path | relative_url }}">&larr; 上一頁</a>
+        {%- endif -%}
+        <span class="pageinfo">第 {{ paginator.page }} / {{ paginator.total_pages }} 頁</span>
+        {%- if paginator.next_page -%}
+          <a class="btn" href="{{ paginator.next_page_path | relative_url }}">下一頁 &rarr;</a>
+        {%- endif -%}
+      </nav>
+    {%- endif -%}
+  </section>
+
+  <aside class="sidebar">
+    {% include sidebar.html %}
+  </aside>
+</div>
