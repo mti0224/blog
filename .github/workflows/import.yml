@@ -27,9 +27,9 @@ jobs:
           fetch-depth: 0
 
       - name: Ensure folders
-        run: |
-          mkdir -p _posts assets/uploads import
+        run: mkdir -p _posts assets/uploads import
 
+      # --- Convert WXR → Markdown (jekyll-import) ---
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -39,33 +39,27 @@ jobs:
         run: |
           gem install jekyll-import reverse_markdown open_uri_redirections nokogiri faraday-retry --no-document
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      # 1) 轉換 WXR → Markdown，並下載文中圖片到 assets/uploads
-      - name: Convert WXR → Markdown (+ download content images)
+      - name: Convert WXR → Markdown (+ download inline images)
         env:
           XML_INPUT: ${{ github.event.inputs.xml_path }}
         run: |
           set -e
-          # 找要處理的 XML
+          # decide source XML
           if [ -n "$XML_INPUT" ] && [ -f "$XML_INPUT" ]; then
             XMLS="$XML_INPUT"
           else
             XMLS=$(ls import/*.xml 2>/dev/null || true)
           fi
           if [ -z "$XMLS" ]; then
-            echo "No XML found in import/. Upload your WXR (e.g., import/export.xml)."
+            echo "No XML found under import/. Upload export.xml first."
             exit 1
           fi
 
-          # 建立 Ruby 腳本並執行
           cat > import.rb <<'RUBY'
           require 'jekyll-import'
           require 'jekyll-import/importers/wordpressdotcom'
           require 'open_uri_redirections'
+
           src = ENV['SRC']
           abort "Missing SRC" unless src && File.exist?(src)
           puts "Importing #{src}..."
@@ -81,82 +75,16 @@ jobs:
             SRC="$X" ruby import.rb
           done
 
-      # 2) 正規化文章內圖片 URL（去掉 query、修正 src/srcset、WP 上傳路徑→站內 assets）
-      - name: Normalize image URLs in posts (strip ?w=, fix src/srcset, wp URLs)
-        run: |
-          node --input-type=commonjs - <<'NODE'
-          const fs = require('fs'), path = require('path');
-          function walk(dir){
-            if (!fs.existsSync(dir)) return [];
-            return fs.readdirSync(dir,{withFileTypes:true})
-              .flatMap(e=>{const p=path.join(dir,e.name);return e.isDirectory()?walk(p):[p];});
-          }
-          const files = walk('_posts').filter(f=>/\.(md|markdown|html)$/i.test(f));
-          const qInPath = /(\.(?:png|jpe?g|gif|webp|svg))(?:\?[^)"'\s>]+)/gi;
-          const srcQuery  = /(src\s*=\s*")([^"?"]+)(\?[^"]*)(")/gi;
-          const srcsetQuery = /(\s)([^,\s"]+?\.(?:png|jpe?g|gif|webp|svg))(?:\?[^,\s"]+)/gi;
-          const wpUploads = /https?:\/\/[^"')]+\/wp-content\/uploads/gi;
-          const toAssets  = '/assets/uploads';
-          let changed = 0;
-          for (const f of files) {
-            let s = fs.readFileSync(f,'utf8');
-            const before = s;
-            s = s
-              .replace(qInPath,'$1')
-              .replace(srcQuery,(_m,p1,p2,_q,p4)=>p1+p2+p4)
-              .replace(srcsetQuery,'$1$2')
-              .replace(wpUploads,toAssets)
-              .replace(/&amp;/g,'&');
-            if (s!==before){ fs.writeFileSync(f,s); changed++; }
-          }
-          console.log('Normalized files:', changed);
-          NODE
+      # --- Attach featured images (thumbnail) to front-matter & download files ---
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      # 3) 將 assets/uploads 底下的檔名一律轉小寫，並同步更新文章引用
-      - name: Lowercase assets filenames and update references
+      - name: Install Node deps for XML parsing
         run: |
-          node --input-type=commonjs - <<'NODE'
-          const fs = require('fs'), path = require('path');
-          function walk(dir){
-            if (!fs.existsSync(dir)) return [];
-            return fs.readdirSync(dir,{withFileTypes:true})
-              .flatMap(e=>{const p=path.join(dir,e.name);return e.isDirectory()?walk(p):[p];});
-          }
-          const ASSET='assets/uploads';
-          const POST='_posts';
-          const files = walk(ASSET);
-          const map = new Map();
-          for (const f of files){
-            const rel = path.relative('.',f).replace(/\\/g,'/');
-            const dir = path.dirname(rel), base = path.basename(rel);
-            const lower = base.toLowerCase();
-            const cut = lower.split('?')[0].replace(/%253f.*$/,'').replace(/%3f.*$/,'');
-            const target = path.join(dir,cut).replace(/\\/g,'/');
-            if (rel!==target){
-              if (fs.existsSync(target)) fs.rmSync(rel);
-              else fs.renameSync(rel,target);
-              map.set(rel,target);
-            }
-          }
-          const posts = walk(POST).filter(f=>/\.(md|markdown|html)$/i.test(f));
-          const reAsset = /\/assets\/uploads\/[^\s"'()]+/gi;
-          let changed=0;
-          for(const pf of posts){
-            let s = fs.readFileSync(pf,'utf8');
-            const before = s;
-            s = s
-              .replace(/(\.(?:png|jpe?g|gif|webp|svg))\?[^)"'\s>]*/gi,'$1')
-              .replace(reAsset, m=>m.toLowerCase())
-              .replace(/%253f[^)"'\s>]*/gi,'')
-              .replace(/%3f[^)"'\s>]*/gi,'');
-            if (s!==before){ fs.writeFileSync(pf,s); changed++; }
-          }
-          console.log('Renamed assets:', map.size, 'Updated posts:', changed);
-          NODE
-
-      # 4) 從 WXR 的 _thumbnail_id 解析出特色圖片 → 下載到 assets 並寫入 front-matter image
-      - name: Install XML parser for featured images
-        run: npm i xml2js --no-save
+          npm init -y >/dev/null 2>&1 || true
+          npm i xml2js --no-audit --no-fund
 
       - name: Attach featured images from WXR (image:) and download assets
         env:
@@ -198,33 +126,29 @@ jobs:
                 .replace(/%3f[^)"'\s>]*/ig,'')
                 .replace(/(\.(png|jpe?g|gif|webp|svg))\?[^)"'\s>]*/ig,'$1');
             }
-            // 把 WordPress.com / 自架 WP / 一般 YYYY/MM 路徑 統一映射到 assets/uploads/YYYY/MM/檔名
+            // Map any of:
+            //   https://warmycat.com/wp-content/uploads/YYYY/MM/file.ext?...
+            //   https://*.files.wordpress.com/YYYY/MM/file.ext?...
             function toAssetsPath(abs){
               if (!abs) return null;
               let url = stripQuery(abs);
               try { url = decodeURIComponent(url); } catch {}
               url = url.replace(/\\/g,'/');
 
-              // 1) WordPress.com：*.files.wordpress.com/YYYY/MM/file.ext
               let m = url.match(/https?:\/\/[^/]*files\.wordpress\.com\/(\d{4})\/(\d{2})\/([^?/#]+)$/i);
               if (m) {
-                const [_, y, mth, file] = m;
-                return path.join('assets','uploads', y, mth, file.toLowerCase());
+                const [_, y, mm, file] = m;
+                return path.join('assets','uploads', y, mm, file.toLowerCase());
               }
-
-              // 2) 自架 WordPress：.../wp-content/uploads/後面整串
               m = url.match(/\/wp-content\/uploads\/(.+)$/i);
               if (m) {
                 return path.join('assets','uploads', m[1].toLowerCase());
               }
-
-              // 3) 保險通用：.../YYYY/MM/file.ext
               m = url.match(/\/(\d{4})\/(\d{2})\/([^/?#]+\.(?:png|jpe?g|gif|webp|svg))$/i);
               if (m) {
-                const [_, y, mth, file] = m;
-                return path.join('assets','uploads', y, mth, file.toLowerCase());
+                const [_, y, mm, file] = m;
+                return path.join('assets','uploads', y, mm, file.toLowerCase());
               }
-
               return null;
             }
             function readFrontMatter(s){
@@ -239,38 +163,47 @@ jobs:
             }
             const normalizeTitle = (t)=> (t||'').trim();
 
-            // 取得 XML 檔
+            // locate XML
             const xmlInput = process.env.XML_INPUT;
             let xmlFiles = [];
             if (xmlInput && fs.existsSync(xmlInput)) xmlFiles = [xmlInput];
             else if (fs.existsSync('import')) xmlFiles = walk('import').filter(f => f.endsWith('.xml'));
-            if (xmlFiles.length === 0){ log('No XML found.'); return; }
+
             log('XML files:', xmlFiles.length);
+            const postFiles = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
+            log('Found posts:', postFiles.length);
 
-            // 支援 .md/.markdown/.html
-            const posts = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
-            log('Found posts:', posts.length);
-            if (posts.length === 0){ console.log('No posts.'); return; }
+            if (xmlFiles.length === 0 || postFiles.length === 0) return;
 
-            // WXR：A) post_id -> featured URL；B) (date|title) -> featured URL（無 id 後備）
+            // Build maps from WXR
             const featuredByPostId = new Map();
-            const featuredByDateTitle = new Map();
+            const attachUrl = new Map();
 
             for (const xf of xmlFiles){
               const xml = fs.readFileSync(xf,'utf8');
               const data = await parseStringPromise(xml, { explicitArray:true });
-              const items = (((data||{}).rss||[])[0]||{}).channel?.[0]?.item || [];
+              const chan = data?.rss?.channel?.[0];
+              const items = chan?.item || [];
+              log('WXR items:', items.length);
 
-              const attachUrl = new Map(); // attachment_id -> url
+              // debug type counts
+              const typeCount = {};
               for (const it of items){
                 const type = (it['wp:post_type']||[''])[0];
-                if (String(type) === 'attachment'){
-                  const id = Number((it['wp:post_id']||['0'])[0]);
-                  const url = (it['wp:attachment_url']||[''])[0];
-                  if (id && url) attachUrl.set(id, url);
-                }
+                typeCount[type] = (typeCount[type]||0) + 1;
+              }
+              log('Type counts:', JSON.stringify(typeCount));
+
+              // attachments -> url map
+              for (const it of items){
+                const type = (it['wp:post_type']||[''])[0];
+                if (String(type) !== 'attachment') continue;
+                const id = Number((it['wp:post_id']||['0'])[0]);
+                const url = (it['wp:attachment_url']||[''])[0];
+                if (id && url) attachUrl.set(id, url);
               }
 
+              // posts -> thumbnail url
               for (const it of items){
                 const type = (it['wp:post_type']||[''])[0];
                 if (String(type) !== 'post') continue;
@@ -279,60 +212,40 @@ jobs:
                 let thumbId = null;
                 for (const m of metas){
                   const k = (m['wp:meta_key']||[''])[0];
-                  if (k === '_thumbnail_id'){ thumbId = Number((m['wp:meta_value']||[''])[0]); break; }
+                  if (k === '_thumbnail_id'){
+                    thumbId = Number((m['wp:meta_value']||[''])[0]); break;
+                  }
                 }
-                const url = thumbId ? attachUrl.get(thumbId) : null;
-                if (pid && url) featuredByPostId.set(pid, url);
-
-                const title = (it['title']||[''])[0] || '';
-                const dateRaw = (it['wp:post_date']||[''])[0] || '';
-                const date = (dateRaw||'').slice(0,10); // YYYY-MM-DD
-                const key = `${date}|${normalizeTitle(title)}`;
-                if (url && date) featuredByDateTitle.set(key, url);
+                if (pid && thumbId && attachUrl.has(thumbId)){
+                  featuredByPostId.set(pid, attachUrl.get(thumbId));
+                }
               }
             }
-            log('WXR mapped: byId=', featuredByPostId.size, ' byDateTitle=', featuredByDateTitle.size);
 
-            // 下載並寫入 front-matter
-            let updated = 0, downloaded = 0, skippedHasImage = 0, unmatched = 0;
+            log('WXR mapped: byId=', featuredByPostId.size);
 
-            for (const file of posts){
+            // apply to posts
+            let updated = 0, downloaded = 0, skipped = 0, unmatched = 0;
+
+            for (const file of postFiles){
               const s = fs.readFileSync(file,'utf8');
               const fm = readFrontMatter(s);
-              if (!fm) { unmatched++; continue; }
+              if (!fm){ unmatched++; continue; }
 
-              // 以 id 為主
               const idm = fm.fm.match(/\b(wordpress_id|wp_id|post_id):\s*"?(\d+)"?/i);
               const pid = idm ? Number(idm[2]) : null;
 
-              // 後備：date + title
-              const fmTitle = getFmField(fm.fm, 'title');
-              let date = getFmField(fm.fm, 'date');
-              date = date ? date.slice(0,10) : null;
-              if (!date){
-                const bn = path.basename(file);
-                const dm = bn.match(/^(\d{4}-\d{2}-\d{2})-/);
-                if (dm) date = dm[1];
-              }
+              const url = pid ? featuredByPostId.get(pid) : null;
+              if (!url){ unmatched++; continue; }
 
-              let fUrlRaw = null;
-              if (pid) fUrlRaw = featuredByPostId.get(pid);
-              if (!fUrlRaw && date && fmTitle){
-                const key = `${date}|${normalizeTitle(fmTitle)}`;
-                fUrlRaw = featuredByDateTitle.get(key);
-              }
-              if (!fUrlRaw) { unmatched++; continue; }
-
-              const dest = toAssetsPath(fUrlRaw);
-              if (!dest) { unmatched++; continue; }
+              const dest = toAssetsPath(url);
+              if (!dest){ unmatched++; continue; }
 
               if (!fs.existsSync(dest)){
-                try { await dl(fUrlRaw, dest); downloaded++; }
-                catch(e){ log('download failed:', fUrlRaw); }
+                try { await dl(url, dest); downloaded++; }
+                catch(e){ log('download failed:', url, e.message); }
               }
-
-              // 已有 image 就不覆蓋
-              if (/\nimage:\s*["']?[^"'\n]+["']?\s*$/m.test(fm.fm)) { skippedHasImage++; continue; }
+              if (/\nimage:\s*["']?[^"'\n]+["']?\s*$/m.test(fm.fm)) { skipped++; continue; }
 
               const rel = '/' + dest.replace(/\\/g,'/');
               const injected = fm.fm.replace(/\n---\s*$/, `\nimage: "${rel}"\n---`);
@@ -340,15 +253,44 @@ jobs:
               updated++;
             }
 
-            log('featured summary => updated:', updated, ' downloaded:', downloaded, ' already-had-image:', skippedHasImage, ' unmatched:', unmatched);
+            log('featured summary => updated:', updated, ' downloaded:', downloaded, ' already-had-image:', skipped, ' unmatched:', unmatched);
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
 
-
-      - name: Quick sanity check
+      # --- Normalize any leftover query strings in posts ---
+      - name: Normalize image URLs in posts (strip ?w=, fix src/srcset, wp URLs)
         run: |
-          echo "Posts count:" && (ls -1 _posts | wc -l || true)
-          echo "Assets count:" && (find assets/uploads -type f | wc -l || true)
+          node --input-type=commonjs - <<'NODE'
+          const fs = require('fs'), path = require('path');
+          function walk(dir){
+            if (!fs.existsSync(dir)) return [];
+            return fs.readdirSync(dir,{withFileTypes:true})
+              .flatMap(e=>{const p=path.join(dir,e.name); return e.isDirectory()?walk(p):[p];});
+          }
+          const files = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
+          const qInPath = /(\.(?:png|jpe?g|gif|webp|svg))(?:\?[^)"'\s>]+)/gi;
+          const srcQuery  = /(src\s*=\s*")([^"?"]+)(\?[^"]*)(")/gi;
+          const srcsetQuery = /(\s)([^,\s"]+?\.(?:png|jpe?g|gif|webp|svg))(?:\?[^,\s"]+)/gi;
+          const wpUploads = /https?:\/\/[^"')]+\/wp-content\/uploads/gi;
+          const toAssets  = '/assets/uploads';
+          let changed = 0;
+          for (const f of files) {
+            let s = fs.readFileSync(f, 'utf8');
+            const before = s;
+            s = s.replace(qInPath,'$1')
+                 .replace(srcQuery,   (_m,p1,p2,_q,p4)=>p1+p2+p4)
+                 .replace(srcsetQuery,'$1$2')
+                 .replace(wpUploads,toAssets)
+                 .replace(/&amp;/g,'&');
+            if (s !== before) { fs.writeFileSync(f, s); changed++; }
+          }
+          console.log('Normalized files:', changed);
+          NODE
+
+      - name: List generated files (debug)
+        run: |
+          echo "==== _posts ====" && ls -al _posts | sed -n '1,20p' || true
+          echo "==== assets/uploads (count) ====" && (find assets/uploads -type f | wc -l || true)
 
       - name: Commit & push imported content
         run: |
@@ -356,7 +298,7 @@ jobs:
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add _posts assets
-            git commit -m "chore(import): WordPress WXR → Markdown + assets + featured images"
+            git commit -m "chore(import): WordPress WXR → Markdown + featured images"
             git push
           else
             echo "No changes to commit."
