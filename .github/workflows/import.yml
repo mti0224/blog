@@ -163,130 +163,131 @@ jobs:
           XML_INPUT: ${{ github.event.inputs.xml_path }}
         run: |
           node --input-type=commonjs - <<'NODE'
-          const fs = require('fs');
-          const path = require('path');
-          const http = require('http');
-          const https = require('https');
-          const { parseStringPromise } = require('xml2js');
+          (async () => {
+            const fs = require('fs');
+            const path = require('path');
+            const http = require('http');
+            const https = require('https');
+            const { parseStringPromise } = require('xml2js');
 
-          function walk(dir){
-            if (!fs.existsSync(dir)) return [];
-            return fs.readdirSync(dir,{withFileTypes:true})
-              .flatMap(e => { const p = path.join(dir, e.name); return e.isDirectory()? walk(p) : [p]; });
-          }
-          function ensureDir(p){ fs.mkdirSync(path.dirname(p), { recursive:true }); }
-          function dl(url, dest){
-            return new Promise((resolve,reject)=>{
-              const client = url.startsWith('https') ? https : http;
-              ensureDir(dest);
-              client.get(url, res=>{
-                if (res.statusCode>=300 && res.statusCode<400 && res.headers.location){
-                  return dl(res.headers.location, dest).then(resolve).catch(reject);
+            function walk(dir){
+              if (!fs.existsSync(dir)) return [];
+              return fs.readdirSync(dir,{withFileTypes:true})
+                .flatMap(e => { const p = path.join(dir, e.name); return e.isDirectory()? walk(p) : [p]; });
+            }
+            function ensureDir(p){ fs.mkdirSync(path.dirname(p), { recursive:true }); }
+            function dl(url, dest){
+              return new Promise((resolve,reject)=>{
+                const client = url.startsWith('https') ? https : http;
+                ensureDir(dest);
+                client.get(url, res=>{
+                  if (res.statusCode>=300 && res.statusCode<400 && res.headers.location){
+                    return dl(res.headers.location, dest).then(resolve).catch(reject);
+                  }
+                  if (res.statusCode!==200) return reject(new Error('HTTP '+res.statusCode+' '+url));
+                  const out = fs.createWriteStream(dest);
+                  res.pipe(out); out.on('finish',()=>out.close(resolve));
+                }).on('error', reject);
+              });
+            }
+            function stripQuery(u){
+              return u
+                .replace(/%253f[^)"'\s>]*/ig,'')
+                .replace(/%3f[^)"'\s>]*/ig,'')
+                .replace(/(\.(png|jpe?g|gif|webp|svg))\?[^)"'\s>]*/ig,'$1');
+            }
+            function toAssetsPath(abs){
+              const m = abs.match(/\/wp-content\/uploads\/(.+)$/i);
+              if (!m) return null;
+              let rel = stripQuery(m[1]);
+              try { rel = decodeURIComponent(rel); } catch {}
+              rel = rel.replace(/\\/g,'/').toLowerCase();
+              return path.join('assets','uploads', rel);
+            }
+            function readFrontMatter(s){
+              if (!s.startsWith('---')) return null;
+              const end = s.indexOf('\n---',3);
+              if (end < 0) return null;
+              return { fm: s.slice(0,end+4), body: s.slice(end+4) };
+            }
+
+            // 取得 XML 檔
+            const xmlInput = process.env.XML_INPUT;
+            let xmlFiles = [];
+            if (xmlInput && fs.existsSync(xmlInput)) xmlFiles = [xmlInput];
+            else if (fs.existsSync('import')) xmlFiles = walk('import').filter(f => f.endsWith('.xml'));
+            if (xmlFiles.length === 0){ console.log('No XML found.'); return; }
+
+            // 文章清單
+            const posts = walk('_posts').filter(f => /\.(md|markdown)$/i.test(f));
+            if (posts.length === 0){ console.log('No posts.'); return; }
+
+            // 由 WXR 建立：post_id -> featured image URL
+            const featuredByPostId = new Map();
+
+            for (const xf of xmlFiles){
+              const xml = fs.readFileSync(xf,'utf8');
+              const data = await parseStringPromise(xml, { explicitArray:true });
+              const items = (((data||{}).rss||[])[0]||{}).channel?.[0]?.item || [];
+
+              const attachUrl = new Map(); // attachment_id -> url
+              for (const it of items){
+                const type = (it['wp:post_type']||[''])[0];
+                if (String(type) === 'attachment'){
+                  const id = Number((it['wp:post_id']||['0'])[0]);
+                  const url = (it['wp:attachment_url']||[''])[0];
+                  if (id && url) attachUrl.set(id, url);
                 }
-                if (res.statusCode!==200) return reject(new Error('HTTP '+res.statusCode+' '+url));
-                const out = fs.createWriteStream(dest);
-                res.pipe(out); out.on('finish',()=>out.close(resolve));
-              }).on('error', reject);
-            });
-          }
-          function stripQuery(u){
-            return u
-              .replace(/%253f[^)"'\s>]*/ig,'')
-              .replace(/%3f[^)"'\s>]*/ig,'')
-              .replace(/(\.(png|jpe?g|gif|webp|svg))\?[^)"'\s>]*/ig,'$1');
-          }
-          function toAssetsPath(abs){
-            const m = abs.match(/\/wp-content\/uploads\/(.+)$/i);
-            if (!m) return null;
-            let rel = stripQuery(m[1]);
-            try { rel = decodeURIComponent(rel); } catch {}
-            rel = rel.replace(/\\/g,'/').toLowerCase();
-            return path.join('assets','uploads', rel);
-          }
-          function readFrontMatter(s){
-            if (!s.startsWith('---')) return null;
-            const end = s.indexOf('\n---',3);
-            if (end < 0) return null;
-            return { fm: s.slice(0,end+4), body: s.slice(end+4) };
-          }
+              }
 
-          // 取得 XML 檔
-          const xmlInput = process.env.XML_INPUT;
-          let xmlFiles = [];
-          if (xmlInput && fs.existsSync(xmlInput)) xmlFiles = [xmlInput];
-          else if (fs.existsSync('import')) xmlFiles = walk('import').filter(f => f.endsWith('.xml'));
-          if (xmlFiles.length === 0){ console.log('No XML found.'); process.exit(0); }
-
-          // 文章清單
-          const posts = walk('_posts').filter(f => /\.(md|markdown)$/i.test(f));
-          if (posts.length === 0){ console.log('No posts.'); process.exit(0); }
-
-          // 由 WXR 建立：post_id -> featured image URL
-          const featuredByPostId = new Map();
-
-          for (const xf of xmlFiles){
-            const xml = fs.readFileSync(xf,'utf8');
-            const data = await parseStringPromise(xml, { explicitArray:true });
-            const items = (((data||{}).rss||[])[0]||{}).channel?.[0]?.item || [];
-
-            const attachUrl = new Map(); // attachment_id -> url
-            for (const it of items){
-              const type = (it['wp:post_type']||[''])[0];
-              if (String(type) === 'attachment'){
-                const id = Number((it['wp:post_id']||['0'])[0]);
-                const url = (it['wp:attachment_url']||[''])[0];
-                if (id && url) attachUrl.set(id, url);
+              for (const it of items){
+                const type = (it['wp:post_type']||[''])[0];
+                if (String(type) !== 'post') continue;
+                const pid = Number((it['wp:post_id']||['0'])[0]);
+                const metas = it['wp:postmeta'] || [];
+                let thumbId = null;
+                for (const m of metas){
+                  const k = (m['wp:meta_key']||[''])[0];
+                  if (k === '_thumbnail_id'){ thumbId = Number((m['wp:meta_value']||[''])[0]); break; }
+                }
+                const url = thumbId ? attachUrl.get(thumbId) : null;
+                if (pid && url) featuredByPostId.set(pid, url);
               }
             }
 
-            for (const it of items){
-              const type = (it['wp:post_type']||[''])[0];
-              if (String(type) !== 'post') continue;
-              const pid = Number((it['wp:post_id']||['0'])[0]);
-              const metas = it['wp:postmeta'] || [];
-              let thumbId = null;
-              for (const m of metas){
-                const k = (m['wp:meta_key']||[''])[0];
-                if (k === '_thumbnail_id'){ thumbId = Number((m['wp:meta_value']||[''])[0]); break; }
+            // 將 featured image 下載並寫入 front-matter image
+            let updated = 0, downloaded = 0;
+            for (const file of posts){
+              const s = fs.readFileSync(file,'utf8');
+              const fm = readFrontMatter(s);
+              if (!fm) continue;
+
+              const idm = fm.fm.match(/\b(wordpress_id|wp_id|post_id):\s*"?(\d+)"?/i);
+              const pid = idm ? Number(idm[2]) : null;
+              if (!pid) continue;
+
+              const fUrlRaw = featuredByPostId.get(pid);
+              if (!fUrlRaw) continue;
+
+              const dest = toAssetsPath(fUrlRaw);
+              if (!dest) continue;
+
+              if (!fs.existsSync(dest)){
+                try { await dl(fUrlRaw, dest); downloaded++; }
+                catch(e){ console.log('download failed:', fUrlRaw); }
               }
-              const url = thumbId ? attachUrl.get(thumbId) : null;
-              if (pid && url) featuredByPostId.set(pid, url);
-            }
-          }
 
-          // 將 featured image 下載並寫入 front-matter image
-          let updated = 0, downloaded = 0;
-          for (const file of posts){
-            const s = fs.readFileSync(file,'utf8');
-            const fm = readFrontMatter(s);
-            if (!fm) continue;
+              // 已有 image 就不覆蓋
+              if (/\nimage:\s*["']?[^"'\n]+["']?\s*$/m.test(fm.fm)) continue;
 
-            // wordpress_id / wp_id / post_id 其一
-            const idm = fm.fm.match(/\b(wordpress_id|wp_id|post_id):\s*"?(\d+)"?/i);
-            const pid = idm ? Number(idm[2]) : null;
-            if (!pid) continue;
-
-            const fUrlRaw = featuredByPostId.get(pid);
-            if (!fUrlRaw) continue;
-
-            const dest = toAssetsPath(fUrlRaw);
-            if (!dest) continue;
-
-            if (!fs.existsSync(dest)){
-              try { await dl(fUrlRaw, dest); downloaded++; }
-              catch(e){ console.log('download failed:', fUrlRaw); }
+              const rel = '/' + dest.replace(/\\/g,'/');
+              const injected = fm.fm.replace(/\n---\s*$/, `\nimage: "${rel}"\n---`);
+              fs.writeFileSync(file, injected + fm.body);
+              updated++;
             }
 
-            // 已有 image 就不覆蓋
-            if (/\nimage:\s*["']?[^"'\n]+["']?\s*$/m.test(fm.fm)) continue;
-
-            const rel = '/' + dest.replace(/\\/g,'/');
-            const injected = fm.fm.replace(/\n---\s*$/, `\nimage: "${rel}"\n---`);
-            fs.writeFileSync(file, injected + fm.body);
-            updated++;
-          }
-
-          console.log('featured mapped (updated posts):', updated, 'downloaded assets:', downloaded);
+            console.log('featured mapped (updated posts):', updated, 'downloaded assets:', downloaded);
+          })().catch(err => { console.error(err); process.exit(1); });
           NODE
 
       - name: Quick sanity check
