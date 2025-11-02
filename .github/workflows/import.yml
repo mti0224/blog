@@ -198,13 +198,34 @@ jobs:
                 .replace(/%3f[^)"'\s>]*/ig,'')
                 .replace(/(\.(png|jpe?g|gif|webp|svg))\?[^)"'\s>]*/ig,'$1');
             }
+            // 把 WordPress.com / 自架 WP / 一般 YYYY/MM 路徑 統一映射到 assets/uploads/YYYY/MM/檔名
             function toAssetsPath(abs){
-              const m = abs.match(/\/wp-content\/uploads\/(.+)$/i);
-              if (!m) return null;
-              let rel = stripQuery(m[1]);
-              try { rel = decodeURIComponent(rel); } catch {}
-              rel = rel.replace(/\\/g,'/').toLowerCase();
-              return path.join('assets','uploads', rel);
+              if (!abs) return null;
+              let url = stripQuery(abs);
+              try { url = decodeURIComponent(url); } catch {}
+              url = url.replace(/\\/g,'/');
+
+              // 1) WordPress.com：*.files.wordpress.com/YYYY/MM/file.ext
+              let m = url.match(/https?:\/\/[^/]*files\.wordpress\.com\/(\d{4})\/(\d{2})\/([^?/#]+)$/i);
+              if (m) {
+                const [_, y, mth, file] = m;
+                return path.join('assets','uploads', y, mth, file.toLowerCase());
+              }
+
+              // 2) 自架 WordPress：.../wp-content/uploads/後面整串
+              m = url.match(/\/wp-content\/uploads\/(.+)$/i);
+              if (m) {
+                return path.join('assets','uploads', m[1].toLowerCase());
+              }
+
+              // 3) 保險通用：.../YYYY/MM/file.ext
+              m = url.match(/\/(\d{4})\/(\d{2})\/([^/?#]+\.(?:png|jpe?g|gif|webp|svg))$/i);
+              if (m) {
+                const [_, y, mth, file] = m;
+                return path.join('assets','uploads', y, mth, file.toLowerCase());
+              }
+
+              return null;
             }
             function readFrontMatter(s){
               if (!s.startsWith('---')) return null;
@@ -226,14 +247,12 @@ jobs:
             if (xmlFiles.length === 0){ log('No XML found.'); return; }
             log('XML files:', xmlFiles.length);
 
-            // 文章清單（⚠️ 同時支援 .md/.markdown/.html）
+            // 支援 .md/.markdown/.html
             const posts = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
             log('Found posts:', posts.length);
             if (posts.length === 0){ console.log('No posts.'); return; }
 
-            // 由 WXR 建立：
-            //  A) post_id -> featured URL
-            //  B) (date|title) -> featured URL （無 id 時的後備）
+            // WXR：A) post_id -> featured URL；B) (date|title) -> featured URL（無 id 後備）
             const featuredByPostId = new Map();
             const featuredByDateTitle = new Map();
 
@@ -265,7 +284,6 @@ jobs:
                 const url = thumbId ? attachUrl.get(thumbId) : null;
                 if (pid && url) featuredByPostId.set(pid, url);
 
-                // 後備鍵
                 const title = (it['title']||[''])[0] || '';
                 const dateRaw = (it['wp:post_date']||[''])[0] || '';
                 const date = (dateRaw||'').slice(0,10); // YYYY-MM-DD
@@ -275,7 +293,7 @@ jobs:
             }
             log('WXR mapped: byId=', featuredByPostId.size, ' byDateTitle=', featuredByDateTitle.size);
 
-            // 將 featured image 下載並寫入 front-matter image
+            // 下載並寫入 front-matter
             let updated = 0, downloaded = 0, skippedHasImage = 0, unmatched = 0;
 
             for (const file of posts){
@@ -283,13 +301,12 @@ jobs:
               const fm = readFrontMatter(s);
               if (!fm) { unmatched++; continue; }
 
-              // 先用 id
+              // 以 id 為主
               const idm = fm.fm.match(/\b(wordpress_id|wp_id|post_id):\s*"?(\d+)"?/i);
               const pid = idm ? Number(idm[2]) : null;
 
-              // 若沒有 id，用 日期 + 標題 後備
+              // 後備：date + title
               const fmTitle = getFmField(fm.fm, 'title');
-              // 從檔名取 yyyy-mm-dd
               let date = getFmField(fm.fm, 'date');
               date = date ? date.slice(0,10) : null;
               if (!date){
@@ -326,6 +343,7 @@ jobs:
             log('featured summary => updated:', updated, ' downloaded:', downloaded, ' already-had-image:', skippedHasImage, ' unmatched:', unmatched);
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
+
 
       - name: Quick sanity check
         run: |
