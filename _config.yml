@@ -9,5 +9,7 @@ plugins:
   - jekyll-redirect-from
   - jekyll-sitemap
   - jekyll-feed
+include:
+  - assets/uploads
 
 markdown: kramdown
