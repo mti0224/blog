@@ -1,0 +1,41 @@
+/* 版心與留白 */
+.site-wrap { max-width: 1100px; margin: 0 auto; padding: 0 18px; }
+
+/* Featured 區 */
+.feature { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin: 18px 0 28px; }
+.feature__card { position: relative; display: block; border-radius: 12px; overflow: hidden; background:#0b2540; }
+.feature__card img { width: 100%; height: 100%; object-fit: cover; display:block; }
+.feature__card .noimg { display:flex; align-items:center; justify-content:center; height:100%; color:#999; background:#222; }
+.feature__card--big { aspect-ratio: 16/9; }
+.feature__card--side { aspect-ratio: 16/9; }
+.feature__title { position:absolute; left:0; right:0; bottom:0; padding:10px 12px; color:#fff; background:linear-gradient(180deg,transparent,rgba(0,0,0,.7)); font-weight:700; }
+.feature__title--small { font-size:14px; }
+.feature__side { display:grid; gap:16px; }
+
+/* 卡片列表 */
+.postgrid { display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:16px; margin: 10px 0 40px; }
+.card { border-radius:12px; overflow:hidden; background:#0b2540; color:#e5e7eb; }
+.card__media { display:block; aspect-ratio: 16/9; background:#1f2937; }
+.card__media img { width:100%; height:100%; object-fit:cover; }
+.card__media .noimg { width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#999; }
+.card__body { padding:12px 14px 16px; }
+.card__title { margin:0 0 6px; font-size:18px; line-height:1.3; }
+.card__title a { color:#e5e7eb; text-decoration:none; }
+.card__title a:hover { text-decoration:underline; }
+.card__meta { font-size:12px; color:#9ca3af; margin-bottom:6px; }
+.card__excerpt { margin:0; color:#cbd5e1; }
+
+/* 文章頁 */
+.post__title { margin:14px 0 4px; }
+.post__meta { color:#64748b; margin-bottom:10px; }
+.post__hero { width:100%; border-radius:12px; margin:8px 0 18px; }
+.post__content img { max-width:100%; height:auto; }
+
+/* RWD */
+@media (max-width: 960px) {
+  .feature { grid-template-columns: 1fr; }
+  .postgrid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .postgrid { grid-template-columns: 1fr; }
+}
