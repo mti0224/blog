@@ -74,6 +74,44 @@ jobs:
           for X in $XMLS; do
             SRC="$X" ruby import.rb
           done
+
+      # 先清掉 ?query、修正 src/srcset、wp 上的絕對 uploads
+      - name: Normalize image URLs in posts (strip ?w=, fix src/srcset, wp URLs)
+        run: |
+          node - <<'NODE'
+          const fs = require('fs'), path = require('path');
+          function walk(dir){
+            if (!fs.existsSync(dir)) return [];
+            return fs.readdirSync(dir,{withFileTypes:true})
+              .flatMap(e=>{const p=path.join(dir,e.name); return e.isDirectory()?walk(p):[p];});
+          }
+          const files = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
+
+          // 1) Markdown/一般連結：...png?xxx  -> ...png
+          const qInPath = /(\.(?:png|jpe?g|gif|webp|svg))(?:\?[^)"'\s>]+)/gi;
+          // 2) <img src="...?...">
+          const srcQuery  = /(src\s*=\s*")([^"?"]+)(\?[^"]*)(")/gi;
+          // 3) <img srcset="a.png?w=1024 1024w, b.jpg?x=1 512w">
+          const srcsetQuery = /(\s)([^,\s"]+?\.(?:png|jpe?g|gif|webp|svg))(?:\?[^,\s"]+)/gi;
+          // 4) 舊站完整網址 -> 相對 uploads
+          const wpUploads = /https?:\/\/[^"')]+\/wp-content\/uploads/gi;
+          const toAssets  = '/assets/uploads';
+
+          let changed = 0;
+          for (const f of files) {
+            let s = fs.readFileSync(f, 'utf8');
+            const before = s;
+            s = s
+              .replace(qInPath, '$1')
+              .replace(srcQuery,   (_m,p1,p2,_q,p4)=>p1+p2+p4)
+              .replace(srcsetQuery,'$1$2')
+              .replace(wpUploads,  toAssets)
+              .replace(/&amp;/g, '&'); // e.g. &amp;w=948
+
+            if (s !== before) { fs.writeFileSync(f, s); changed++; }
+          }
+          console.log('Normalized files:', changed);
+          NODE
       # 解析 WXR 取出每篇文章的 featured image，下載到 assets 並寫入 front-matter: image
       - name: Attach featured images from WXR to posts (image:) and download assets
         uses: actions/setup-node@v4
@@ -235,45 +273,6 @@ jobs:
 
           console.log('featured mapped (updated posts):', updated, 'downloaded assets:', downloaded);
           NODE
-
-      # 先清掉 ?query、修正 src/srcset、wp 上的絕對 uploads
-      - name: Normalize image URLs in posts (strip ?w=, fix src/srcset, wp URLs)
-        run: |
-          node - <<'NODE'
-          const fs = require('fs'), path = require('path');
-          function walk(dir){
-            if (!fs.existsSync(dir)) return [];
-            return fs.readdirSync(dir,{withFileTypes:true})
-              .flatMap(e=>{const p=path.join(dir,e.name); return e.isDirectory()?walk(p):[p];});
-          }
-          const files = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
-
-          // 1) Markdown/一般連結：...png?xxx  -> ...png
-          const qInPath = /(\.(?:png|jpe?g|gif|webp|svg))(?:\?[^)"'\s>]+)/gi;
-          // 2) <img src="...?...">
-          const srcQuery  = /(src\s*=\s*")([^"?"]+)(\?[^"]*)(")/gi;
-          // 3) <img srcset="a.png?w=1024 1024w, b.jpg?x=1 512w">
-          const srcsetQuery = /(\s)([^,\s"]+?\.(?:png|jpe?g|gif|webp|svg))(?:\?[^,\s"]+)/gi;
-          // 4) 舊站完整網址 -> 相對 uploads
-          const wpUploads = /https?:\/\/[^"')]+\/wp-content\/uploads/gi;
-          const toAssets  = '/assets/uploads';
-
-          let changed = 0;
-          for (const f of files) {
-            let s = fs.readFileSync(f, 'utf8');
-            const before = s;
-            s = s
-              .replace(qInPath, '$1')
-              .replace(srcQuery,   (_m,p1,p2,_q,p4)=>p1+p2+p4)
-              .replace(srcsetQuery,'$1$2')
-              .replace(wpUploads,  toAssets)
-              .replace(/&amp;/g, '&'); // e.g. &amp;w=948
-
-            if (s !== before) { fs.writeFileSync(f, s); changed++; }
-          }
-          console.log('Normalized files:', changed);
-          NODE
-
       # 把 /assets/... 改成 {{ "/assets/..." | relative_url }}（解決 baseurl=/blog）
       - name: Rewrite /assets URLs to Liquid relative_url
         run: |
