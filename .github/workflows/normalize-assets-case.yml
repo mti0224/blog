@@ -1,0 +1,94 @@
+name: Normalize assets filenames to lowercase and fix references
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Lowercase all files under assets/uploads and update _posts references
+        run: |
+          node - <<'NODE'
+          const fs = require('fs'), path = require('path');
+
+          function walk(dir){
+            if (!fs.existsSync(dir)) return [];
+            return fs.readdirSync(dir,{withFileTypes:true})
+              .flatMap(e=>{const p=path.join(dir,e.name); return e.isDirectory()?walk(p):[p];});
+          }
+
+          const ASSET_ROOT = 'assets/uploads';
+          const POST_ROOT  = '_posts';
+
+          // 1) 先把資產目錄內的檔名全部轉小寫（保留路徑層級）
+          const files = walk(ASSET_ROOT);
+          const mapOldToNew = new Map(); // 舊 → 新（相對路徑）
+
+          for (const f of files) {
+            const rel = path.relative('.', f).replace(/\\/g,'/');
+            const dir = path.dirname(rel), base = path.basename(rel);
+            const lower = base.toLowerCase();
+
+            // 也順便把任何殘留的 %3F、? 後綴剃掉
+            const cut = lower.split('?')[0].replace(/%253f.*$/,'').replace(/%3f.*$/,'');
+            const target = path.join(dir, cut).replace(/\\/g,'/');
+
+            if (rel !== target) {
+              // 目標若已存在，就先移除原檔（避免覆蓋衝突）
+              if (fs.existsSync(target)) {
+                fs.rmSync(rel);
+              } else {
+                fs.renameSync(rel, target);
+              }
+              mapOldToNew.set(rel, target);
+            }
+          }
+
+          // 2) 更新 _posts 內所有引用到 /assets/uploads/... 的路徑為小寫
+          const postFiles = walk(POST_ROOT).filter(f => /\.(md|markdown|html)$/i.test(f));
+          const reAsset = /\/assets\/uploads\/[^\s"'()]+/gi;
+
+          let changed = 0;
+          for (const pf of postFiles) {
+            let s = fs.readFileSync(pf,'utf8');
+            const before = s;
+
+            // a) 去掉副檔名後面的 query（保險再剃一次）
+            s = s.replace(/(\.(?:png|jpe?g|gif|webp|svg))\?[^)"'\s>]*/gi, '$1');
+
+            // b) 把整段 /assets/uploads 路徑轉成小寫
+            s = s.replace(reAsset, m => m.toLowerCase());
+
+            // c) 也把 %3F / %253F 這種編碼型 query 從路徑移除
+            s = s.replace(/%253f[^)"'\s>]*/gi,'').replace(/%3f[^)"'\s>]*/gi,'');
+
+            if (s !== before) { fs.writeFileSync(pf, s); changed++; }
+          }
+
+          console.log('Renamed assets:', mapOldToNew.size, 'Updated posts:', changed);
+          NODE
+
+      - name: Commit & push
+        run: |
+          if [ -n "$(git status --porcelain _posts assets)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add _posts assets
+            git commit -m "fix: normalize assets filenames to lowercase and update post references"
+            git push
+          else
+            echo "No changes to commit."
+          fi
