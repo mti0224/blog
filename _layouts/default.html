@@ -1,38 +1,21 @@
-<!doctype html>
-<html lang="zh-Hant">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>{% if page.title %}{{ page.title }} · {% endif %}{{ site.title }}</title>
-    {%- seo -%}
-    <link rel="alternate" type="application/atom+xml" href="{{ '/feed.xml' | relative_url }}">
-    <!-- 字型：與 WP 風格接近 -->
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- 主題樣式 -->
-    <link rel="stylesheet" href="{{ '/assets/css/site.css' | relative_url }}">
-  </head>
-  <body>
-    <header class="site-header">
-      <div class="container header-inner">
-        <a class="brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
-        <nav class="nav">
-          <a href="{{ '/' | relative_url }}">首頁</a>
-          <a href="{{ '/feed.xml' | relative_url }}">RSS</a>
-          <!-- 需要可自行加連結 -->
-        </nav>
-      </div>
-    </header>
+---
+---
 
-    <main class="container main">
-      {{ content }}
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: 'zh-TW' }}">
+  <head>
+    {%- include head.html -%}
+  </head>
+  <body class="{{ page.layout | default: 'default' }}">
+    {%- include header.html -%}
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        {{ content }}
+      </div>
     </main>
 
-    <footer class="site-footer">
-      <div class="container footer-inner">
-        <div>© {{ site.time | date: '%Y' }} {{ site.title }}</div>
-        <div class="muted">Powered by Jekyll & GitHub Pages</div>
-      </div>
-    </footer>
+    {%- include footer.html -%}
+    <script src="{{ '/assets/js/yt-embed.js' | relative_url }}" defer></script>
   </body>
 </html>
