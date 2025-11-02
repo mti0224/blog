@@ -117,18 +117,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm i xml2js
+
+      - name: Install XML parser
+        run: |
+          npm i xml2js --no-save
+
       - name: Map _thumbnail_id → attachment_url → front-matter image
         env:
           XML_INPUT: ${{ github.event.inputs.xml_path }}
         run: |
-          node - <<'NODE'
+          node --input-type=commonjs - <<'NODE'
           const fs = require('fs');
           const path = require('path');
+          const http = require('http');
           const https = require('https');
           const { parseStringPromise } = require('xml2js');
 
-          // --- helpers ---
           function walk(dir){
             if (!fs.existsSync(dir)) return [];
             return fs.readdirSync(dir,{withFileTypes:true})
@@ -137,8 +141,10 @@ jobs:
           function ensureDir(p){ fs.mkdirSync(path.dirname(p), { recursive:true }); }
           function dl(url, dest){
             return new Promise((resolve,reject)=>{
+              const client = url.startsWith('https') ? https : http;
               ensureDir(dest);
-              https.get(url, res=>{
+              client.get(url, res=>{
+                // follow redirect
                 if (res.statusCode>=300 && res.statusCode<400 && res.headers.location){
                   return dl(res.headers.location, dest).then(resolve).catch(reject);
                 }
@@ -155,12 +161,10 @@ jobs:
               .replace(/(\.(png|jpe?g|gif|webp|svg))\?[^)"'\s>]*/ig,'$1');
           }
           function toAssetsPath(abs){
-            // 取出 /wp-content/uploads/ 後的相對路徑
             const m = abs.match(/\/wp-content\/uploads\/(.+)$/i);
             if (!m) return null;
             let rel = stripQuery(m[1]);
             try { rel = decodeURIComponent(rel); } catch {}
-            // 正規化為小寫，避免 Pages 上大小寫 404
             rel = rel.replace(/\\/g,'/').toLowerCase();
             return path.join('assets','uploads', rel);
           }
@@ -168,40 +172,20 @@ jobs:
             if (!s.startsWith('---')) return null;
             const end = s.indexOf('\n---',3);
             if (end < 0) return null;
-            return { fm: s.slice(0,end+4), body: s.slice(end+4), endIdx: end };
+            return { fm: s.slice(0,end+4), body: s.slice(end+4) };
           }
 
-          // --- 1) 找到要處理的 XML 清單 ---
+          // XML 檔清單
           const xmlInput = process.env.XML_INPUT;
           let xmlFiles = [];
           if (xmlInput && fs.existsSync(xmlInput)) xmlFiles = [xmlInput];
           else if (fs.existsSync('import')) xmlFiles = walk('import').filter(f => f.endsWith('.xml'));
-          if (xmlFiles.length === 0){ console.log('No XML found under import/.'); process.exit(0); }
+          if (xmlFiles.length === 0){ console.log('No XML found.'); process.exit(0); }
 
-          // 文章檔
           const posts = walk('_posts').filter(f => /\.(md|markdown)$/i.test(f));
-          if (posts.length === 0){ console.log('No posts in _posts/.'); process.exit(0); }
+          if (posts.length === 0){ console.log('No posts.'); process.exit(0); }
 
-          // 用來配對 WXR 與 Jekyll 的 id/title/date
-          const postMeta = posts.map(f=>{
-            const s = fs.readFileSync(f,'utf8');
-            const fmObj = readFrontMatter(s);
-            let id=null, title=null, date=null;
-            if (fmObj){
-              const fm = fmObj.fm;
-              const m1 = fm.match(/\b(wordpress_id|wp_id|post_id):\s*"?(\d+)"?/i); if (m1) id = Number(m1[2]);
-              const m2 = fm.match(/\ntitle:\s*["']?(.+?)["']?\s*\n/i);        if (m2) title = m2[1].trim();
-              const m3 = fm.match(/\ndate:\s*["']?(.+?)["']?\s*\n/i);         if (m3) date = m3[1].trim().slice(0,10);
-            }
-            // 從檔名取 yyyy-mm-dd
-            if (!date){
-              const bn = path.basename(f);
-              const dm = bn.match(/^(\d{4}-\d{2}-\d{2})-/); if (dm) date = dm[1];
-            }
-            return { file:f, id, title, date, raw:s, fm: fmObj };
-          });
-
-          // --- 2) 從 WXR 建立：post_id -> featured attachment URL 的對照 ---
+          // 讀 XML：建立 attachment 映射 + post -> _thumbnail_id
           const featuredByPostId = new Map();
 
           for (const xf of xmlFiles){
@@ -209,8 +193,7 @@ jobs:
             const data = await parseStringPromise(xml, { explicitArray:true });
             const items = (((data||{}).rss||[])[0]||{}).channel?.[0]?.item || [];
 
-            // 附件表：attachment_id → url
-            const attachUrl = new Map();
+            const attachUrl = new Map(); // attachment_id -> url
             for (const it of items){
               const type = (it['wp:post_type']||[''])[0];
               if (String(type) === 'attachment'){
@@ -220,7 +203,6 @@ jobs:
               }
             }
 
-            // 文章：找 _thumbnail_id，映射為 URL
             for (const it of items){
               const type = (it['wp:post_type']||[''])[0];
               if (String(type) !== 'post') continue;
@@ -229,50 +211,48 @@ jobs:
               let thumbId = null;
               for (const m of metas){
                 const k = (m['wp:meta_key']||[''])[0];
-                if (k === '_thumbnail_id'){
-                  thumbId = Number((m['wp:meta_value']||[''])[0]); break;
-                }
+                if (k === '_thumbnail_id'){ thumbId = Number((m['wp:meta_value']||[''])[0]); break; }
               }
               const url = thumbId ? attachUrl.get(thumbId) : null;
               if (pid && url) featuredByPostId.set(pid, url);
             }
           }
 
-          // --- 3) 對每篇 Jekyll 文章：若有對應 featured，下載並寫 front-matter image ---
+          // 對每篇 Jekyll post：若未設定 image，則下載並補上
           let updated = 0, downloaded = 0;
-          for (const p of postMeta){
-            // 先看 id 配對
-            let fUrl = p.id ? featuredByPostId.get(p.id) : null;
+          for (const file of posts){
+            const s = fs.readFileSync(file,'utf8');
+            const fm = readFrontMatter(s);
+            if (!fm) continue;
 
-            // 若 id 不在 WXR（或 importer 沒寫 id），用「日期+標題」弱匹配
-            if (!fUrl){
-              // 在 WXR 內用 title/date 找（略，簡化：以 id 為主）
-            }
+            // 優先用 importer 可能寫進去的 wordpress_id
+            const idm = fm.fm.match(/\b(wordpress_id|wp_id|post_id):\s*"?(\d+)"?/i);
+            const pid = idm ? Number(idm[2]) : null;
+            if (!pid) continue;
 
-            if (!fUrl) continue; // 沒有 featured
+            const fUrlRaw = featuredByPostId.get(pid);
+            if (!fUrlRaw) continue;
 
-            const dest = toAssetsPath(fUrl);
+            const dest = toAssetsPath(fUrlRaw);
             if (!dest) continue;
 
-            // 下載（不存在才抓）
             if (!fs.existsSync(dest)){
-              try { await dl(fUrl, dest); downloaded++; }
-              catch(e){ console.log('download failed:', fUrl); }
+              try { await dl(fUrlRaw, dest); downloaded++; }
+              catch(e){ console.log('download failed:', fUrlRaw); }
             }
 
-            // 如果文章沒有 image:，就補上
-            if (!p.fm) continue;
-            if (/\nimage:\s*["']?[^"'\n]+["']?\s*$/m.test(p.fm.fm)) continue;
+            // 已有 image 就不覆蓋
+            if (/\nimage:\s*["']?[^"'\n]+["']?\s*$/m.test(fm.fm)) continue;
 
-            const rel = '/' + dest.replace(/\\/g,'/'); // 例如 /assets/uploads/2025/06/xxx.png
-            const injected = p.fm.fm.replace(/\n---\s*$/, `\nimage: "${rel}"\n---`);
-            const combined = injected + p.fm.body;
-            fs.writeFileSync(p.file, combined);
+            const rel = '/' + dest.replace(/\\/g,'/');
+            const injected = fm.fm.replace(/\n---\s*$/, `\nimage: "${rel}"\n---`);
+            fs.writeFileSync(file, injected + fm.body);
             updated++;
           }
 
           console.log('featured mapped (updated posts):', updated, 'downloaded assets:', downloaded);
           NODE
+
       # 把 /assets/... 改成 {{ "/assets/..." | relative_url }}（解決 baseurl=/blog）
       - name: Rewrite /assets URLs to Liquid relative_url
         run: |
