@@ -1,7 +1,7 @@
 // scripts/attach_by_thumbnail_id.js
-// 目的：把 WordPress 的 featured image 寫進每篇文章的 front-matter: image: /assets/uploads/...
-// 來源優先：WXR 附件表 -> 本文 <img class="...wp-image-<id>..." src="..."> 備援
-// 會處理 BOM、YAML 解析失敗、?w=1024 等 query、以及各種 front-matter 邊界情況
+// 目的：把 WordPress 的 featured image 寫入每篇文章 front-matter: image: /assets/uploads/...
+// 來源優先：WXR 附件表 -> 本文中 class="wp-image-<id>" 的 <img> 備援
+// 新增：可辨識 {{site.baseurl}} / {{ site.baseurl }} / | relative_url 前綴，以及任何包含 assets/uploads 的 src
 
 const fs = require('fs');
 const path = require('path');
@@ -32,18 +32,15 @@ function extractFrontMatter(raw) {
   const body = lines.slice(end + 1).join('\n');
   return { head, body };
 }
-
 function parseFMObject(head) {
   try { return yaml.load(head) || {}; } catch { return null; }
 }
-
 function writeFM(raw, obj) {
   const fm = extractFrontMatter(raw);
   if (!fm) return raw;
   const headNew = yaml.dump(obj, { lineWidth: -1 });
   return `---\n${headNew}---\n${fm.body}`;
 }
-
 function findThumbIdFromFMObj(frontObj, headRaw) {
   if (!frontObj) frontObj = {};
   const meta = frontObj.meta || {};
@@ -53,12 +50,34 @@ function findThumbIdFromFMObj(frontObj, headRaw) {
   return m ? m[1] : '';
 }
 
+// ★ 修正：支援 Liquid 前綴與任何位置的 assets/uploads
 function normalizeUploadsURL(u) {
   if (!u) return null;
-  u = u.replace(/\?[^#]*$/, '');
-  const m = u.match(/\/wp-content\/uploads\/(.+)$/i);
-  if (m) return '/' + path.posix.join(UP_BASE, m[1]);
-  if (/^\/assets\/uploads\//i.test(u)) return u;
+  u = String(u).trim();
+
+  // 去 query
+  u = u.replace(/\?[^#"]*$/, '');
+
+  // 移除 Liquid 前綴（各種寫法）
+  u = u
+    .replace(/\{\{\s*site\.baseurl\s*\}\}\s*\|\s*relative_url/gi, '')
+    .replace(/\{\{\s*site\.baseurl\s*\}\}/gi, '')
+    .replace(/\{\{\s*site\.baseurl\s*\|\s*relative_url\s*\}\}/gi, '');
+
+  // wp-content/uploads -> assets/uploads
+  const mWP = u.match(/\/wp-content\/uploads\/([^"')\s>]+)/i);
+  if (mWP) {
+    const rel = mWP[1];
+    return '/' + path.posix.join(UP_BASE, rel);
+  }
+
+  // 任何字串中出現 assets/uploads/xxx
+  const mAssets = u.match(/\/?assets\/uploads\/([^"')\s>]+)/i);
+  if (mAssets) {
+    const rel = mAssets[1];
+    return '/' + path.posix.join('assets/uploads', rel);
+  }
+
   return null;
 }
 
@@ -102,12 +121,15 @@ async function buildAttachmentMap() {
 }
 
 function fallbackImageFromBody(body, thumbId) {
+  // 先用 class 精準選
   const re = new RegExp(`<img[^>]*class="[^"]*wp-image-${thumbId}[^"]*"[^>]*src="([^"]+)"[^>]*>`, 'i');
   let m = body.match(re);
   if (m && m[1]) {
     const norm = normalizeUploadsURL(m[1]);
     if (norm) return norm;
   }
+
+  // 再掃所有 <img>，並檢查附近是否含有 wp-image-<id>
   const reAny = /<img[^>]*src="([^"]+)"[^>]*>/gi;
   let mm;
   while ((mm = reAny.exec(body))) {
