@@ -170,6 +170,8 @@ jobs:
             const https = require('https');
             const { parseStringPromise } = require('xml2js');
 
+            const log = (...a)=>console.log('[featured]', ...a);
+
             function walk(dir){
               if (!fs.existsSync(dir)) return [];
               return fs.readdirSync(dir,{withFileTypes:true})
@@ -210,20 +212,30 @@ jobs:
               if (end < 0) return null;
               return { fm: s.slice(0,end+4), body: s.slice(end+4) };
             }
+            function getFmField(fm, key){
+              const re = new RegExp(`\\n${key}:\\s*["']?(.+?)["']?\\s*\\n`,`i`);
+              const m = fm.match(re); return m ? m[1].trim() : null;
+            }
+            const normalizeTitle = (t)=> (t||'').trim();
 
             // 取得 XML 檔
             const xmlInput = process.env.XML_INPUT;
             let xmlFiles = [];
             if (xmlInput && fs.existsSync(xmlInput)) xmlFiles = [xmlInput];
             else if (fs.existsSync('import')) xmlFiles = walk('import').filter(f => f.endsWith('.xml'));
-            if (xmlFiles.length === 0){ console.log('No XML found.'); return; }
+            if (xmlFiles.length === 0){ log('No XML found.'); return; }
+            log('XML files:', xmlFiles.length);
 
-            // 文章清單
-            const posts = walk('_posts').filter(f => /\.(md|markdown)$/i.test(f));
+            // 文章清單（⚠️ 同時支援 .md/.markdown/.html）
+            const posts = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
+            log('Found posts:', posts.length);
             if (posts.length === 0){ console.log('No posts.'); return; }
 
-            // 由 WXR 建立：post_id -> featured image URL
+            // 由 WXR 建立：
+            //  A) post_id -> featured URL
+            //  B) (date|title) -> featured URL （無 id 時的後備）
             const featuredByPostId = new Map();
+            const featuredByDateTitle = new Map();
 
             for (const xf of xmlFiles){
               const xml = fs.readFileSync(xf,'utf8');
@@ -252,33 +264,58 @@ jobs:
                 }
                 const url = thumbId ? attachUrl.get(thumbId) : null;
                 if (pid && url) featuredByPostId.set(pid, url);
+
+                // 後備鍵
+                const title = (it['title']||[''])[0] || '';
+                const dateRaw = (it['wp:post_date']||[''])[0] || '';
+                const date = (dateRaw||'').slice(0,10); // YYYY-MM-DD
+                const key = `${date}|${normalizeTitle(title)}`;
+                if (url && date) featuredByDateTitle.set(key, url);
               }
             }
+            log('WXR mapped: byId=', featuredByPostId.size, ' byDateTitle=', featuredByDateTitle.size);
 
             // 將 featured image 下載並寫入 front-matter image
-            let updated = 0, downloaded = 0;
+            let updated = 0, downloaded = 0, skippedHasImage = 0, unmatched = 0;
+
             for (const file of posts){
               const s = fs.readFileSync(file,'utf8');
               const fm = readFrontMatter(s);
-              if (!fm) continue;
+              if (!fm) { unmatched++; continue; }
 
+              // 先用 id
               const idm = fm.fm.match(/\b(wordpress_id|wp_id|post_id):\s*"?(\d+)"?/i);
               const pid = idm ? Number(idm[2]) : null;
-              if (!pid) continue;
 
-              const fUrlRaw = featuredByPostId.get(pid);
-              if (!fUrlRaw) continue;
+              // 若沒有 id，用 日期 + 標題 後備
+              const fmTitle = getFmField(fm.fm, 'title');
+              // 從檔名取 yyyy-mm-dd
+              let date = getFmField(fm.fm, 'date');
+              date = date ? date.slice(0,10) : null;
+              if (!date){
+                const bn = path.basename(file);
+                const dm = bn.match(/^(\d{4}-\d{2}-\d{2})-/);
+                if (dm) date = dm[1];
+              }
+
+              let fUrlRaw = null;
+              if (pid) fUrlRaw = featuredByPostId.get(pid);
+              if (!fUrlRaw && date && fmTitle){
+                const key = `${date}|${normalizeTitle(fmTitle)}`;
+                fUrlRaw = featuredByDateTitle.get(key);
+              }
+              if (!fUrlRaw) { unmatched++; continue; }
 
               const dest = toAssetsPath(fUrlRaw);
-              if (!dest) continue;
+              if (!dest) { unmatched++; continue; }
 
               if (!fs.existsSync(dest)){
                 try { await dl(fUrlRaw, dest); downloaded++; }
-                catch(e){ console.log('download failed:', fUrlRaw); }
+                catch(e){ log('download failed:', fUrlRaw); }
               }
 
               // 已有 image 就不覆蓋
-              if (/\nimage:\s*["']?[^"'\n]+["']?\s*$/m.test(fm.fm)) continue;
+              if (/\nimage:\s*["']?[^"'\n]+["']?\s*$/m.test(fm.fm)) { skippedHasImage++; continue; }
 
               const rel = '/' + dest.replace(/\\/g,'/');
               const injected = fm.fm.replace(/\n---\s*$/, `\nimage: "${rel}"\n---`);
@@ -286,7 +323,7 @@ jobs:
               updated++;
             }
 
-            console.log('featured mapped (updated posts):', updated, 'downloaded assets:', downloaded);
+            log('featured summary => updated:', updated, ' downloaded:', downloaded, ' already-had-image:', skippedHasImage, ' unmatched:', unmatched);
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
 
