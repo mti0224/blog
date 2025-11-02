@@ -1,7 +1,7 @@
 // scripts/attach_by_thumbnail_id.js
-// 將 WordPress 的 featured image（_thumbnail_id）寫入每篇 post 的 front-matter: image: /assets/uploads/...
-// 來源優先順序：WXR 附件表 -> 本文 <img class="...wp-image-<id>..." src="..."> 備援
-// 同時處理 BOM、各種 YAML/Front-Matter 邊界情況。
+// 目的：把 WordPress 的 featured image 寫進每篇文章的 front-matter: image: /assets/uploads/...
+// 來源優先：WXR 附件表 -> 本文 <img class="...wp-image-<id>..." src="..."> 備援
+// 會處理 BOM、YAML 解析失敗、?w=1024 等 query、以及各種 front-matter 邊界情況
 
 const fs = require('fs');
 const path = require('path');
@@ -12,32 +12,25 @@ const POSTS_DIR = '_posts';
 const IMPORT_DIR = 'import';
 const UP_BASE = 'assets/uploads';
 
-// --- utilities ---
 function walk(dir) {
   if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap(e => {
     const p = path.join(dir, e.name);
     return e.isDirectory() ? walk(p) : [p];
   });
 }
-
-function stripBOM(s) {
-  return s.replace(/^\uFEFF/, '');
-}
+const stripBOM = (s) => s.replace(/^\uFEFF/, '');
 
 function extractFrontMatter(raw) {
   const s = stripBOM(raw);
-  // 以換行分段找兩條 '---' 獨立行
   const lines = s.split(/\r?\n/);
   if (lines[0].trim() !== '---') return null;
   let end = -1;
-  for (let i = 1; i < lines.length; i++) {
-    if (lines[i].trim() === '---') { end = i; break; }
-  }
+  for (let i = 1; i < lines.length; i++) if (lines[i].trim() === '---') { end = i; break; }
   if (end < 0) return null;
   const head = lines.slice(1, end).join('\n');
   const body = lines.slice(end + 1).join('\n');
-  return { head, body, before: s.slice(0, s.indexOf(head)), after: s.slice(s.indexOf(body)) };
+  return { head, body };
 }
 
 function parseFMObject(head) {
@@ -46,38 +39,33 @@ function parseFMObject(head) {
 
 function writeFM(raw, obj) {
   const fm = extractFrontMatter(raw);
-  if (!fm) return raw; // 不動
+  if (!fm) return raw;
   const headNew = yaml.dump(obj, { lineWidth: -1 });
   return `---\n${headNew}---\n${fm.body}`;
 }
 
 function findThumbIdFromFMObj(frontObj, headRaw) {
   if (!frontObj) frontObj = {};
-  // 常見兩種：meta._thumbnail_id 或 _thumbnail_id 直屬
   const meta = frontObj.meta || {};
   let id = meta._thumbnail_id || meta['_thumbnail_id'] || frontObj._thumbnail_id || frontObj['_thumbnail_id'];
   if (id) return String(id).trim();
-  // YAML 解析失敗時，以正則在 head 兜底
   const m = String(headRaw).match(/_thumbnail_id:\s*['"]?(\d+)['"]?/);
   return m ? m[1] : '';
 }
 
 function normalizeUploadsURL(u) {
   if (!u) return null;
-  u = u.replace(/\?[^#]*$/, '');                // 去 query
+  u = u.replace(/\?[^#]*$/, '');
   const m = u.match(/\/wp-content\/uploads\/(.+)$/i);
   if (m) return '/' + path.posix.join(UP_BASE, m[1]);
-  if (/^\/assets\/uploads\//i.test(u)) return u; // 已是相對資源
+  if (/^\/assets\/uploads\//i.test(u)) return u;
   return null;
 }
 
 async function buildAttachmentMap() {
-  const map = new Map(); // id -> '/assets/uploads/YYYY/MM/filename.ext'
-  const xmls = walk(IMPORT_DIR).filter((f) => f.endsWith('.xml'));
-  if (!xmls.length) {
-    console.log('[attach] no XML under import/');
-    return map;
-  }
+  const map = new Map();
+  const xmls = walk(IMPORT_DIR).filter(f => f.endsWith('.xml'));
+  if (!xmls.length) { console.log('[attach] no XML under import/'); return map; }
 
   let items = 0, mapped = 0;
   for (const xf of xmls) {
@@ -90,11 +78,9 @@ async function buildAttachmentMap() {
       const type = (it['wp:post_type'] || [])[0];
       const id = String((it['wp:post_id'] || [])[0] || '').trim();
       const attachmentURL = ((it['wp:attachment_url'] || [])[0] || (it['guid'] || [])[0] || '').toString();
-
       const isAttachment = !!attachmentURL || String(type).toLowerCase() === 'attachment';
       if (!isAttachment || !id) continue;
 
-      // 先試 _wp_attached_file（YYYY/MM/filename.ext）
       let rel = null;
       for (const m of (it['wp:postmeta'] || [])) {
         const k = (m['wp:meta_key'] || [])[0];
@@ -116,14 +102,12 @@ async function buildAttachmentMap() {
 }
 
 function fallbackImageFromBody(body, thumbId) {
-  // 優先：class 帶 wp-image-<id> 的 <img>
   const re = new RegExp(`<img[^>]*class="[^"]*wp-image-${thumbId}[^"]*"[^>]*src="([^"]+)"[^>]*>`, 'i');
   let m = body.match(re);
   if (m && m[1]) {
     const norm = normalizeUploadsURL(m[1]);
     if (norm) return norm;
   }
-  // 退一步：找任何 <img>，但近鄰有 wp-image-<id>
   const reAny = /<img[^>]*src="([^"]+)"[^>]*>/gi;
   let mm;
   while ((mm = reAny.exec(body))) {
@@ -136,9 +120,8 @@ function fallbackImageFromBody(body, thumbId) {
   return null;
 }
 
-// --- main ---
 (async () => {
-  const posts = walk(POSTS_DIR).filter((f) => /\.(md|markdown|html)$/i.test(f));
+  const posts = walk(POSTS_DIR).filter(f => /\.(md|markdown|html)$/i.test(f));
   const attachMap = await buildAttachmentMap();
 
   let withThumb = 0, updated = 0, missing = 0, viaWXR = 0, viaBody = 0;
@@ -150,7 +133,6 @@ function fallbackImageFromBody(body, thumbId) {
 
     const front = parseFMObject(fm.head) || {};
     const tid = findThumbIdFromFMObj(front, fm.head);
-
     if (!tid) { missing++; continue; }
 
     let imgPath = attachMap.get(tid);
@@ -162,7 +144,7 @@ function fallbackImageFromBody(body, thumbId) {
     }
 
     if (imgPath && front.image !== imgPath) {
-      front.image = imgPath; // 寫回 image:
+      front.image = imgPath;
       const out = writeFM(raw, front);
       fs.writeFileSync(file, out);
       updated++;
@@ -171,7 +153,4 @@ function fallbackImageFromBody(body, thumbId) {
   }
 
   console.log(`[attach] posts=${posts.length}  withThumb=${withThumb}  updated=${updated}  viaWXR=${viaWXR}  viaBody=${viaBody}  missing=${missing}`);
-})().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+})().catch((e) => { console.error(e); process.exit(1); });
