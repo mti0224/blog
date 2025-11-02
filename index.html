@@ -3,65 +3,49 @@ layout: default
 title: 首頁
 ---
 
-<style>
-  .grid { display:grid; gap:1.25rem; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
-  .card { border:1px solid #e5e5e5; border-radius:16px; overflow:hidden; background:#fff; }
-  .thumb { display:block; background:#f6f7f8; padding:0; margin:0; }
-  .thumb img { width:100%; height:auto; display:block; border-radius:16px; border:3px solid #1a1a1a; box-sizing:border-box; }
-  .body { padding:14px 16px 16px; }
-  .title { margin:0 0 6px; font-size:1.15rem; line-height:1.35; font-weight:700; }
-  .meta { color:#666; font-size:.85rem; margin-bottom:6px; }
-  .excerpt { color:#333; font-size:.95rem; }
-  @media (prefers-color-scheme: dark) {
-    .card { border-color:#2d2d2d; background:#121212; }
-    .thumb { background:#1b1b1b; }
-    .thumb img { border-color:#2b2b2b; }
-    .title a { color:#fff; }
-    .meta { color:#aaa; }
-    .excerpt { color:#ddd; }
-  }
-</style>
+<!-- HERO：最新 3 篇（需有 image） -->
+<div class="hero">
+  {% assign recent = site.posts | where_exp: "p", "p.image" | sort: "date" | reverse | slice: 0, 3 %}
+  {% if recent and recent.size > 0 %}
+  <div class="hero-grid">
+    {% assign first = recent[0] %}
+    <a class="hero-card hero-large" href="{{ first.url | relative_url }}">
+      {% if first.image %}
+        <img src="{{ first.image | relative_url }}" alt="{{ first.title | escape }}">
+      {% else %}<div class="noimg">No Image</div>{% endif %}
+      <div class="hero-title">{{ first.title }}</div>
+    </a>
 
-{% assign posts_list = site.posts %}
+    <div style="display:grid; grid-template-rows:1fr 1fr; gap:16px;">
+      {% for p in recent offset:1 %}
+        <a class="hero-card hero-small" href="{{ p.url | relative_url }}">
+          {% if p.image %}
+            <img src="{{ p.image | relative_url }}" alt="{{ p.title | escape }}">
+          {% else %}<div class="noimg">No Image</div>{% endif %}
+          <div class="hero-title">{{ p.title }}</div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
 
-<div class="grid">
-  {% for post in posts_list %}
-    {% assign thumb = post.image %}
-
-    {%- comment -%}
-    若 front-matter 沒有 image，嘗試從已轉換的內容抓第一張 <img src="..."> 當縮圖
-    {%- endcomment -%}
-    {% if thumb == nil or thumb == '' %}
-      {% assign parts = post.content | split: 'src="' %}
-      {% if parts.size > 1 %}
-        {% assign after = parts[1] | split: '"' %}
-        {% assign thumb = after[0] %}
-      {% endif %}
-    {% endif %}
-
-    {%- comment -%}
-    WordPress 絕對路徑 → 站內 assets；並清掉 ? 查詢與 %3F/%253F 編碼
-    {%- endcomment -%}
-    {% if thumb %}
-      {% assign thumb = thumb | replace: 'https://warmycat.com/wp-content/uploads', '/assets/uploads' %}
-      {% assign thumb = thumb | replace: 'http://warmycat.com/wp-content/uploads',  '/assets/uploads' %}
-      {% if thumb contains '?' %}
-        {% assign thumb = thumb | split: '?' | first %}
-      {% endif %}
-      {% assign thumb = thumb | replace: '%253F', '' | replace: '%3F', '' %}
-    {% endif %}
-
-    <article class="card">
-      <a class="thumb" href="{{ post.url | relative_url }}">
-        {% if thumb and thumb != '' %}
-          <img src="{{ thumb | relative_url }}" alt="{{ post.title | escape }}">
+<!-- 貼文清單 -->
+<div class="post-grid">
+  {% assign posts = site.posts | sort: "date" | reverse %}
+  {% for post in posts %}
+    <a class="card" href="{{ post.url | relative_url }}">
+      <div class="card-img">
+        {% if post.image %}
+          <img src="{{ post.image | relative_url }}" alt="{{ post.title | escape }}">
+        {% else %}
+          <div class="noimg">No Image</div>
         {% endif %}
-      </a>
-      <div class="body">
-        <h3 class="title"><a href="{{ post.url | relative_url }}">{{ post.title | escape }}</a></h3>
-        <div class="meta">{{ post.date | date: "%Y-%m-%d" }}</div>
-        <div class="excerpt">{{ post.excerpt | strip_html | truncate: 120 }}</div>
       </div>
-    </article>
+      <div class="card-body">
+        <div class="card-title">{{ post.title }}</div>
+        <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
+      </div>
+    </a>
   {% endfor %}
 </div>
