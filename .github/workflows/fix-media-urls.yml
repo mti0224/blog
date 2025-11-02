@@ -1,0 +1,40 @@
+name: Fix media URLs in posts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Strip query strings from image URLs in Markdown/HTML
+        run: |
+          set -e
+          shopt -s globstar nullglob
+
+          # 1) Markdown：把 ) 或 " 前的 ?參數 去掉
+          for f in _posts/**/*.md; do
+            perl -0777 -pe 's/(\.(?:png|jpe?g|gif|webp|svg))\?[^\)\"]+(?=[\)\"])/$1/gi' -i "$f"
+          done
+
+          # 2) 內嵌 HTML：<img src="...?..."> 也去掉
+          for f in _posts/**/*.{md,html}; do
+            perl -0777 -pe 's/(<img[^>]+src=["\'])([^"\']+?\.(?:png|jpe?g|gif|webp|svg))\?[^"\']+(["\'])/$1$2$3/gi' -i "$f"
+          done
+
+      - name: Commit changes (if any)
+        run: |
+          if [ -n "$(git status --porcelain _posts)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add _posts
+            git commit -m "fix: strip ?w=… etc. from image URLs in posts"
+            git push
+          else
+            echo "No changes to commit."
+          fi
