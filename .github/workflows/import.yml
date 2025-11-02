@@ -27,7 +27,8 @@ jobs:
           fetch-depth: 0
 
       - name: Ensure folders
-        run: mkdir -p _posts assets/uploads import
+        run: |
+          mkdir -p _posts assets/uploads import
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -38,12 +39,18 @@ jobs:
         run: |
           gem install jekyll-import reverse_markdown open_uri_redirections nokogiri faraday-retry --no-document
 
-      - name: Convert WXR → Markdown (+ download images)
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 1) 轉換 WXR → Markdown，並下載文中圖片到 assets/uploads
+      - name: Convert WXR → Markdown (+ download content images)
         env:
           XML_INPUT: ${{ github.event.inputs.xml_path }}
         run: |
           set -e
-          # 1) 決定要處理哪些 XML
+          # 找要處理的 XML
           if [ -n "$XML_INPUT" ] && [ -f "$XML_INPUT" ]; then
             XMLS="$XML_INPUT"
           else
@@ -54,7 +61,7 @@ jobs:
             exit 1
           fi
 
-          # 2) Ruby 腳本（⚠️ 正確常數名 + 需要 require open_uri_redirections）
+          # 建立 Ruby 腳本並執行
           cat > import.rb <<'RUBY'
           require 'jekyll-import'
           require 'jekyll-import/importers/wordpressdotcom'
@@ -64,65 +71,94 @@ jobs:
           puts "Importing #{src}..."
           JekyllImport::Importers::WordpressDotCom.run(
             'source'          => src,
-            'assets_folder'   => 'assets/uploads', # 圖片下載位置
-            'no_fetch_images' => false,            # 若抓圖太慢可改 true 先轉文章
+            'assets_folder'   => 'assets/uploads',
+            'no_fetch_images' => false,
             'comments'        => false
           )
           RUBY
 
-          # 3) 逐檔執行
           for X in $XMLS; do
             SRC="$X" ruby import.rb
           done
 
-      # 先清掉 ?query、修正 src/srcset、wp 上的絕對 uploads
+      # 2) 正規化文章內圖片 URL（去掉 query、修正 src/srcset、WP 上傳路徑→站內 assets）
       - name: Normalize image URLs in posts (strip ?w=, fix src/srcset, wp URLs)
         run: |
-          node - <<'NODE'
+          node --input-type=commonjs - <<'NODE'
           const fs = require('fs'), path = require('path');
           function walk(dir){
             if (!fs.existsSync(dir)) return [];
             return fs.readdirSync(dir,{withFileTypes:true})
-              .flatMap(e=>{const p=path.join(dir,e.name); return e.isDirectory()?walk(p):[p];});
+              .flatMap(e=>{const p=path.join(dir,e.name);return e.isDirectory()?walk(p):[p];});
           }
-          const files = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
-
-          // 1) Markdown/一般連結：...png?xxx  -> ...png
+          const files = walk('_posts').filter(f=>/\.(md|markdown|html)$/i.test(f));
           const qInPath = /(\.(?:png|jpe?g|gif|webp|svg))(?:\?[^)"'\s>]+)/gi;
-          // 2) <img src="...?...">
           const srcQuery  = /(src\s*=\s*")([^"?"]+)(\?[^"]*)(")/gi;
-          // 3) <img srcset="a.png?w=1024 1024w, b.jpg?x=1 512w">
           const srcsetQuery = /(\s)([^,\s"]+?\.(?:png|jpe?g|gif|webp|svg))(?:\?[^,\s"]+)/gi;
-          // 4) 舊站完整網址 -> 相對 uploads
           const wpUploads = /https?:\/\/[^"')]+\/wp-content\/uploads/gi;
           const toAssets  = '/assets/uploads';
-
           let changed = 0;
           for (const f of files) {
-            let s = fs.readFileSync(f, 'utf8');
+            let s = fs.readFileSync(f,'utf8');
             const before = s;
             s = s
-              .replace(qInPath, '$1')
-              .replace(srcQuery,   (_m,p1,p2,_q,p4)=>p1+p2+p4)
+              .replace(qInPath,'$1')
+              .replace(srcQuery,(_m,p1,p2,_q,p4)=>p1+p2+p4)
               .replace(srcsetQuery,'$1$2')
-              .replace(wpUploads,  toAssets)
-              .replace(/&amp;/g, '&'); // e.g. &amp;w=948
-
-            if (s !== before) { fs.writeFileSync(f, s); changed++; }
+              .replace(wpUploads,toAssets)
+              .replace(/&amp;/g,'&');
+            if (s!==before){ fs.writeFileSync(f,s); changed++; }
           }
           console.log('Normalized files:', changed);
           NODE
-      # 解析 WXR 取出每篇文章的 featured image，下載到 assets 並寫入 front-matter: image
-      - name: Attach featured images from WXR to posts (image:) and download assets
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
 
-      - name: Install XML parser
+      # 3) 將 assets/uploads 底下的檔名一律轉小寫，並同步更新文章引用
+      - name: Lowercase assets filenames and update references
         run: |
-          npm i xml2js --no-save
+          node --input-type=commonjs - <<'NODE'
+          const fs = require('fs'), path = require('path');
+          function walk(dir){
+            if (!fs.existsSync(dir)) return [];
+            return fs.readdirSync(dir,{withFileTypes:true})
+              .flatMap(e=>{const p=path.join(dir,e.name);return e.isDirectory()?walk(p):[p];});
+          }
+          const ASSET='assets/uploads';
+          const POST='_posts';
+          const files = walk(ASSET);
+          const map = new Map();
+          for (const f of files){
+            const rel = path.relative('.',f).replace(/\\/g,'/');
+            const dir = path.dirname(rel), base = path.basename(rel);
+            const lower = base.toLowerCase();
+            const cut = lower.split('?')[0].replace(/%253f.*$/,'').replace(/%3f.*$/,'');
+            const target = path.join(dir,cut).replace(/\\/g,'/');
+            if (rel!==target){
+              if (fs.existsSync(target)) fs.rmSync(rel);
+              else fs.renameSync(rel,target);
+              map.set(rel,target);
+            }
+          }
+          const posts = walk(POST).filter(f=>/\.(md|markdown|html)$/i.test(f));
+          const reAsset = /\/assets\/uploads\/[^\s"'()]+/gi;
+          let changed=0;
+          for(const pf of posts){
+            let s = fs.readFileSync(pf,'utf8');
+            const before = s;
+            s = s
+              .replace(/(\.(?:png|jpe?g|gif|webp|svg))\?[^)"'\s>]*/gi,'$1')
+              .replace(reAsset, m=>m.toLowerCase())
+              .replace(/%253f[^)"'\s>]*/gi,'')
+              .replace(/%3f[^)"'\s>]*/gi,'');
+            if (s!==before){ fs.writeFileSync(pf,s); changed++; }
+          }
+          console.log('Renamed assets:', map.size, 'Updated posts:', changed);
+          NODE
 
-      - name: Map _thumbnail_id → attachment_url → front-matter image
+      # 4) 從 WXR 的 _thumbnail_id 解析出特色圖片 → 下載到 assets 並寫入 front-matter image
+      - name: Install XML parser for featured images
+        run: npm i xml2js --no-save
+
+      - name: Attach featured images from WXR (image:) and download assets
         env:
           XML_INPUT: ${{ github.event.inputs.xml_path }}
         run: |
@@ -144,7 +180,6 @@ jobs:
               const client = url.startsWith('https') ? https : http;
               ensureDir(dest);
               client.get(url, res=>{
-                // follow redirect
                 if (res.statusCode>=300 && res.statusCode<400 && res.headers.location){
                   return dl(res.headers.location, dest).then(resolve).catch(reject);
                 }
@@ -175,17 +210,18 @@ jobs:
             return { fm: s.slice(0,end+4), body: s.slice(end+4) };
           }
 
-          // XML 檔清單
+          // 取得 XML 檔
           const xmlInput = process.env.XML_INPUT;
           let xmlFiles = [];
           if (xmlInput && fs.existsSync(xmlInput)) xmlFiles = [xmlInput];
           else if (fs.existsSync('import')) xmlFiles = walk('import').filter(f => f.endsWith('.xml'));
           if (xmlFiles.length === 0){ console.log('No XML found.'); process.exit(0); }
 
+          // 文章清單
           const posts = walk('_posts').filter(f => /\.(md|markdown)$/i.test(f));
           if (posts.length === 0){ console.log('No posts.'); process.exit(0); }
 
-          // 讀 XML：建立 attachment 映射 + post -> _thumbnail_id
+          // 由 WXR 建立：post_id -> featured image URL
           const featuredByPostId = new Map();
 
           for (const xf of xmlFiles){
@@ -218,14 +254,14 @@ jobs:
             }
           }
 
-          // 對每篇 Jekyll post：若未設定 image，則下載並補上
+          // 將 featured image 下載並寫入 front-matter image
           let updated = 0, downloaded = 0;
           for (const file of posts){
             const s = fs.readFileSync(file,'utf8');
             const fm = readFrontMatter(s);
             if (!fm) continue;
 
-            // 優先用 importer 可能寫進去的 wordpress_id
+            // wordpress_id / wp_id / post_id 其一
             const idm = fm.fm.match(/\b(wordpress_id|wp_id|post_id):\s*"?(\d+)"?/i);
             const pid = idm ? Number(idm[2]) : null;
             if (!pid) continue;
@@ -253,112 +289,10 @@ jobs:
           console.log('featured mapped (updated posts):', updated, 'downloaded assets:', downloaded);
           NODE
 
-      # 把 /assets/... 改成 {{ "/assets/..." | relative_url }}（解決 baseurl=/blog）
-      - name: Rewrite /assets URLs to Liquid relative_url
+      - name: Quick sanity check
         run: |
-          node - <<'NODE'
-          const fs = require('fs'), path = require('path');
-          function walk(dir){
-            if (!fs.existsSync(dir)) return [];
-            return fs.readdirSync(dir,{withFileTypes:true})
-              .flatMap(e=>{const p=path.join(dir,e.name); return e.isDirectory()?walk(p):[p];});
-          }
-          const files = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
-          const rules = [
-            // Markdown 圖片
-            { re: /(!\[[^\]]*\]\()\s*(\/assets\/[^)\s]+)(\s+"[^"]*")?\)/gi,
-              fn: (m,p1,p2,p3='') => `${p1}{{ "${p2}" | relative_url }}${p3})` },
-            // <img src="/assets/...">
-            { re: /(<img[^>]*\ssrc=)["'](\/assets\/[^"']+)["']/gi,
-              fn: (m,p1,p2) => `${p1}"{{ "${p2}" | relative_url }}"` },
-            // <a href="/assets/...">
-            { re: /(<a[^>]*\shref=)["'](\/assets\/[^"']+)["']/gi,
-              fn: (m,p1,p2) => `${p1}"{{ "${p2}" | relative_url }}"` },
-          ];
-          let changed = 0;
-          for (const f of files) {
-            const before = fs.readFileSync(f,'utf8');
-            let after = before;
-            for (const {re, fn} of rules) after = after.replace(re, fn);
-            if (after !== before) { fs.writeFileSync(f, after); changed++; }
-          }
-          console.log('Rewritten files:', changed);
-          NODE
-      - name: Ensure each post has a front-matter `image` (first image in content)
-        run: |
-          node - <<'NODE'
-          const fs = require('fs'), path = require('path');
-
-          function walk(dir){
-            if (!fs.existsSync(dir)) return [];
-            return fs.readdirSync(dir,{withFileTypes:true})
-              .flatMap(e => {
-                const p = path.join(dir, e.name);
-                return e.isDirectory() ? walk(p) : [p];
-              });
-          }
-
-          const posts = walk('_posts').filter(f => /\.(md|markdown)$/i.test(f));
-
-          // 抓第一張圖：支援 Markdown 與 <img src="">
-          const reMd  = /!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/i;
-          const reImg = /<img[^>]+src=["']([^"']+)["']/i;
-
-          function stripQuery(u){
-            // 移除 ?w=… 這類查詢參數與編碼後的 %3F/%253F
-            return u
-              .replace(/%253f[^)"'\s>]*/i,'')
-              .replace(/%3f[^)"'\s>]*/i,'')
-              .replace(/(\.(png|jpe?g|gif|webp|svg))\?[^)"'\s>]*/i,'$1');
-          }
-
-          function toAssets(u){
-            // 站外 wp 上傳路徑 → 本地 assets；其餘保留
-            return u
-              .replace(/https?:\/\/[^"')]+\/wp-content\/uploads/i, '/assets/uploads');
-          }
-
-          for (const f of posts){
-            let s = fs.readFileSync(f, 'utf8');
-
-            // 解析 front matter
-            if (!s.startsWith('---')) continue;
-            const end = s.indexOf('\n---', 3);
-            if (end < 0) continue;
-
-            const fm = s.slice(0, end + 4);      // 含結尾 '---\n'
-            const body = s.slice(end + 4);
-
-            // 已有 image 就略過
-            if (/\nimage:\s*["']?[^"'\n]+["']?\s*$/m.test(fm)) continue;
-
-            // 從內文抓第一張圖
-            let m = body.match(reMd) || body.match(reImg);
-            if (!m) continue;
-
-            let url = stripQuery(m[1] || '');
-            url = toAssets(url);
-
-            // 僅接受站內 /assets/uploads/... 圖；其他情況略過（避免壞連結）
-            if (!/^\/assets\/uploads\//i.test(url)) continue;
-
-            // 寫入 image 欄位到 front matter（放在最後一行前面）
-            const ins = `image: "${url}"\n`;
-            const updated = fm.replace(/\n---\s*$/, `\n${ins}---`) + body;
-            fs.writeFileSync(f, updated);
-          }
-          console.log('Front-matter image ensured (where possible).');
-          NODE
-
-      - name: Quick sanity check for leftovers
-        run: |
-          echo "Leftover '?w=' refs (should be 0):"
-          grep -R --line-number -E '\.(png|jpe?g|gif|webp|svg)\?[^\)"\s>]+' _posts || true
-
-      - name: List generated files (debug)
-        run: |
-          echo "==== _posts ====" && ls -al _posts || true
-          echo "==== assets/uploads count ====" && (find assets/uploads -type f | wc -l || true)
+          echo "Posts count:" && (ls -1 _posts | wc -l || true)
+          echo "Assets count:" && (find assets/uploads -type f | wc -l || true)
 
       - name: Commit & push imported content
         run: |
@@ -366,7 +300,7 @@ jobs:
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add _posts assets
-            git commit -m "chore(import): WordPress WXR → Markdown + assets + URL fixes"
+            git commit -m "chore(import): WordPress WXR → Markdown + assets + featured images"
             git push
           else
             echo "No changes to commit."
