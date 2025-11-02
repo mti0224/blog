@@ -1,4 +1,4 @@
-name: Attach WordPress featured images to posts (HTML/MD)
+name: Attach featured images from WXR to posts (HTML/MD)
 
 on:
   workflow_dispatch: {}
@@ -26,149 +26,118 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install parser deps
+      - name: Install deps
         run: |
           npm init -y >/dev/null 2>&1
-          npm i xml2js@0.6.2 >/dev/null
+          npm i xml2js@0.6.2 js-yaml@4.1.0 >/dev/null
 
-      - name: Write script (attach_featured.js)
+      - name: Write script (attach by _thumbnail_id)
         shell: bash
         run: |
-          cat > scripts/attach_featured.js <<'JS'
+          cat > scripts/attach_by_thumbnail_id.js <<'JS'
           const fs = require('fs');
           const path = require('path');
+          const yaml = require('js-yaml');
           const { parseStringPromise } = require('xml2js');
 
-          function walk(dir){
-            if (!fs.existsSync(dir)) return [];
-            return fs.readdirSync(dir,{withFileTypes:true})
-              .flatMap(e => {
-                const p = path.join(dir, e.name);
-                return e.isDirectory() ? walk(p) : [p];
-              });
-          }
-          const stripQuery = u => u.replace(/\?[^#]*$/,'');
-          const normTitle = s => (s||'').toString()
-            .replace(/&amp;/g,'&').replace(/\s+/g,'')
-            .replace(/[，。、！!？?\-_:：~～'"（）()[\]]/g,'').toLowerCase();
+          const walk = d =>
+            fs.existsSync(d)
+              ? fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>{
+                  const p=path.join(d,e.name);
+                  return e.isDirectory()?walk(p):[p];
+                })
+              : [];
 
-          // --- read/patch YAML front-matter in either .md or .html ---
-          function readFM(s){
-            if (!s.startsWith('---')) return null;
+          // --- parse front-matter ---
+          function splitFM(s){
+            if(!s.startsWith('---')) return null;
             const end = s.indexOf('\n---',3);
             if (end < 0) return null;
-            return {head:s.slice(0,end+4), body:s.slice(end+4)};
-          }
-          function setFMField(s, key, val){
-            const fm = readFM(s);
-            if (!fm) return s;
-            const re = new RegExp(`\\n${key}\\s*:\\s*[^\\n]*\\n`, 'i');
-            const line = `\n${key}: ${val}\n`;
-            if (re.test(fm.head)) return fm.head.replace(re, line) + fm.body;
-            return fm.head.replace(/\n---\s*$/, `\n${key}: ${val}\n---`) + fm.body;
-          }
-          function getFMTitle(s){
-            const fm = readFM(s); if (!fm) return null;
-            const m = fm.head.match(/\ntitle\s*:\s*(.*)\n/i);
-            return m ? m[1].trim().replace(/^["']|["']$/g,'') : null;
+            const head = s.slice(4, end);   // skip opening '---\n'
+            const body = s.slice(end+4);    // skip closing '\n---'
+            return { head, body };
           }
 
-          async function buildMapsFromWXR(){
-            const xmlFiles = walk('import').filter(f => f.endsWith('.xml'));
-            if (!xmlFiles.length){
-              console.log('[attach] No XML under import/.');
-              return { attachById:new Map(), postKeyToThumbId:new Map() };
-            }
-            const attachById = new Map();       // id -> {url, relPath}
-            const postKeyToThumbId = new Map(); // "YYYY-MM-DD|normTitle" -> thumbId
-            for (const xf of xmlFiles){
+          // --- build map: attachment id -> relative uploads path (YYYY/MM/filename) ---
+          async function buildAttachmentMap() {
+            const map = new Map();
+            const xmls = walk('import').filter(f => f.endsWith('.xml'));
+            for (const xf of xmls) {
               const xml = fs.readFileSync(xf,'utf8');
               const data = await parseStringPromise(xml, { explicitArray:true, mergeAttrs:true });
               const items = (((data||{}).rss||[])[0]?.channel||[])[0]?.item || [];
               for (const it of items){
                 const type = (it['wp:post_type']||[])[0];
-                const id   = (it['wp:post_id']||[])[0];
-                const title= (it['title']||[])[0] || '';
-                const date = ((it['wp:post_date']||[])[0] || '').slice(0,10);
-                const metas= it['wp:postmeta'] || [];
-
-                if (type === 'attachment'){
-                  const url = stripQuery((it['wp:attachment_url']||[])[0] || (it['guid']||[])[0] || '');
-                  let rel = null;
-                  for (const m of metas){
-                    const k = (m['wp:meta_key']||[])[0];
-                    const v = (m['wp:meta_value']||[])[0];
-                    if (k === '_wp_attached_file') rel = v; // e.g. 2025/10/name.png
-                  }
-                  if (!rel && url.includes('/uploads/')) rel = url.split('/uploads/')[1];
-                  if (id && url) attachById.set(String(id), { url, relPath: rel });
+                if (type !== 'attachment') continue;
+                const id  = String((it['wp:post_id']||[])[0]);
+                const url = ((it['wp:attachment_url']||[])[0] || (it['guid']||[])[0] || '').toString();
+                let rel = null;
+                // WordPress 會放在 _wp_attached_file
+                for (const m of (it['wp:postmeta']||[])) {
+                  const k = (m['wp:meta_key']||[])[0];
+                  const v = (m['wp:meta_value']||[])[0];
+                  if (k === '_wp_attached_file') rel = String(v);
                 }
-
-                if (type === 'post'){
-                  let thumbId = null;
-                  for (const m of metas){
-                    const k = (m['wp:meta_key']||[])[0];
-                    const v = (m['wp:meta_value']||[])[0];
-                    if (k === '_thumbnail_id') thumbId = String(v);
-                  }
-                  if (thumbId){
-                    const key = `${date}|${normTitle(title)}`;
-                    postKeyToThumbId.set(key, thumbId);
-                  }
-                }
+                // 退而求其次：從 URL 擷取 uploads/ 後面的路徑
+                if (!rel && url.includes('/uploads/')) rel = url.split('/uploads/')[1];
+                if (id && rel) map.set(id, rel.replace(/\?[^#]*$/,''));
               }
             }
-            return { attachById, postKeyToThumbId };
+            return map;
           }
 
           (async () => {
-            const { attachById, postKeyToThumbId } = await buildMapsFromWXR();
+            const attachMap = await buildAttachmentMap();
+            console.log('[attach] attachments mapped:', attachMap.size);
 
-            // 同時處理 .md/.markdown/.html
-            const posts = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
-            let updated = 0, matched = 0, missing = 0;
+            const posts = walk('_posts')
+              .filter(f => /\.(md|markdown|html)$/i.test(f));
 
-            for (const file of posts){
-              const base = path.basename(file);
-              const dm = base.match(/^(\d{4}-\d{2}-\d{2})-/);
-              const date = dm ? dm[1] : null;
-              const s0 = fs.readFileSync(file,'utf8');
-              const title = getFMTitle(s0);
+            let touched = 0, withThumb = 0, missing = 0;
 
-              if (!date || !title){ missing++; continue; }
+            for (const file of posts) {
+              const raw = fs.readFileSync(file,'utf8');
+              const fm = splitFM(raw);
+              if (!fm) { missing++; continue; }
 
-              const key = `${date}|${normTitle(title)}`;
-              const thumbId = postKeyToThumbId.get(key);
-              const att = thumbId ? attachById.get(String(thumbId)) : null;
-              if (!att){ missing++; continue; }
+              let data;
+              try { data = yaml.load(fm.head) || {}; }
+              catch(e){ console.warn('[attach] YAML parse failed:', file); continue; }
 
-              const rel = att.relPath
-                ? `assets/uploads/${att.relPath}`
-                : (att.url.includes('/uploads/') ? `assets/uploads/${att.url.split('/uploads/')[1]}` : null);
-              if (!rel){ missing++; continue; }
+              // 取 front-matter 的 _thumbnail_id
+              const meta = data.meta || {};
+              const tid  = String(meta._thumbnail_id || meta['_thumbnail_id'] || '').trim();
+              if (!tid) { missing++; continue; }
 
-              const imagePath = '/' + rel.replace(/%2F/gi,'/');
-              const s1 = setFMField(s0, 'image', imagePath);
-              if (s1 !== s0){
-                fs.writeFileSync(file, s1);
-                updated++;
+              const rel = attachMap.get(tid);
+              if (!rel) { missing++; continue; }
+
+              const imagePath = '/' + path.posix.join('assets','uploads', rel).replace(/%2F/gi,'/');
+
+              if (data.image !== imagePath) {
+                data.image = imagePath;
+                const headNew = yaml.dump(data, { lineWidth: -1 });
+                const out = `---\n${headNew}---${fm.body}`;
+                fs.writeFileSync(file, out);
+                touched++;
               }
-              matched++;
+              withThumb++;
             }
-            console.log(`[attach] matched=${matched}, updated=${updated}, missing=${missing}`);
+
+            console.log(`[attach] posts=${posts.length}  withThumb=${withThumb}  updated=${touched}  missing=${missing}`);
           })().catch(e => { console.error(e); process.exit(1); });
           JS
 
       - name: Run script
-        run: node scripts/attach_featured.js
+        run: node scripts/attach_by_thumbnail_id.js
 
-      - name: Commit & push changes
+      - name: Commit & push
         run: |
-          if [ -n "$(git status --porcelain _posts assets/uploads)" ]; then
+          if [ -n "$(git status --porcelain _posts)" ]; then
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add _posts assets/uploads
-            git commit -m "feat: add featured image to front-matter for HTML/MD posts"
+            git add _posts
+            git commit -m "feat: write image: from _thumbnail_id for posts"
             git push
           else
             echo "No changes."
