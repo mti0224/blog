@@ -1,92 +1,53 @@
-name: Import WordPress WXR → Markdown
+# .github/workflows/import.yml
+name: Import WordPress XML to Jekyll
 
 on:
   workflow_dispatch:
     inputs:
       xml_path:
-        description: Path to WXR (default: import/export.xml or all import/*.xml)
-        required: false
-        default: ""
+        description: 'Path to the WXR file'
+        required: true
+        default: import/export.xml
   push:
-    branches: [ main ]
     paths:
-      - 'import/**/*.xml'
-      - 'import/*.xml'
+      - "import/*.xml"
 
 permissions:
-  contents: write
+  contents: write  # 讓 GITHUB_TOKEN 可以 commit
 
 jobs:
-  import:
+  convert:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
+          node-version: 20
 
-      - name: Ensure folders
+      - name: Install converter
+        run: npm i -g wordpress-export-to-markdown@latest
+
+      - name: Clean output folders
+        run: rm -rf _posts assets && mkdir -p _posts assets
+
+      - name: Convert WXR -> Markdown
         run: |
-          mkdir -p _posts assets/uploads import
+          wordpress-export-to-markdown \
+            "${{ github.event.inputs.xml_path || 'import/export.xml' }}" \
+            --post-folder "_posts" \
+            --asset-folder "assets" \
+            --download-attachments
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-
-      - name: Install importer gems
+      - name: Commit converted files
         run: |
-          gem install jekyll-import reverse_markdown
-
-      - name: Convert WXR → Markdown (+ download images)
-        env:
-          XML_INPUT: ${{ github.event.inputs.xml_path }}
-        run: |
-          set -e
-
-          # 1) 決定要處理哪些 XML
-          if [ -n "$XML_INPUT" ] && [ -f "$XML_INPUT" ]; then
-            XMLS="$XML_INPUT"
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add _posts assets
+            git commit -m "chore(import): convert WordPress XML to Markdown"
+            git push
           else
-            # 沒指定就抓 import/ 下所有 .xml；若只有 export.xml 也會抓到
-            XMLS=$(ls import/*.xml 2>/dev/null || true)
+            echo "No changes to commit."
           fi
-
-          if [ -z "$XMLS" ]; then
-            echo "No XML found. Upload your WXR to import/ (e.g., import/export.xml)."
-            exit 1
-          fi
-
-          # 2) Ruby 腳本：實際執行 jekyll-import（逐檔）
-          cat > import.rb <<'RUBY'
-          require 'jekyll-import'
-          src = ENV['SRC']
-          abort "Missing SRC" unless src && File.exist?(src)
-          puts "Importing #{src}..."
-          JekyllImport::WordPressDotCom.process(
-            'source'          => src,
-            'assets_folder'   => 'assets/uploads', # 圖片放這裡
-            'no_fetch_images' => false,            # 若想跳過抓圖可設 true
-            'comments'        => false
-          )
-          RUBY
-
-          for X in $XMLS; do
-            SRC="$X" ruby import.rb
-          done
-
-      - name: List generated files (debug)
-        run: |
-          echo "==== _posts ===="
-          ls -al _posts || true
-          echo "==== assets/uploads count ===="
-          find assets/uploads -type f | wc -l || true
-
-      - name: Commit & push imported content
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add _posts assets/uploads || true
-          git commit -m "chore(import): convert WordPress WXR to Markdown + assets" || echo "No changes"
-          git push || true
