@@ -1,0 +1,7 @@
+title: 蚯蚓貓的資工人生
+description: 這裡有各種LINE Rangers銀河特攻隊的角色分析文章！
+theme: minima
+permalink: /:year/:month/:day/:title/
+plugins:
+  - jekyll-redirect-from   # 之後需要做舊→新網址轉向時會用到
+markdown: kramdown
