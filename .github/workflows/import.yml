@@ -1,0 +1,61 @@
+name: Import WordPress WXR → Markdown
+
+on:
+  # 手動觸發（Actions 頁面可輸入不同路徑）
+  workflow_dispatch:
+    inputs:
+      xml_path:
+        description: Path to WXR (default: import/export.xml)
+        required: false
+        default: import/export.xml
+  # 只要 import/ 下新增或更新 .xml 就自動跑
+  push:
+    branches: [ main ]
+    paths:
+      - 'import/**/*.xml'
+      - 'import/*.xml'
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install importer gems
+        run: |
+          gem install jekyll-import reverse_markdown
+
+      - name: Convert WXR → Markdown (+ download images)
+        env:
+          XML_PATH: ${{ github.event.inputs.xml_path || 'import/export.xml' }}
+        run: |
+          mkdir -p _posts assets/uploads
+          ruby - <<'RUBY'
+          require 'jekyll-import'
+          # 使用 WordPress.com 的 XML 匯入器
+          JekyllImport::WordPressDotCom.process({
+            'source'          => ENV.fetch('XML_PATH', 'import/export.xml'),
+            'assets_folder'   => 'assets/uploads', # 下載的媒體會放這裡
+            'no_fetch_images' => false,            # 抓取圖片
+            'comments'        => false             # 若要保留留言可改成 true
+          })
+          RUBY
+
+      - name: Commit & push imported content
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add _posts assets/uploads || true
+          git commit -m "chore(import): convert WordPress WXR to Markdown + assets" || echo "No changes"
+          git push || true
