@@ -1,137 +1,43 @@
-name: Normalize posts (embed images & add front-matter image)
+name: Fix posts (attach featured images)
 
 on:
   workflow_dispatch: {}
   push:
     branches: [ main ]
     paths:
-      - "_posts/**"
+      - 'scripts/attach_by_thumbnail_id.js'
+      - 'import/*.xml'
+      - '_posts/**'
 
 permissions:
   contents: write
 
 jobs:
-  fix:
+  run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
+          node-version: '20'
 
-      - name: Ensure script folder
-        run: mkdir -p scripts
+      - name: Install deps for importer
+        run: npm i xml2js@0.6
 
-      - name: Write fixer script
-        shell: bash
-        run: |
-          cat > scripts/fix_posts.js <<'JS'
-          // scripts/fix_posts.js  (Node v18+ / v20+)
-          const fs = require('fs');
-          const path = require('path');
+      - name: Attach featured images into Front-Matter
+        run: node scripts/attach_by_thumbnail_id.js
 
-          function walk(dir){
-            if (!fs.existsSync(dir)) return [];
-            return fs.readdirSync(dir,{withFileTypes:true})
-              .flatMap(e => {
-                const p = path.join(dir, e.name);
-                return e.isDirectory() ? walk(p) : [p];
-              });
-          }
-
-          // 把 [Image](url) / [圖片](url) → ![](url)，以及看起來像圖片的連結也轉為圖片
-          function linksToImages(md){
-            let s = md;
-            s = s.replace(/\[(?:Image|圖片|image|img)\]\(([^)]+)\)/g, '![]($1)');
-            s = s.replace(/\[([^\]]*)\]\(((?:[^)]+?\.(?:png|jpe?g|gif|webp|svg))(?:\?[^)]*)?)\)/gi, (_m, _t, url) => {
-              return `![](${url})`;
-            });
-            return s;
-          }
-
-          function stripQuery(u){
-            return u
-              .replace(/%253f[^)"'\s>]*/ig,'')     // 兩次編碼的 ? ( %253f )
-              .replace(/%3f[^)"'\s>]*/ig,'')       // 一次編碼的 ? ( %3f )
-              .replace(/(\.(png|jpe?g|gif|webp|svg))\?[^)"'\s>]*/ig,'$1'); // 去掉 ?w=.. 等 query
-          }
-
-          function normalizeAssetPath(u){
-            if (!u) return null;
-            let url = stripQuery(u).trim();
-            // WordPress 上的 wp-content/uploads → 本站 assets/uploads
-            url = url.replace(/https?:\/\/[^"')]+\/wp-content\/uploads/ig, '/assets/uploads');
-            // 相對路徑補一個 /
-            if (!/^https?:\/\//i.test(url) && !url.startsWith('/')) url = '/' + url;
-            return url;
-          }
-
-          function extractFirstImage(md){
-            // 1) Markdown 圖片
-            let m = md.match(/!\[[^\]]*\]\(([^)]+?\.(?:png|jpe?g|gif|webp|svg)(?:\?[^)]*)?)\)/i);
-            if (m) return normalizeAssetPath(m[1]);
-            // 2) HTML <img>
-            m = md.match(/<img[^>]+src=["']([^"']+\.(?:png|jpe?g|gif|webp|svg)(?:\?[^"']*)?)["']/i);
-            if (m) return normalizeAssetPath(m[1]);
-            return null;
-          }
-
-          function readFrontMatter(s){
-            if (!s.startsWith('---')) return null;
-            const end = s.indexOf('\n---',3);
-            if (end < 0) return null;
-            return { head: s.slice(0,end+4), body: s.slice(end+4) };
-          }
-
-          function hasImageField(fmHead){
-            return /\nimage\s*:\s*["']?[^"'\n]+["']?\s*\n/i.test(fmHead);
-          }
-
-          function injectImageField(s, img){
-            const fm = readFrontMatter(s);
-            if (!fm) return s;
-            if (hasImageField(fm.head)) return s;
-            const head2 = fm.head.replace(/\n---\s*$/,'\n') + `image: ${img}\n---`;
-            return head2 + fm.body;
-          }
-
-          const posts = walk('_posts').filter(f => /\.(md|markdown)$/i.test(f));
-          let changed = 0, convertedLinks = 0, addedImageFm = 0;
-
-          for (const file of posts){
-            let s = fs.readFileSync(file,'utf8');
-            const before = s;
-
-            // 1) 連結 → 圖片
-            const s1 = linksToImages(s);
-            if (s1 !== s) { s = s1; convertedLinks++; }
-
-            // 2) 取第一張圖，寫入 front-matter image:
-            const img = extractFirstImage(s);
-            if (img){
-              const s2 = injectImageField(s, img);
-              if (s2 !== s) { s = s2; addedImageFm++; }
-            }
-
-            if (s !== before){
-              fs.writeFileSync(file, s);
-              changed++;
-            }
-          }
-
-          console.log(`fixed files: ${changed}, links→images: ${convertedLinks}, fm image added: ${addedImageFm}`);
-          JS
-
-      - name: Run fixer
-        run: node scripts/fix_posts.js
-
-      - name: Commit changes
+      - name: Commit changes (if any)
         run: |
           if [ -n "$(git status --porcelain _posts)" ]; then
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add _posts
-            git commit -m "fix: embed images & add front-matter image"
+            git commit -m "fix(posts): move image into Front-Matter and remove stray line"
             git push
           else
-            echo "No changes."
+            echo "No changes to commit."
           fi
