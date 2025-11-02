@@ -1,39 +1,73 @@
 ---
 layout: default
+title: 首頁
 ---
 
-<style>
-  .post-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem 1.25rem}
-  .post-card{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;background:#fff}
-  .post-card .thumb{display:block;aspect-ratio:16/9;background:#f2f2f2}
-  .post-card .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-  .thumb--placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#888;font-size:.9rem}
-  .post-card-body{padding:12px 14px}
-  .post-card-title{margin:0 0 .25rem;font-size:1.05rem;line-height:1.35}
-  .post-meta{color:#666;font-size:.85rem;margin-bottom:.35rem}
-  .post-excerpt{color:#333;font-size:.92rem;margin:0}
-</style>
+{%- comment -%}
+  取出有 image 的最新三篇（只用最基本的 Liquid 語法）
+{%- endcomment -%}
+{% assign first = nil %}{% assign second = nil %}{% assign third = nil %}
+{% assign count = 0 %}
+{% for p in site.posts %}
+  {% if p.image %}
+    {% assign count = count | plus: 1 %}
+    {% if count == 1 %}{% assign first = p %}
+    {% elsif count == 2 %}{% assign second = p %}
+    {% elsif count == 3 %}{% assign third = p %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
 
-<div class="home">
-  {%- if page.title -%}<h1 class="page-heading">{{ page.title }}</h1>{%- endif -%}
+{% if first %}
+<div class="hero">
+  <div class="hero-grid">
+    <!-- 左側大圖 -->
+    <a class="hero-card hero-large" href="{{ first.url | relative_url }}">
+      {% if first.image %}<img src="{{ first.image | relative_url }}" alt="{{ first.title | escape }}">{% else %}<div class="noimg">No Image</div>{% endif %}
+      <div class="hero-title">{{ first.title }}</div>
+    </a>
 
-  <div class="post-grid">
-  {%- for post in site.posts -%}
-    <article class="post-card">
-      <a class="thumb" href="{{ post.url | relative_url }}">
-        {%- assign img = post.image | default: post.featured_image -%}
-        {%- if img -%}
-          <img src="{{ img | relative_url }}" alt="{{ post.title | escape }}">
-        {%- else -%}
-          <div class="thumb--placeholder">No Image</div>
-        {%- endif -%}
+    <!-- 右側兩張 -->
+    <div style="display:grid; grid-template-rows:1fr 1fr; gap:16px;">
+      <a class="hero-card hero-small" href="{{ (second or first).url | relative_url }}">
+        {% if second and second.image %}
+          <img src="{{ second.image | relative_url }}" alt="{{ second.title | escape }}">
+          <div class="hero-title">{{ second.title }}</div>
+        {% else %}
+          <div class="noimg">No Image</div>
+          <div class="hero-title">{{ first.title }}</div>
+        {% endif %}
       </a>
-      <div class="post-card-body">
-        <h2 class="post-card-title"><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h2>
-        <div class="post-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
-        <p class="post-excerpt">{{ post.excerpt | strip_html | truncate: 120 }}</p>
-      </div>
-    </article>
-  {%- endfor -%}
+      <a class="hero-card hero-small" href="{{ (third or first).url | relative_url }}">
+        {% if third and third.image %}
+          <img src="{{ third.image | relative_url }}" alt="{{ third.title | escape }}">
+          <div class="hero-title">{{ third.title }}</div>
+        {% else %}
+          <div class="noimg">No Image</div>
+          <div class="hero-title">{{ first.title }}</div>
+        {% endif %}
+      </a>
+    </div>
   </div>
+</div>
+{% endif %}
+
+<!-- 下面是所有貼文卡片 -->
+<div class="post-grid">
+  {% assign posts_sorted = site.posts | sort: "date" | reverse %}
+  {% for post in posts_sorted %}
+    <a class="card" href="{{ post.url | relative_url }}">
+      <div class="card-img">
+        {% if post.image %}
+          <img src="{{ post.image | relative_url }}" alt="{{ post.title | escape }}">
+        {% else %}
+          <div class="noimg">No Image</div>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <div class="card-title">{{ post.title }}</div>
+        <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
+      </div>
+    </a>
+  {% endfor %}
 </div>
