@@ -2,32 +2,28 @@
 layout: default
 ---
 
-<div class="site-wrap">
-  {% capture hero %}
-    {% if page.image and page.image != "" %}
-      {{ page.image }}
-    {% else %}
-      {% assign s1 = content | split:'src="' %}
-      {% if s1.size > 1 %}
-        {% assign s2 = s1[1] | split:'"' %}
-        {{ s2[0] | replace: '{{site.baseurl}}', site.baseurl }}
-      {% endif %}
+<article class="post-page">
+  <header class="post-header">
+    <h1 class="post-title">{{ page.title }}</h1>
+    <div class="meta">{{ page.date | date: "%Y-%m-%d" }}</div>
+    {% if page.image %}
+      <img class="post-hero" src="{{ page.image | relative_url }}" alt="{{ page.title }}">
     {% endif %}
-  {% endcapture %}
+  </header>
 
-  <article class="post">
-    <h1 class="post__title">{{ page.title }}</h1>
-    <div class="post__meta">{{ page.date | date: "%Y-%m-%d" }}</div>
+  <div id="post-content" class="post-content">
+    {{ content }}
+  </div>
+</article>
 
-    {% if hero | strip != "" %}
-      <img class="post__hero" src="{{ hero | strip | relative_url }}" alt="{{ page.title }}">
-    {% endif %}
-
-    <div id="post-content" class="post__content">
-      {{ content }}
-    </div>
-  </article>
-</div>
-
-<!-- 清掉文章開頭那種 'image: /assets/...' 行 & 把 YouTube 連結轉成 iframe -->
-<script src="{{ '/assets/js/blog.js' | relative_url }}"></script>
+<script>
+/* 把文章開頭若出現的 "image: /assets/..." 文字行隱藏（有些匯入檔會把它留在內文） */
+(function(){
+  var el = document.getElementById('post-content');
+  if (!el) return;
+  var first = el.firstElementChild;
+  if (first && first.tagName === 'P' && /^image:\s*\/assets\//i.test(first.textContent.trim())) {
+    first.style.display = 'none';
+  }
+})();
+</script>
