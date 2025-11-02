@@ -3,37 +3,59 @@ layout: default
 title: 首頁
 ---
 
-<!-- HERO：最新 3 篇（需有 image） -->
+{%- comment -%}
+  取出有 image 的最新三篇（只用最基本的 Liquid 語法）
+{%- endcomment -%}
+{% assign first = nil %}{% assign second = nil %}{% assign third = nil %}
+{% assign count = 0 %}
+{% for p in site.posts %}
+  {% if p.image %}
+    {% assign count = count | plus: 1 %}
+    {% if count == 1 %}{% assign first = p %}
+    {% elsif count == 2 %}{% assign second = p %}
+    {% elsif count == 3 %}{% assign third = p %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+{% if first %}
 <div class="hero">
-  {% assign recent = site.posts | where_exp: "p", "p.image" | sort: "date" | reverse | slice: 0, 3 %}
-  {% if recent and recent.size > 0 %}
   <div class="hero-grid">
-    {% assign first = recent[0] %}
+    <!-- 左側大圖 -->
     <a class="hero-card hero-large" href="{{ first.url | relative_url }}">
-      {% if first.image %}
-        <img src="{{ first.image | relative_url }}" alt="{{ first.title | escape }}">
-      {% else %}<div class="noimg">No Image</div>{% endif %}
+      {% if first.image %}<img src="{{ first.image | relative_url }}" alt="{{ first.title | escape }}">{% else %}<div class="noimg">No Image</div>{% endif %}
       <div class="hero-title">{{ first.title }}</div>
     </a>
 
+    <!-- 右側兩張 -->
     <div style="display:grid; grid-template-rows:1fr 1fr; gap:16px;">
-      {% for p in recent offset:1 %}
-        <a class="hero-card hero-small" href="{{ p.url | relative_url }}">
-          {% if p.image %}
-            <img src="{{ p.image | relative_url }}" alt="{{ p.title | escape }}">
-          {% else %}<div class="noimg">No Image</div>{% endif %}
-          <div class="hero-title">{{ p.title }}</div>
-        </a>
-      {% endfor %}
+      <a class="hero-card hero-small" href="{{ (second or first).url | relative_url }}">
+        {% if second and second.image %}
+          <img src="{{ second.image | relative_url }}" alt="{{ second.title | escape }}">
+          <div class="hero-title">{{ second.title }}</div>
+        {% else %}
+          <div class="noimg">No Image</div>
+          <div class="hero-title">{{ first.title }}</div>
+        {% endif %}
+      </a>
+      <a class="hero-card hero-small" href="{{ (third or first).url | relative_url }}">
+        {% if third and third.image %}
+          <img src="{{ third.image | relative_url }}" alt="{{ third.title | escape }}">
+          <div class="hero-title">{{ third.title }}</div>
+        {% else %}
+          <div class="noimg">No Image</div>
+          <div class="hero-title">{{ first.title }}</div>
+        {% endif %}
+      </a>
     </div>
   </div>
-  {% endif %}
 </div>
+{% endif %}
 
-<!-- 貼文清單 -->
+<!-- 下面是所有貼文卡片 -->
 <div class="post-grid">
-  {% assign posts = site.posts | sort: "date" | reverse %}
-  {% for post in posts %}
+  {% assign posts_sorted = site.posts | sort: "date" | reverse %}
+  {% for post in posts_sorted %}
     <a class="card" href="{{ post.url | relative_url }}">
       <div class="card-img">
         {% if post.image %}
