@@ -54,16 +54,16 @@ jobs:
             exit 1
           fi
 
-          # Ruby 腳本（注意：正確常數與 .run）
+          # Ruby 腳本（⚠️ 正確常數：WordpressDotCom；方法：.run）
           cat > import.rb <<'RUBY'
           require 'jekyll-import'
-          require 'jekyll-import/importers/wordpressdotcom' # 保險地顯式載入
+          require 'jekyll-import/importers/wordpressdotcom'
           src = ENV['SRC']
           abort "Missing SRC" unless src && File.exist?(src)
           puts "Importing #{src}..."
-          JekyllImport::Importers::WordPressDotCom.run(
+          JekyllImport::Importers::WordpressDotCom.run(
             'source'          => src,
-            'assets_folder'   => 'assets/uploads', # 下載媒體
+            'assets_folder'   => 'assets/uploads', # 圖片下載到這裡
             'no_fetch_images' => false,            # 若先不抓圖可改 true
             'comments'        => false
           )
