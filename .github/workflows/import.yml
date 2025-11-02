@@ -36,14 +36,14 @@ jobs:
 
       - name: Install importer gems
         run: |
-          gem install jekyll-import reverse_markdown faraday-retry
+          gem install jekyll-import reverse_markdown open_uri_redirections nokogiri faraday-retry --no-document
 
       - name: Convert WXR → Markdown (+ download images)
         env:
           XML_INPUT: ${{ github.event.inputs.xml_path }}
         run: |
           set -e
-          # 決定要處理哪些 XML
+          # 1) 決定要處理哪些 XML
           if [ -n "$XML_INPUT" ] && [ -f "$XML_INPUT" ]; then
             XMLS="$XML_INPUT"
           else
@@ -54,21 +54,23 @@ jobs:
             exit 1
           fi
 
-          # Ruby 腳本（⚠️ 正確常數：WordpressDotCom；方法：.run）
+          # 2) Ruby 腳本（⚠️ 正確常數名 + 需要 require open_uri_redirections）
           cat > import.rb <<'RUBY'
           require 'jekyll-import'
           require 'jekyll-import/importers/wordpressdotcom'
+          require 'open_uri_redirections'
           src = ENV['SRC']
           abort "Missing SRC" unless src && File.exist?(src)
           puts "Importing #{src}..."
           JekyllImport::Importers::WordpressDotCom.run(
             'source'          => src,
-            'assets_folder'   => 'assets/uploads', # 圖片下載到這裡
-            'no_fetch_images' => false,            # 若先不抓圖可改 true
+            'assets_folder'   => 'assets/uploads', # 圖片下載位置
+            'no_fetch_images' => false,            # 若抓圖太慢可改 true 先轉文章
             'comments'        => false
           )
           RUBY
 
+          # 3) 逐檔執行
           for X in $XMLS; do
             SRC="$X" ruby import.rb
           done
