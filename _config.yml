@@ -11,5 +11,6 @@ plugins:
   - jekyll-feed
 include:
   - assets/uploads
-
+paginate: 12
+paginate_path: "/page:num/"
 markdown: kramdown
