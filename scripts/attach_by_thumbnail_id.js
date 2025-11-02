@@ -1,82 +1,118 @@
 // scripts/attach_by_thumbnail_id.js
-// node scripts/attach_by_thumbnail_id.js
-const fs = require('fs'), path = require('path');
+const fs = require('fs');
+const path = require('path');
+const { parseStringPromise } = require('xml2js');
 
-function findXmls() {
-  const dirs = ['import', '.', 'wxr'];
-  const out = [];
-  for (const d of dirs) {
-    if (!fs.existsSync(d)) continue;
-    for (const f of fs.readdirSync(d)) {
-      if (f.toLowerCase().endsWith('.xml')) out.push(path.join(d, f));
-    }
-  }
-  return out;
+function walk(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { withFileTypes: true })
+    .flatMap(e => {
+      const p = path.join(dir, e.name);
+      return e.isDirectory() ? walk(p) : [p];
+    });
 }
-function parseAttachments(xml) {
-  const items = [];
-  const reItem = /<item>[\s\S]*?<\/item>/g;
-  const reType = /<wp:post_type><!\[CDATA\[(.*?)\]\]><\/wp:post_type>/;
-  const reId   = /<wp:post_id>(\d+)<\/wp:post_id>/;
-  const reURL  = /<wp:attachment_url><!\[CDATA\[(.*?)\]\]><\/wp:attachment_url>/;
-  for (const m of xml.matchAll(reItem)) {
-    const blk = m[0];
-    const type = (blk.match(reType)||[])[1];
+
+function stripQuery(u) { return u.replace(/\?[^#)"]*$/, ''); }
+
+async function loadWxrMap(xmlPath) {
+  const xml = fs.readFileSync(xmlPath, 'utf8');
+  const doc = await parseStringPromise(xml, { explicitArray: true });
+  const items = (((doc || {}).rss || [])[0] || {}).channel?.[0]?.item || [];
+  const map = {}; // id -> /assets/uploads/yyyy/mm/file.ext
+  for (const it of items) {
+    const type = (it['wp:post_type'] || [''])[0];
     if (type !== 'attachment') continue;
-    const id  = (blk.match(reId)||[])[1];
-    const url = (blk.match(reURL)||[])[1];
-    if (id && url) items.push({ id: String(id), url });
+    const id = String((it['wp:post_id'] || [''])[0] || '').trim();
+    const url = String((it['wp:attachment_url'] || [''])[0] || '').trim();
+    if (!id || !url) continue;
+    const noQ = stripQuery(url);
+    const idx = noQ.indexOf('/wp-content/uploads/');
+    if (idx === -1) continue;
+    const tail = noQ.substring(idx + '/wp-content/uploads/'.length);
+    map[id] = '/assets/uploads/' + tail;
   }
-  return items;
-}
-function toAssets(u) {
-  const m = u && u.match(/\/wp-content\/uploads\/(\d{4}\/\d{2}\/[^?]+)$/);
-  return m ? `/assets/uploads/${m[1]}` : null;
+  return map;
 }
 
-const xmlPaths = process.env.XML_PATH ? [process.env.XML_PATH] : findXmls();
-let map = new Map();
-for (const p of xmlPaths) {
-  try {
-    const xml = fs.readFileSync(p, 'utf8');
-    for (const it of parseAttachments(xml)) {
-      const local = toAssets(it.url);
-      if (local) map.set(it.id, local);
+function insertImageIntoFrontMatter(src, imagePath) {
+  // 解析 Front-Matter
+  const m = src.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  let yaml = '', body = src;
+  if (m) { yaml = m[1]; body = src.slice(m[0].length); }
+
+  // 把誤放在本文最上方的 `image: ...` 單行清掉
+  body = body.replace(/^\s*image:\s*\S+.*\n/i, '');
+
+  // 若原本就有 image:，直接覆寫；否則追加一行
+  if (yaml) {
+    if (/^image:/m.test(yaml)) {
+      yaml = yaml.replace(/^image:\s*.*$/m, `image: ${imagePath}`);
+    } else {
+      yaml = yaml + (yaml.endsWith('\n') ? '' : '\n') + `image: ${imagePath}\n`;
     }
-  } catch {}
-}
-console.log(`[attach] xml files=${xmlPaths.length}  attachments mapped=${map.size}`);
-
-const postsDir = '_posts';
-let updated=0, withThumb=0, viaWXR=0, viaBody=0;
-
-for (const name of fs.readdirSync(postsDir)) {
-  if (!/\.(md|markdown|html)$/i.test(name)) continue;
-  const p = path.join(postsDir, name);
-  let s = fs.readFileSync(p, 'utf8');
-
-  const fmStart = s.indexOf('---');
-  const fmEnd = s.indexOf('---', fmStart+3);
-  if (fmStart !== 0 || fmEnd === -1) continue;
-
-  const head = s.slice(0, fmEnd+3);
-  const body = s.slice(fmEnd+3);
-
-  const mId = head.match(/_thumbnail_id:\s*['"]?(\d+)['"]?/);
-  if (!mId) continue;
-  withThumb++;
-  if (/^\s*image:/m.test(head)) continue; // 已有 image
-
-  let url = map.get(mId[1]);
-  if (!url) {
-    // 退而求其次：從本文中的 wp-image-XXXX 去反查附件
-    const ids = [...body.matchAll(/wp-image-(\d{3,})/g)].map(x=>x[1]);
-    for (const id of ids) { if (map.get(id)) { url = map.get(id); viaBody++; break; } }
+    return `---\n${yaml}---\n${body}`;
+  } else {
+    return `---\nimage: ${imagePath}\n---\n${body}`;
   }
-  if (!url) continue;
-
-  const newHead = head.replace(/\n$/, '') + `\nimage: ${url}\n`;
-  fs.writeFileSync(p, newHead + body);
-  updated++; if (map.get(mId[1])) viaWXR++;
 }
-console.log(`[attach] posts=${withThumb}  updated=${updated}  viaWXR=${viaWXR}  viaBody=${viaBody}  missing=${withThumb - updated}`);
+
+function pickThumbIdFromYaml(yaml) {
+  const a = yaml.match(/_thumbnail_id:\s*'(\d+)'/);
+  if (a) return a[1];
+  const b = yaml.match(/_thumbnail_id:\s*(\d+)/);
+  if (b) return b[1];
+  return null;
+}
+
+function firstLocalAssetInBody(body) {
+  const m = body.match(/assets\/uploads\/[^\s"'>)]+/);
+  return m ? '/' + m[0].replace(/^\/+/, '') : null;
+}
+
+function patchPost(file, id2asset) {
+  const s = fs.readFileSync(file, 'utf8');
+  const fm = s.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  const yaml = fm ? fm[1] : '';
+  const body = fm ? s.slice(fm[0].length) : s;
+
+  let img = null;
+  const tid = pickThumbIdFromYaml(yaml);
+  if (tid && id2asset[tid]) img = id2asset[tid];
+
+  if (!img) {
+    // 後備：從本文找第一個 assets/uploads 圖片
+    img = firstLocalAssetInBody(body);
+  }
+
+  if (!img) return false; // 找不到就不改
+
+  const out = insertImageIntoFrontMatter(s, img);
+  if (out !== s) fs.writeFileSync(file, out);
+  return out !== s;
+}
+
+(async () => {
+  // 找 WXR
+  let xml = null;
+  if (fs.existsSync('import/export.xml')) xml = 'import/export.xml';
+  else {
+    const c = walk('import').filter(f => /\.xml$/i.test(f));
+    if (c.length) xml = c[0];
+  }
+
+  let id2asset = {};
+  if (xml) {
+    id2asset = await loadWxrMap(xml);
+  }
+
+  const posts = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
+  let updated = 0, withThumb = 0;
+  for (const f of posts) {
+    const s = fs.readFileSync(f, 'utf8');
+    const fm = s.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+    const yaml = fm ? fm[1] : '';
+    if (/_thumbnail_id:/m.test(yaml)) withThumb++;
+    if (patchPost(f, id2asset)) updated++;
+  }
+  console.log(`[attach] xml=${!!xml} attachments=${Object.keys(id2asset).length} posts=${posts.length} withThumb=${withThumb} updated=${updated}`);
+})();
