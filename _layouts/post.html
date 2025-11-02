@@ -2,26 +2,32 @@
 layout: default
 ---
 
-<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
-  <header class="post-header">
-    <h1 class="post-title p-name" itemprop="name headline">{{ page.title | escape }}</h1>
-    <p class="post-meta">
-      <time class="dt-published" datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">
-        {{ page.date | date: "%Y-%m-%d" }}
-      </time>
-    </p>
-
-    {%- comment -%}
-    只渲染圖片，不要印出「image: 路徑」這種純文字
-    {%- endcomment -%}
-    {% if page.image %}
-    <figure class="post-featured" style="margin:1rem 0">
-      <img src="{{ page.image | relative_url }}" alt="{{ page.title | escape }}" style="width:100%;height:auto;display:block;border-radius:12px">
-    </figure>
+<div class="site-wrap">
+  {% capture hero %}
+    {% if page.image and page.image != "" %}
+      {{ page.image }}
+    {% else %}
+      {% assign s1 = content | split:'src="' %}
+      {% if s1.size > 1 %}
+        {% assign s2 = s1[1] | split:'"' %}
+        {{ s2[0] | replace: '{{site.baseurl}}', site.baseurl }}
+      {% endif %}
     {% endif %}
-  </header>
+  {% endcapture %}
 
-  <div class="post-content e-content" itemprop="articleBody">
-    {{ content }}
-  </div>
-</article>
+  <article class="post">
+    <h1 class="post__title">{{ page.title }}</h1>
+    <div class="post__meta">{{ page.date | date: "%Y-%m-%d" }}</div>
+
+    {% if hero | strip != "" %}
+      <img class="post__hero" src="{{ hero | strip | relative_url }}" alt="{{ page.title }}">
+    {% endif %}
+
+    <div id="post-content" class="post__content">
+      {{ content }}
+    </div>
+  </article>
+</div>
+
+<!-- 清掉文章開頭那種 'image: /assets/...' 行 & 把 YouTube 連結轉成 iframe -->
+<script src="{{ '/assets/js/blog.js' | relative_url }}"></script>
