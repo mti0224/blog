@@ -75,6 +75,81 @@ jobs:
             SRC="$X" ruby import.rb
           done
 
+      # 先清掉 ?query、修正 src/srcset、wp 上的絕對 uploads
+      - name: Normalize image URLs in posts (strip ?w=, fix src/srcset, wp URLs)
+        run: |
+          node - <<'NODE'
+          const fs = require('fs'), path = require('path');
+          function walk(dir){
+            if (!fs.existsSync(dir)) return [];
+            return fs.readdirSync(dir,{withFileTypes:true})
+              .flatMap(e=>{const p=path.join(dir,e.name); return e.isDirectory()?walk(p):[p];});
+          }
+          const files = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
+
+          // 1) Markdown/一般連結：...png?xxx  -> ...png
+          const qInPath = /(\.(?:png|jpe?g|gif|webp|svg))(?:\?[^)"'\s>]+)/gi;
+          // 2) <img src="...?...">
+          const srcQuery  = /(src\s*=\s*")([^"?"]+)(\?[^"]*)(")/gi;
+          // 3) <img srcset="a.png?w=1024 1024w, b.jpg?x=1 512w">
+          const srcsetQuery = /(\s)([^,\s"]+?\.(?:png|jpe?g|gif|webp|svg))(?:\?[^,\s"]+)/gi;
+          // 4) 舊站完整網址 -> 相對 uploads
+          const wpUploads = /https?:\/\/[^"')]+\/wp-content\/uploads/gi;
+          const toAssets  = '/assets/uploads';
+
+          let changed = 0;
+          for (const f of files) {
+            let s = fs.readFileSync(f, 'utf8');
+            const before = s;
+            s = s
+              .replace(qInPath, '$1')
+              .replace(srcQuery,   (_m,p1,p2,_q,p4)=>p1+p2+p4)
+              .replace(srcsetQuery,'$1$2')
+              .replace(wpUploads,  toAssets)
+              .replace(/&amp;/g, '&'); // e.g. &amp;w=948
+
+            if (s !== before) { fs.writeFileSync(f, s); changed++; }
+          }
+          console.log('Normalized files:', changed);
+          NODE
+
+      # 把 /assets/... 改成 {{ "/assets/..." | relative_url }}（解決 baseurl=/blog）
+      - name: Rewrite /assets URLs to Liquid relative_url
+        run: |
+          node - <<'NODE'
+          const fs = require('fs'), path = require('path');
+          function walk(dir){
+            if (!fs.existsSync(dir)) return [];
+            return fs.readdirSync(dir,{withFileTypes:true})
+              .flatMap(e=>{const p=path.join(dir,e.name); return e.isDirectory()?walk(p):[p];});
+          }
+          const files = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
+          const rules = [
+            // Markdown 圖片
+            { re: /(!\[[^\]]*\]\()\s*(\/assets\/[^)\s]+)(\s+"[^"]*")?\)/gi,
+              fn: (m,p1,p2,p3='') => `${p1}{{ "${p2}" | relative_url }}${p3})` },
+            // <img src="/assets/...">
+            { re: /(<img[^>]*\ssrc=)["'](\/assets\/[^"']+)["']/gi,
+              fn: (m,p1,p2) => `${p1}"{{ "${p2}" | relative_url }}"` },
+            // <a href="/assets/...">
+            { re: /(<a[^>]*\shref=)["'](\/assets\/[^"']+)["']/gi,
+              fn: (m,p1,p2) => `${p1}"{{ "${p2}" | relative_url }}"` },
+          ];
+          let changed = 0;
+          for (const f of files) {
+            const before = fs.readFileSync(f,'utf8');
+            let after = before;
+            for (const {re, fn} of rules) after = after.replace(re, fn);
+            if (after !== before) { fs.writeFileSync(f, after); changed++; }
+          }
+          console.log('Rewritten files:', changed);
+          NODE
+
+      - name: Quick sanity check for leftovers
+        run: |
+          echo "Leftover '?w=' refs (should be 0):"
+          grep -R --line-number -E '\.(png|jpe?g|gif|webp|svg)\?[^\)"\s>]+' _posts || true
+
       - name: List generated files (debug)
         run: |
           echo "==== _posts ====" && ls -al _posts || true
@@ -86,7 +161,7 @@ jobs:
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add _posts assets
-            git commit -m "chore(import): WordPress WXR → Markdown + assets"
+            git commit -m "chore(import): WordPress WXR → Markdown + assets + URL fixes"
             git push
           else
             echo "No changes to commit."
