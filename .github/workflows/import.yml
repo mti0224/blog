@@ -144,6 +144,71 @@ jobs:
           }
           console.log('Rewritten files:', changed);
           NODE
+      - name: Ensure each post has a front-matter `image` (first image in content)
+        run: |
+          node - <<'NODE'
+          const fs = require('fs'), path = require('path');
+
+          function walk(dir){
+            if (!fs.existsSync(dir)) return [];
+            return fs.readdirSync(dir,{withFileTypes:true})
+              .flatMap(e => {
+                const p = path.join(dir, e.name);
+                return e.isDirectory() ? walk(p) : [p];
+              });
+          }
+
+          const posts = walk('_posts').filter(f => /\.(md|markdown)$/i.test(f));
+
+          // 抓第一張圖：支援 Markdown 與 <img src="">
+          const reMd  = /!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/i;
+          const reImg = /<img[^>]+src=["']([^"']+)["']/i;
+
+          function stripQuery(u){
+            // 移除 ?w=… 這類查詢參數與編碼後的 %3F/%253F
+            return u
+              .replace(/%253f[^)"'\s>]*/i,'')
+              .replace(/%3f[^)"'\s>]*/i,'')
+              .replace(/(\.(png|jpe?g|gif|webp|svg))\?[^)"'\s>]*/i,'$1');
+          }
+
+          function toAssets(u){
+            // 站外 wp 上傳路徑 → 本地 assets；其餘保留
+            return u
+              .replace(/https?:\/\/[^"')]+\/wp-content\/uploads/i, '/assets/uploads');
+          }
+
+          for (const f of posts){
+            let s = fs.readFileSync(f, 'utf8');
+
+            // 解析 front matter
+            if (!s.startsWith('---')) continue;
+            const end = s.indexOf('\n---', 3);
+            if (end < 0) continue;
+
+            const fm = s.slice(0, end + 4);      // 含結尾 '---\n'
+            const body = s.slice(end + 4);
+
+            // 已有 image 就略過
+            if (/\nimage:\s*["']?[^"'\n]+["']?\s*$/m.test(fm)) continue;
+
+            // 從內文抓第一張圖
+            let m = body.match(reMd) || body.match(reImg);
+            if (!m) continue;
+
+            let url = stripQuery(m[1] || '');
+            url = toAssets(url);
+
+            // 僅接受站內 /assets/uploads/... 圖；其他情況略過（避免壞連結）
+            if (!/^\/assets\/uploads\//i.test(url)) continue;
+
+            // 寫入 image 欄位到 front matter（放在最後一行前面）
+            const ins = `image: "${url}"\n`;
+            const updated = fm.replace(/\n---\s*$/, `\n${ins}---`) + body;
+            fs.writeFileSync(f, updated);
+          }
+          console.log('Front-matter image ensured (where possible).');
+          NODE
 
       - name: Quick sanity check for leftovers
         run: |
