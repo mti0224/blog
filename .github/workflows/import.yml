@@ -1,14 +1,15 @@
 name: Import WordPress WXR → Markdown
 
 on:
-  # 手動觸發（Actions 頁面可輸入不同路徑）
+  # 手動觸發（可指定 xml 路徑）
   workflow_dispatch:
     inputs:
       xml_path:
         description: Path to WXR (default: import/export.xml)
         required: false
         default: import/export.xml
-  # 只要 import/ 下新增或更新 .xml 就自動跑
+
+  # 只要 import/ 下新增或更新 xml 就自動跑
   push:
     branches: [ main ]
     paths:
@@ -21,11 +22,16 @@ permissions:
 jobs:
   import:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Ensure folders
+        run: |
+          mkdir -p _posts assets/uploads import
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -38,19 +44,53 @@ jobs:
 
       - name: Convert WXR → Markdown (+ download images)
         env:
-          XML_PATH: ${{ github.event.inputs.xml_path || 'import/export.xml' }}
+          XML_INPUT: ${{ github.event.inputs.xml_path }}
         run: |
-          mkdir -p _posts assets/uploads
-          ruby - <<'RUBY'
-          require 'jekyll-import'
-          # 使用 WordPress.com 的 XML 匯入器
-          JekyllImport::WordPressDotCom.process({
-            'source'          => ENV.fetch('XML_PATH', 'import/export.xml'),
-            'assets_folder'   => 'assets/uploads', # 下載的媒體會放這裡
-            'no_fetch_images' => false,            # 抓取圖片
-            'comments'        => false             # 若要保留留言可改成 true
-          })
-          RUBY
+          set -e
+          echo "XML_INPUT=${XML_INPUT}"
+          # 若沒有指定輸入，就抓 import/ 下所有 .xml
+          if [ -z "$XML_INPUT" ] || [ "$XML_INPUT" = "import/export.xml" ] && [ ! -f "$XML_INPUT" ]; then
+            echo "No explicit xml found, will scan import/ for *.xml"
+            ls -al import/ || true
+            XMLS=$(ls import/*.xml 2>/dev/null || true)
+          else
+            XMLS="$XML_INPUT"
+          fi
+
+          if [ -z "$XMLS" ]; then
+            echo "No XML found in import/. Please upload your export.xml"
+            exit 1
+          fi
+
+          echo "Will process: $XMLS"
+
+          for X in $XMLS; do
+            echo "Processing $X ..."
+            ruby - <<'RUBY'
+            require 'jekyll-import'
+            src = ENV['X_FILE']
+            puts "Importing #{src}"
+            JekyllImport::WordPressDotCom.process({
+              'source'          => src,
+              'assets_folder'   => 'assets/uploads', # 下載媒體到這裡
+              'no_fetch_images' => false,            # 若要跳過抓圖可改 true
+              'comments'        => false
+            })
+            RUBY
+          done
+        shell: bash
+        env:
+          X_FILE: ${{ matrix.x }}
+        strategy:
+          matrix:
+            x: []
+
+      - name: List generated files (debug)
+        run: |
+          echo "==== _posts ===="
+          ls -al _posts || true
+          echo "==== assets/uploads (count) ===="
+          find assets/uploads -type f | wc -l || true
 
       - name: Commit & push imported content
         run: |
