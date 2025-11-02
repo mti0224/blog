@@ -1,4 +1,4 @@
-name: Attach WordPress featured images to posts
+name: Attach WordPress featured images to posts (HTML/MD)
 
 on:
   workflow_dispatch: {}
@@ -16,12 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
 
       - name: Ensure folders
-        run: |
-          mkdir -p scripts assets/uploads
+        run: mkdir -p _posts assets/uploads scripts
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -33,7 +31,7 @@ jobs:
           npm init -y >/dev/null 2>&1
           npm i xml2js@0.6.2 >/dev/null
 
-      - name: Write attach_featured.js
+      - name: Write script (attach_featured.js)
         shell: bash
         run: |
           cat > scripts/attach_featured.js <<'JS'
@@ -49,61 +47,40 @@ jobs:
                 return e.isDirectory() ? walk(p) : [p];
               });
           }
+          const stripQuery = u => u.replace(/\?[^#]*$/,'');
+          const normTitle = s => (s||'').toString()
+            .replace(/&amp;/g,'&').replace(/\s+/g,'')
+            .replace(/[，。、！!？?\-_:：~～'"（）()[\]]/g,'').toLowerCase();
 
-          function stripQuery(u){
-            return u.replace(/\?[^#]*$/,'');
-          }
-
-          function normTitle(s){
-            return (s||'').toString()
-              .replace(/&amp;/g,'&')
-              .replace(/\s+/g,'')
-              .replace(/[，。、！!？?\-_:：~～'"（）()[\]]/g,'')
-              .toLowerCase();
-          }
-
+          // --- read/patch YAML front-matter in either .md or .html ---
           function readFM(s){
             if (!s.startsWith('---')) return null;
             const end = s.indexOf('\n---',3);
             if (end < 0) return null;
-            const head = s.slice(0,end+4);
-            const body = s.slice(end+4);
-            return {head, body};
+            return {head:s.slice(0,end+4), body:s.slice(end+4)};
           }
-
           function setFMField(s, key, val){
             const fm = readFM(s);
             if (!fm) return s;
             const re = new RegExp(`\\n${key}\\s*:\\s*[^\\n]*\\n`, 'i');
             const line = `\n${key}: ${val}\n`;
-            if (re.test(fm.head)) {
-              const head = fm.head.replace(re, line);
-              return head + fm.body;
-            } else {
-              const head = fm.head.replace(/\n---\s*$/, `\n${key}: ${val}\n---`);
-              return head + fm.body;
-            }
+            if (re.test(fm.head)) return fm.head.replace(re, line) + fm.body;
+            return fm.head.replace(/\n---\s*$/, `\n${key}: ${val}\n---`) + fm.body;
           }
-
           function getFMTitle(s){
-            const fm = readFM(s);
-            if (!fm) return null;
+            const fm = readFM(s); if (!fm) return null;
             const m = fm.head.match(/\ntitle\s*:\s*(.*)\n/i);
-            if (!m) return null;
-            return m[1].trim().replace(/^["']|["']$/g,'');
+            return m ? m[1].trim().replace(/^["']|["']$/g,'') : null;
           }
 
-          async function main(){
+          async function buildMapsFromWXR(){
             const xmlFiles = walk('import').filter(f => f.endsWith('.xml'));
             if (!xmlFiles.length){
               console.log('[attach] No XML under import/.');
-              return;
+              return { attachById:new Map(), postKeyToThumbId:new Map() };
             }
-
-            // 讀全部 XML，建立：attachments(附件) 與 posts → thumbnailId
-            const attachById = new Map();  // id -> {url, relPath}
-            const postKeyToThumbId = new Map(); // "YYYY-MM-DD|normTitle" -> attachId
-
+            const attachById = new Map();       // id -> {url, relPath}
+            const postKeyToThumbId = new Map(); // "YYYY-MM-DD|normTitle" -> thumbId
             for (const xf of xmlFiles){
               const xml = fs.readFileSync(xf,'utf8');
               const data = await parseStringPromise(xml, { explicitArray:true, mergeAttrs:true });
@@ -116,24 +93,18 @@ jobs:
                 const metas= it['wp:postmeta'] || [];
 
                 if (type === 'attachment'){
-                  const attUrl = stripQuery((it['wp:attachment_url']||[])[0] || (it['guid']||[])[0] || '');
-                  // 相對路徑（年/月/檔案）從 meta _wp_attached_file 取
+                  const url = stripQuery((it['wp:attachment_url']||[])[0] || (it['guid']||[])[0] || '');
                   let rel = null;
                   for (const m of metas){
                     const k = (m['wp:meta_key']||[])[0];
                     const v = (m['wp:meta_value']||[])[0];
-                    if (k === '_wp_attached_file') rel = v;
+                    if (k === '_wp_attached_file') rel = v; // e.g. 2025/10/name.png
                   }
-                  if (!rel && attUrl.includes('/uploads/')) {
-                    rel = attUrl.split('/uploads/')[1];
-                  }
-                  if (id && attUrl) {
-                    attachById.set(String(id), { url: attUrl, relPath: rel });
-                  }
+                  if (!rel && url.includes('/uploads/')) rel = url.split('/uploads/')[1];
+                  if (id && url) attachById.set(String(id), { url, relPath: rel });
                 }
 
                 if (type === 'post'){
-                  // 找 _thumbnail_id
                   let thumbId = null;
                   for (const m of metas){
                     const k = (m['wp:meta_key']||[])[0];
@@ -147,105 +118,57 @@ jobs:
                 }
               }
             }
+            return { attachById, postKeyToThumbId };
+          }
 
-            // 對照本地 _posts
-            const posts = walk('_posts').filter(f => /\.(md|markdown)$/i.test(f));
-            const toFetch = []; // [{url, out}]
+          (async () => {
+            const { attachById, postKeyToThumbId } = await buildMapsFromWXR();
+
+            // 同時處理 .md/.markdown/.html
+            const posts = walk('_posts').filter(f => /\.(md|markdown|html)$/i.test(f));
             let updated = 0, matched = 0, missing = 0;
 
             for (const file of posts){
               const base = path.basename(file);
-              // 檔名日期
-              const m = base.match(/^(\d{4}-\d{2}-\d{2})-/);
-              const d = m ? m[1] : null;
+              const dm = base.match(/^(\d{4}-\d{2}-\d{2})-/);
+              const date = dm ? dm[1] : null;
+              const s0 = fs.readFileSync(file,'utf8');
+              const title = getFMTitle(s0);
 
-              let s = fs.readFileSync(file,'utf8');
-              const t = getFMTitle(s) || '';
+              if (!date || !title){ missing++; continue; }
 
-              if (!d || !t){
-                missing++;
-                continue;
-              }
-
-              const key = `${d}|${normTitle(t)}`;
+              const key = `${date}|${normTitle(title)}`;
               const thumbId = postKeyToThumbId.get(key);
-              if (!thumbId){
-                missing++;
-                continue;
-              }
-              const att = attachById.get(String(thumbId));
-              if (!att){
-                missing++;
-                continue;
-              }
+              const att = thumbId ? attachById.get(String(thumbId)) : null;
+              if (!att){ missing++; continue; }
 
-              // 目標本地路徑
-              const rel = att.relPath ?
-                `assets/uploads/${att.relPath}` :
-                // 從 URL 推：.../uploads/YYYY/MM/name.ext
-                (att.url.includes('/uploads/') ? `assets/uploads/${att.url.split('/uploads/')[1]}` : null);
+              const rel = att.relPath
+                ? `assets/uploads/${att.relPath}`
+                : (att.url.includes('/uploads/') ? `assets/uploads/${att.url.split('/uploads/')[1]}` : null);
+              if (!rel){ missing++; continue; }
 
-              if (!rel){
-                missing++;
-                continue;
-              }
-
-              const outPath = rel.replace(/%2F/gi,'/'); // 容錯
-              const url = stripQuery(att.url);
-              // 寫入 front-matter image
-              const before = s;
-              s = setFMField(s, 'image', '/' + outPath);
-              if (s !== before){
-                fs.writeFileSync(file, s);
+              const imagePath = '/' + rel.replace(/%2F/gi,'/');
+              const s1 = setFMField(s0, 'image', imagePath);
+              if (s1 !== s0){
+                fs.writeFileSync(file, s1);
                 updated++;
               }
-
-              // 需要下載圖片
-              const local = path.join(process.cwd(), outPath);
-              if (!fs.existsSync(local)){
-                fs.mkdirSync(path.dirname(local), { recursive:true });
-                toFetch.push({ url, out: local });
-              }
-
               matched++;
             }
-
-            // 下載清單輸出
-            const lines = toFetch.map(x => `${x.url}|${x.out}`).join('\n');
-            fs.writeFileSync('featured_to_fetch.txt', lines, 'utf8');
-
-            console.log(`[attach] matched posts: ${matched}, updated front-matter: ${updated}, to download: ${toFetch.length}, missing: ${missing}`);
-          }
-
-          main().catch(e => { console.error(e); process.exit(1); });
+            console.log(`[attach] matched=${matched}, updated=${updated}, missing=${missing}`);
+          })().catch(e => { console.error(e); process.exit(1); });
           JS
 
-      - name: Run attach_featured.js (set front-matter + plan downloads)
-        run: |
-          node scripts/attach_featured.js
-          echo "------- to fetch (preview) -------"
-          head -n 20 featured_to_fetch.txt || true
+      - name: Run script
+        run: node scripts/attach_featured.js
 
-      - name: Download featured images
-        run: |
-          if [ -f featured_to_fetch.txt ] && [ -s featured_to_fetch.txt ]; then
-            while IFS="|" read -r url out; do
-              [ -z "$url" ] && continue
-              echo "fetch: $url -> $out"
-              mkdir -p "$(dirname "$out")"
-              curl -L --fail --retry 3 --connect-timeout 10 -o "$out" "$url"
-            done < featured_to_fetch.txt
-          else
-            echo "Nothing to download."
-          fi
-
-      - name: Commit changes
+      - name: Commit & push changes
         run: |
           if [ -n "$(git status --porcelain _posts assets/uploads)" ]; then
             git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add _posts assets/uploads
-            git commit -m "feat: attach featured images from WordPress export"
+            git commit -m "feat: add featured image to front-matter for HTML/MD posts"
             git push
           else
             echo "No changes."
