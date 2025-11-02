@@ -1,4 +1,12 @@
 (function () {
+  // 把正文中「image: /assets/...」這種單獨一行移除（你尚未搬回 Front-Matter 時避免出現）
+  document.querySelectorAll('.post-content p, .post-content div').forEach(p => {
+    const t = (p.textContent || '').trim();
+    if (/^image:\s*\/assets\/uploads\//i.test(t) && p.childElementCount === 0) {
+      p.remove();
+    }
+  });
+
   function extractId(url) {
     try {
       const u = new URL(url);
