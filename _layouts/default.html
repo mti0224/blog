@@ -8,8 +8,9 @@
   <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
   <link rel="stylesheet" href="{{ "/assets/custom.css" | relative_url }}">
 </head>
-<body class="{% if page.url == '/' or page.url == site.baseurl or page.url == '/blog/' %}is-home{% endif %}">
+<body>
 
+  <!-- Header -->
   <header class="wc-header">
     <div class="wc-header-inner">
       <div class="wc-brand">
@@ -30,18 +31,29 @@
     </div>
   </header>
 
+  <!-- 主要內容 -->
   <main class="wc-main">
     <article id="post-content" class="wc-prose">
       {{ content }}
     </article>
   </main>
 
+  <!-- JS（以 RAW 包起來，避免 Liquid 干擾） -->
+  {% raw %}
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    (function () {
+      // 在前端決定首頁：避免在 Liquid 內做複雜條件
+      try {
+        var p = location.pathname.replace(/index\.html$/,'');
+        if (p === '/' || p === '/blog/' || p === '{{ site.baseurl }}/') {
+          document.body.classList.add('is-home');
+        }
+      } catch (e) {}
+
       var wrap = document.getElementById('post-content');
       if (!wrap) return;
 
-      /* 1) 剔除混入內容的 front-matter 區塊（--- layout: post ... ---） */
+      // A) 剔除混入內容的 front-matter 區塊（--- layout: post ... ---）
       try {
         var html = wrap.innerHTML;
         var start = html.search(/---\s*layout\s*:\s*post/i);
@@ -55,11 +67,11 @@
         }
       } catch (e) {}
 
-      /* 2) 移除文章內、Header 下方的「回首頁/站名」連結（只清內容區） */
+      // B) 移除文章內「回首頁/站名」連結（只清內容區）
       try {
         var siteName = '蚯蚓貓的資工人生';
         var homeUrls = ['/', '/blog/', location.origin + '/', location.origin + '/blog/'];
-        wrap.querySelectorAll('a').forEach(function(a){
+        [].forEach.call(wrap.querySelectorAll('a'), function(a){
           var txt = (a.textContent || '').trim();
           var href = (a.getAttribute('href') || '').trim();
           if (homeUrls.indexOf(href) >= 0 || txt === siteName) {
@@ -70,20 +82,20 @@
         });
       } catch (e) {}
 
-      /* 3) 清掉 WP 匯出時常見的雜訊鍵（保守地只清這幾個前綴） */
+      // C) 清除常見 WP 雜訊鍵
       try {
-        var noiseKeys = [
+        var noise = [
           /^_oembed_/i, /^firehose_sent:/i, /^timeline_notification:/i,
           /^_publicize_job_id:/i, /^_publicize_shares:/i,
           /^_elasticsearch_data_sharing_indexed_on:/i, /^permalink:/i
         ];
-        wrap.querySelectorAll('p').forEach(function(p){
+        [].forEach.call(wrap.querySelectorAll('p'), function(p){
           var t = (p.textContent || '').trim();
-          if (noiseKeys.some(function(rx){ return rx.test(t); })) { p.style.display = 'none'; }
+          if (noise.some(function(rx){ return rx.test(t); })) p.style.display = 'none';
         });
       } catch (e) {}
 
-      /* 4) 指定「減礦量」表格縮 40%（保留） */
+      // D) 「下表是為各種減礦時的礦物量」下一個表格/圖片縮為 40%
       try {
         var keys = ['下表是為各種減礦時的礦物量','下表為各種減礦時的礦物量'];
         var paras = wrap.querySelectorAll('p');
@@ -99,8 +111,9 @@
           }
         }
       } catch (e) {}
-    });
+    })();
   </script>
+  {% endraw %}
 
   <script src="{{ "/assets/yt-embed.js" | relative_url }}"></script>
 </body>
