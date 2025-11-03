@@ -8,19 +8,18 @@
   <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
   <link rel="stylesheet" href="{{ "/assets/custom.css" | relative_url }}">
 
-  <!-- 文章 Hero 區塊的極簡樣式 -->
   <style>
-    .wc-article-hero{margin:0 0 1.25rem 0;padding:0}
-    .wc-article-title{font-size:clamp(28px,4vw,42px);line-height:1.2;margin:0 0 .75rem 0;font-weight:800}
-    .wc-hero-figure{margin:0 0 1.25rem 0}
-    .wc-hero-figure>img{display:block;width:100%;height:auto;border-radius:12px}
-    /* 讓首頁有較寬的主欄 */
+    /* 置中主欄並拉寬首頁 */
+    .wc-main{max-width:980px;margin:0 auto;padding:0 16px}
     body.is-home .wc-main{max-width:1200px}
+    /* 文章頁 Hero */
+    .wc-article-hero{margin:0 0 20px 0}
+    .wc-article-title{font-size:clamp(28px,4vw,42px);line-height:1.2;margin:0 0 12px;font-weight:800}
+    .wc-hero-figure{margin:0}
+    .wc-hero-figure img{display:block;width:100%;height:auto;border-radius:12px}
   </style>
 </head>
 <body>
-
-  <!-- Header -->
   <header class="wc-header">
     <div class="wc-header-inner">
       <div class="wc-brand">
@@ -41,134 +40,166 @@
     </div>
   </header>
 
-  <!-- 內容 -->
   <main class="wc-main">
     <article id="post-content" class="wc-prose">
       {{ content }}
     </article>
   </main>
 
-  <!-- 把 baseurl 傳給 JS（不可包 raw） -->
-  <script>
-    window.__BASEURL__ = "{{ site.baseurl | default: '' }}"; // 例如 "/blog"
-  </script>
+  <!-- 提供 baseurl 給 JS -->
+  <script>window.__BASEURL__="{{ site.baseurl | default: '' }}";</script>
 
   {% raw %}
   <script>
-  (function () {
-    // 判斷首頁（控制首頁格線寬度等）
+  (function(){
+    // 判斷首頁（控制寬度樣式）
     try {
       var p = location.pathname.replace(/index\.html$/,'');
       if (p === '/' || p.endsWith('/blog/')) document.body.classList.add('is-home');
-    } catch (e) {}
+    } catch(e){}
 
     var wrap = document.getElementById('post-content');
-    if (!wrap) return;
+    if(!wrap) return;
 
-    // ===== Step 0：抓「原始內容」做 metadata 解析（避免之後清掉找不到） =====
-    var rawHTML = wrap.innerHTML;
+    // 工具
+    function addBase(u){
+      if(!u) return '';
+      if(/^https?:\/\//i.test(u)) return u;
+      if(u.charAt(0)!=='/') u='/'+u;
+      return (window.__BASEURL__||'')+u;
+    }
+    function fixUploadToLocal(u){
+      if(!u) return '';
+      var m = u.match(/\/wp-content\/uploads(\/.+)$/);
+      if(m) return addBase('/assets/uploads'+m[1]);
+      return addBase(u);
+    }
+    function fetchMap(cb){
+      var url = addBase('/assets/featured-map.json');
+      fetch(url).then(r=>r.json()).then(cb).catch(function(){cb(null)});
+    }
     function pick(re, src){
       var m = re.exec(src);
-      return m && m[1] ? m[1].trim() : '';
+      return m && m[1] ? (m[1]+'').trim() : '';
     }
 
-    // 標題優先：posttitle: > title: > 內文第一個 <h1> > 檔名替代
+    // 先用原始 HTML 解析 metadata（避免清理過就抓不到）
+    var rawHTML = wrap.innerHTML;
     var metaTitle =
       pick(/posttitle:\s*["']?([^"\n\r']+)["']?/i, rawHTML) ||
-      pick(/title:\s*["']?([^"\n\r']+)["']?/i, rawHTML)   || '';
+      pick(/title:\s*["']?([^"\n\r']+)["']?/i, rawHTML) || '';
+    var featuredLine = pick(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i, rawHTML);
+    var thumbId = pick(/_thumbnail_id:\s*["']?(\d+)["']?/i, rawHTML);
 
-    // 精選圖優先：image: 路徑（支援引號/無引號、相對/絕對）
-    var featured =
-      pick(/image:\s*["']?([^\s"'<>\)]+?\.(?:png|jpe?g|webp|gif))["']?/i, rawHTML) || '';
-
-    // ===== Step 1：清掉混入的 front-matter 區塊（--- layout: post ... ---） =====
-    try {
+    // 清掉混入的 front-matter 區塊
+    try{
       var html = wrap.innerHTML;
-      var start = html.search(/---\s*layout\s*:\s*post/i);
-      if (start < 0) start = html.search(/layout\s*:\s*post/i);
-      if (start >= 0) {
-        var cutStart = html.lastIndexOf('---', start);
-        if (cutStart < 0) cutStart = start;
-        var cutEnd = html.indexOf('---', start + 3);
-        if (cutEnd > cutStart) html = html.slice(0, cutStart) + html.slice(cutEnd + 3);
+      var s = html.search(/---\s*layout\s*:\s*post/i);
+      if(s<0) s = html.search(/layout\s*:\s*post/i);
+      if(s>=0){
+        var a = html.lastIndexOf('---', s); if(a<0) a=s;
+        var b = html.indexOf('---', s+3);
+        if(b>a) html = html.slice(0,a)+html.slice(b+3);
         wrap.innerHTML = html;
       }
-    } catch (e) {}
+    }catch(e){}
 
-    // ===== Step 2：清常見 WP 雜訊鍵（但含媒體的段落只清字、不隱藏） =====
-    try {
-      var noiseLine = /(^|\s)(_oembed_[^\n<]+|firehose_sent:[^\n<]+|timeline_notification:[^\n<]+|_publicize_job_id:[^\n<]+|_publicize_shares:[^\n<]+|_elasticsearch_data_sharing_indexed_on:[^\n<]+|permalink:[^\n<]+)/gi;
-      Array.prototype.forEach.call(wrap.querySelectorAll('p'), function(p){
-        var hasMedia = p.querySelector('img,iframe,video');
-        var t = (p.textContent || '').trim();
-        if (!t) return;
-        if (hasMedia) {
-          p.innerHTML = p.innerHTML.replace(noiseLine, '');
-        } else if (/_oembed_|firehose_sent:|timeline_notification:|_publicize_job_id:|_publicize_shares:|_elasticsearch_data_sharing_indexed_on:|^permalink:/i.test(t)) {
-          p.style.display = 'none';
+    // 清雜訊（含媒體只清字、不隱藏）
+    try{
+      var noise=/(^|\s)(_oembed_[^\n<]+|firehose_sent:[^\n<]+|timeline_notification:[^\n<]+|_publicize_job_id:[^\n<]+|_publicize_shares:[^\n<]+|_elasticsearch_data_sharing_indexed_on:[^\n<]+|permalink:[^\n<]+)/gi;
+      [].forEach.call(wrap.querySelectorAll('p'),function(p){
+        var media=p.querySelector('img,iframe,video');
+        var t=(p.textContent||'').trim();
+        if(!t) return;
+        if(media){ p.innerHTML=p.innerHTML.replace(noise,''); }
+        else if(/_oembed_|firehose_sent:|timeline_notification:|_publicize_job_id:|_publicize_shares:|_elasticsearch_data_sharing_indexed_on:|^permalink:/i.test(t)){
+          p.style.display='none';
         }
       });
-    } catch (e) {}
+    }catch(e){}
 
-    // ===== Step 3：在文首插入「Hero：標題 + 精選圖」 =====
-    try {
-      // 若沒有從 metadata 取到，再嘗試內文第一個 <h1>
-      if (!metaTitle) {
-        var h1 = wrap.querySelector('h1');
-        if (h1) metaTitle = (h1.textContent || '').trim();
+    // 文章頁：文首插入 Hero（標題 + 精選圖）
+    (function(){
+      // 若沒拿到，再退到第一個 H1
+      if(!metaTitle){
+        var h1=wrap.querySelector('h1');
+        if(h1) metaTitle=(h1.textContent||'').trim();
       }
-
-      // 建立 Hero 區塊（只要有標題或精選圖其中之一就建立）
-      if (metaTitle || featured) {
-        var hero = document.createElement('section');
-        hero.className = 'wc-article-hero';
-
-        if (metaTitle) {
-          var h1El = document.createElement('h1');
-          h1El.className = 'wc-article-title';
-          h1El.textContent = metaTitle;
-          hero.appendChild(h1El);
+      // 先建立 hero（有任一就建立）
+      if(metaTitle || featuredLine || thumbId){
+        var hero=document.createElement('section');
+        hero.className='wc-article-hero';
+        if(metaTitle){
+          var h=document.createElement('h1');
+          h.className='wc-article-title';
+          h.textContent=metaTitle;
+          hero.appendChild(h);
         }
-
-        // 轉成可用的 src（相對路徑要補 baseurl）
-        if (featured) {
-          var src = featured;
-          if (!/^https?:\/\//i.test(src)) {
-            if (src.charAt(0) !== '/') src = '/' + src;
-            if (window.__BASEURL__ && src.indexOf(window.__BASEURL__ + '/') !== 0) {
-              src = window.__BASEURL__ + src;
-            }
-          }
-          var fig = document.createElement('figure');
-          fig.className = 'wc-hero-figure';
-          var img = document.createElement('img');
-          img.src = src;
-          img.alt = metaTitle || '';
-          fig.appendChild(img);
-          hero.appendChild(fig);
-        }
-
-        // 插到文章最前
+        var fig=document.createElement('figure');
+        fig.className='wc-hero-figure';
+        hero.appendChild(fig);
         wrap.insertBefore(hero, wrap.firstChild);
-      }
-    } catch (e) {}
 
-    // ===== Step 4：「下表是為各種減礦時的礦物量」→ 下一個元素縮 40% =====
-    try {
-      var keys = ['下表是為各種減礦時的礦物量','下表為各種減礦時的礦物量'];
-      var paras = wrap.querySelectorAll('p');
-      for (var i = 0; i < paras.length; i++) {
-        var t = (paras[i].innerText || '').trim();
-        if (keys.some(function(k){ return t.indexOf(k) === 0; })) {
-          var sib = paras[i].nextElementSibling, inner = sib;
-          if (!sib) break;
-          if (sib.tagName === 'FIGURE' && sib.querySelector('img')) inner = sib.querySelector('img');
-          if (sib.tagName === 'P') inner = sib.querySelector('img') || sib.querySelector('table') || sib;
-          if (inner) inner.classList.add('shrink-40');
+        // 1) 若 image: 已有 → 直接用（也會自動轉成本地 /assets/uploads）
+        if(featuredLine){
+          var img=document.createElement('img');
+          img.src=fixUploadToLocal(featuredLine);
+          img.alt=metaTitle||'';
+          fig.appendChild(img);
+        }
+        // 2) 若沒有 image: 但有 _thumbnail_id → 查對照表
+        else if(thumbId){
+          fetchMap(function(map){
+            if(!map) return;
+            var local=map[thumbId];
+            if(!local) return;
+            // 若此時還沒有圖再插入
+            if(!fig.querySelector('img')){
+              var img=document.createElement('img');
+              img.src=addBase(local);
+              img.alt=metaTitle||'';
+              fig.appendChild(img);
+            }
+          });
+        }
+      }
+    })();
+
+    // 特定表格縮 40%
+    try{
+      var keys=['下表是為各種減礦時的礦物量','下表為各種減礦時的礦物量'];
+      var ps=wrap.querySelectorAll('p');
+      for(var i=0;i<ps.length;i++){
+        var t=(ps[i].innerText||'').trim();
+        if(keys.some(function(k){return t.indexOf(k)===0;})){
+          var sib=ps[i].nextElementSibling, inner=sib;
+          if(!sib) break;
+          if(sib.tagName==='FIGURE'&&sib.querySelector('img')) inner=sib.querySelector('img');
+          if(sib.tagName==='P') inner=sib.querySelector('img')||sib.querySelector('table')||sib;
+          if(inner) inner.classList.add('shrink-40');
           break;
         }
       }
-    } catch (e) {}
+    }catch(e){}
+
+    // 首頁卡片：用 data-thumb-id → featured-map.json 替換縮圖
+    if(document.body.classList.contains('is-home')){
+      var cards=[].slice.call(document.querySelectorAll('.card[data-thumb-id]'));
+      var need=cards.filter(function(c){return c.getAttribute('data-thumb-id');});
+      if(need.length){
+        fetchMap(function(map){
+          if(!map) return;
+          need.forEach(function(c){
+            var id=c.getAttribute('data-thumb-id');
+            var local=map[id];
+            if(local){
+              var img=c.querySelector('.card-thumb img');
+              if(img) img.src=addBase(local);
+            }
+          });
+        });
+      }
+    }
   })();
   </script>
   {% endraw %}
