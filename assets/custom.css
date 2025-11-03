@@ -1,137 +1,126 @@
-/* -------- Base -------- */
+/* ========== 基礎 ========== */
 :root{
-  --bg:#0b0c10;         /* 背景底色（深） */
-  --paper:#ffffff;      /* 卡片/文章底色（淺） */
-  --fg:#111827;         /* 主要文字 */
-  --muted:#6b7280;      /* 次要文字 */
-  --brand:#111827;      /* 標題/品牌色 */
-  --line:#e5e7eb;       /* 邊框色 */
+  --container: 1120px;          /* 版心寬 */
+  --content: 880px;             /* 文章內容寬（圖片與文字等寬）*/
+  --radius: 14px;
+  --gap: 16px;
+  --card-bg: #111318;
+  --card-bd: #232732;
+  --muted: #8b93a7;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
-  background:#fafafa;
-  color:var(--fg);
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Noto Sans,Apple Color Emoji,Segoe UI Emoji;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Helvetica Neue", Arial, "Hiragino Sans", "Microsoft JhengHei", sans-serif;
+  line-height:1.75;
+  color:#e6e9ef;
+  background:#0b0d12;
 }
-a{color:inherit;text-decoration:none}
-img{max-width:100%;height:auto}
 
-/* -------- Layout -------- */
-.container{max-width:1120px;margin:0 auto;padding:20px}
+/* 版心與頂欄 */
+.container{max-width:var(--container);margin:0 auto;padding:0 16px;}
 .site-topbar{
   position:sticky;top:0;z-index:50;
-  background:#fff;border-bottom:1px solid var(--line);
+  background:#0e1117cc; backdrop-filter: blur(6px);
+  border-bottom:1px solid #1f2230;
 }
-.site-topbar .brand{font-weight:800;color:var(--brand);font-size:20px}
-.site-topbar .nav a{margin-left:18px;color:#111;font-weight:600}
-.flex-between{display:flex;align-items:center;justify-content:space-between}
+.site-topbar .brand{color:#fff;text-decoration:none;font-weight:700}
+.site-topbar .nav a{color:#c7cbe0;text-decoration:none;margin-left:16px}
+.site-topbar .nav a:hover{color:#fff}
 
-/* -------- Home: Card Grid -------- */
+/* ========== 首頁：精選 Banner ========== */
+.featured{
+  display:grid;grid-template-columns:2fr 1fr;gap:16px;margin:24px 0 32px;
+}
+.featured .big, .featured .sm{
+  position:relative;overflow:hidden;border-radius:var(--radius);
+  background:#151821;border:1px solid var(--card-bd);
+}
+.featured .big .img, .featured .sm .img{
+  width:100%;aspect-ratio:16/9;object-fit:cover;display:block;
+  filter:saturate(1.02);
+}
+.featured .label{
+  position:absolute;left:12px;top:12px;
+  background:#0ea5e9cc;color:#fff;padding:4px 8px;border-radius:999px;font-size:12px
+}
+.featured .meta{
+  position:absolute;left:0;right:0;bottom:0;
+  padding:14px 16px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.6));
+}
+.featured h3{margin:0;font-size:20px;line-height:1.35}
+.featured h3 a{color:#fff;text-decoration:none}
+.featured .date{margin-top:4px;color:#c5cbe3;font-size:13px}
+.featured .col{
+  display:grid;grid-template-rows:1fr 1fr;gap:16px;
+}
+
+/* ========== 首頁：文章卡片 ========== */
 .post-grid{
-  display:grid;gap:22px;
-  grid-template-columns:repeat(3,minmax(0,1fr));
+  display:grid;gap:16px;
+  grid-template-columns:repeat(3,1fr);
 }
 @media (max-width: 980px){ .post-grid{grid-template-columns:repeat(2,1fr)} }
 @media (max-width: 640px){ .post-grid{grid-template-columns:1fr} }
 
 .card{
-  display:block;overflow:hidden;border:1px solid var(--line);
-  border-radius:14px;background:#fff;transition:transform .12s ease, box-shadow .12s ease;
+  display:flex;flex-direction:column;
+  border:1px solid var(--card-bd);background:var(--card-bg);
+  border-radius:var(--radius);overflow:hidden;text-decoration:none;color:inherit;
+  transition:transform .15s ease, box-shadow .15s ease;
 }
-.card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.06)}
-.card-img{
-  background:#111;display:flex;align-items:center;justify-content:center;
-  aspect-ratio:16/9; /* 固定比例 */
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.card-img{background:#0f1117;display:block}
+.card-img .img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.card-img .noimg{
+  width:100%;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;
+  color:#6f7791;font-size:13px;background:#0f121a
 }
-.card-img img{width:100%;height:100%;object-fit:cover}
-.noimg{color:#9ca3af;font-size:14px}
-.card-body{padding:12px 14px}
-.card-title{
-  font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
+.card-body{padding:12px 14px 14px}
+.card-title{font-weight:700;line-height:1.35;font-size:16px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card-meta{margin-top:6px;font-size:12px;color:var(--muted)}
+.card-excerpt{margin-top:8px;color:#c7cde3;font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
-/* -------- Post -------- */
-.post-header{margin-bottom:14px}
-.post-title{font-size:28px;line-height:1.25;font-weight:800;margin:6px 0}
-.post-meta{color:var(--muted);font-size:14px;margin-top:2px}
-.post-hero{margin:14px 0 18px}
-.post-hero img{border-radius:10px;border:1px solid var(--line);background:#fff}
-.post-content{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px}
-.post-content img{border-radius:8px}
+/* ========== 文章頁 ========== */
+.post-header{padding:24px 0 12px;border-bottom:1px solid #1b1e2a;margin-bottom:16px}
+.post-title{margin:0 0 10px 0;font-size:28px;line-height:1.25}
+.post-meta{color:var(--muted);font-size:14px}
+.post-hero{margin:18px 0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--card-bd);background:#0f1218}
+.post-hero img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover}
 
-/* WP 轉出區塊的基本間距微調 */
-.post-content figure{margin:16px 0}
-.post-content .wp-block-embed, .post-content figure.wp-block-embed{margin:16px 0}
+/* 文章內容包一層，讓圖片與文字等寬、置中 */
+.post-inner{max-width:var(--content);margin:0 auto}
+.post-content{font-size:16px;color:#e6e9ef}
+.post-content p{margin:1em 0}
 
-/* -------- YouTube 16:9 wrapper（給 yt-embed.js） -------- */
-.yt-16x9{position:relative;width:100%;padding-top:56.25%;margin:16px 0}
-.yt-16x9 > iframe{position:absolute;inset:0;width:100%;height:100%}
-
-/* -------- Misc -------- */
-.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
-.tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:.1rem .5rem;border-radius:999px;background:#fff}
-
-/* ====== 統一文章內容寬度 & 置中 ====== */
-/* 想調整文章內容與圖片的固定寬度，在這裡改即可 */
-:root { --post-content-width: 760px; }
-
-/* 包住標題、首圖、內文的軌道（統一寬度 & 置中） */
-.post-rail{
-  max-width: var(--post-content-width);
-  margin-left: auto;
-  margin-right: auto;
+/* 讓所有圖片、figure、oEmbed 影片「滿版佔滿內容寬」並置中 */
+.post-content figure{margin:18px auto;border-radius:12px;overflow:hidden}
+.post-content img{
+  display:block;width:100%;height:auto;margin:0 auto;border-radius:12px;
 }
-
-/* 讓標題與中繼資訊也跟著置中（可保留或移除） */
-.post-header, .post-title, .post-meta { text-align: center; }
-
-/* 文章內容盒：同寬、置中 */
-.post-hero, .post-content{
-  max-width: var(--post-content-width);
-  margin-left: auto;
-  margin-right: auto;
+.post-content iframe{
+  display:block;width:100%;aspect-ratio:16/9;height:auto;border:0;border-radius:12px;background:#000
 }
+.post-content .wp-block-embed,
+.post-content .embed-youtube,
+.post-content .wp-block-image{max-width:100%;margin:18px auto}
 
-/* 所有圖片滿版充滿內容寬度、維持比例、置中 */
-.post-content img,
-.post-hero img,
-.post-content figure img{
-  display: block;
-  width: 100% !important;      /* 蓋掉 WP 內嵌 style="width:700px" 之類 */
-  height: auto !important;
-  margin: 0 auto;
+/* 引用、表格等基本排版 */
+.post-content blockquote{
+  margin:16px auto;padding:12px 16px;border-left:4px solid #3b82f6;background:#0f1320;border-radius:8px
 }
+.post-content table{width:100%;border-collapse:collapse;margin:16px 0;font-size:15px}
+.post-content th, .post-content td{border:1px solid #2a2f3f;padding:8px 10px}
+.post-content a{color:#7cc5ff;text-decoration:underline}
+.post-content a:hover{color:#a9dcff}
 
-/* figure 與 WP 區塊統一置中、同寬 */
-.post-content figure,
-.post-content .wp-block-image,
-.post-content .alignwide,
-.post-content .alignfull{
-  max-width: var(--post-content-width) !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+/* 底部留白 */
+main.container{padding-bottom:56px}
+
+/* 小螢幕：版心邊距不要貼齊 */
+@media (max-width: 480px){
+  .container{padding:0 14px}
+  .post-title{font-size:24px}
+  .featured{grid-template-columns:1fr}
+  .featured .col{grid-template-rows:auto}
 }
-
-/* 讓一般段落、清單與表格也沿用同寬（避免貼上時外擴） */
-.post-content > p,
-.post-content > ul,
-.post-content > ol,
-.post-content > table,
-.post-content > blockquote,
-.post-content > div{
-  max-width: var(--post-content-width);
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* 表格溢出時可橫向捲動 */
-.post-content table{ width: 100%; border-collapse: collapse; }
-.post-content .table-wrap{ overflow-x: auto; }
-
-/* YouTube 16:9 外框（你已有 yt-embed.js，這裡只確保同寬） */
-.yt-16x9{ max-width: var(--post-content-width); margin-left:auto; margin-right:auto; }
-
