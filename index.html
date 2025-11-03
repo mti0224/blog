@@ -6,12 +6,10 @@ title: 蚯蚓貓的資工人生
 <div class="home">
   {% assign posts_all = site.posts | sort: "date" | reverse %}
 
-  <!-- 區段：最新精選 -->
   <section class="section">
     <h2 class="h2">最新精選</h2>
     <div class="card-grid">
       {% for post in posts_all limit:3 %}
-        {%- comment -%} 標題：posttitle: > title: > 檔名 {%- endcomment -%}
         {% assign title_txt = post.title %}
         {% if title_txt == nil or title_txt == "" %}
           {% assign t0 = post.content | split: "posttitle:" %}
@@ -29,15 +27,10 @@ title: 蚯蚓貓的資工人生
         {% endif %}
         {% if title_txt == nil or title_txt == "" %}{% assign title_txt = post.name %}{% endif %}
 
-        {%- comment -%} 摘要：取第二個 --- 之後的內容 {%- endcomment -%}
         {% assign parts = post.content | split: "---" %}
-        {% if parts.size >= 3 %}
-          {% assign body_html = parts[2] %}
-        {% else %}
-          {% assign body_html = post.content %}
-        {% endif %}
+        {% if parts.size >= 3 %}{% assign body_html = parts[2] %}{% else %}{% assign body_html = post.content %}{% endif %}
 
-        {%- comment -%} 精選圖：優先抓 image: 路徑，否則抓第一張 <img> {%- endcomment -%}
+        {# 取 image: 作為初始縮圖；真正精選圖會由前端用 data-thumb-id 替換 #}
         {% assign thumb = "" %}
         {% assign im0 = post.content | split: " image:" %}
         {% if im0.size > 1 %}
@@ -67,7 +60,6 @@ title: 蚯蚓貓的資工人生
           {% endif %}
         {% endif %}
 
-        {% comment %} 驗證副檔名 {%- endcomment -%}
         {% assign thumb_ok = 'no' %}
         {% if thumb != "" %}
           {% if thumb contains ".png" or thumb contains ".jpg" or thumb contains ".jpeg" or thumb contains ".webp" or thumb contains ".gif" %}
@@ -75,22 +67,18 @@ title: 蚯蚓貓的資工人生
           {% endif %}
         {% endif %}
 
-        {% comment %} 避免 /blog/blog/：若 thumb 已含 baseurl 前綴，直接輸出 {% endcomment %}
-        {% assign base = site.baseurl | default: "" %}
-        {% assign base_slash = base | append: "/" %}
-        {% assign bsize = base_slash | size %}
-        {% if thumb %}
-          {% assign prefix = thumb | slice: 0, bsize %}
+        {# 從內容抓 _thumbnail_id，作為前端替換用 #}
+        {% assign thumb_id = "" %}
+        {% assign tid0 = post.content | split: "_thumbnail_id:" %}
+        {% if tid0.size > 1 %}
+          {% assign tid1 = tid0[1] | split: "\n" | first | strip %}
+          {% assign thumb_id = tid1 | replace: '"', "" | replace: "'", "" | replace: ",", "" | strip %}
         {% endif %}
 
-        <article class="card">
+        <article class="card" data-thumb-id="{{ thumb_id }}">
           <a class="card-thumb" href="{{ post.url | relative_url }}">
             {% if thumb_ok == 'yes' %}
-              {% if thumb contains '://' or prefix == base_slash %}
-                <img src="{{ thumb }}" alt="{{ title_txt | escape }}">
-              {% else %}
-                <img src="{{ thumb | relative_url }}" alt="{{ title_txt | escape }}">
-              {% endif %}
+              <img src="{{ thumb | relative_url }}" alt="{{ title_txt | escape }}">
             {% else %}
               <div class="thumb-fallback">No Image</div>
             {% endif %}
@@ -105,7 +93,6 @@ title: 蚯蚓貓的資工人生
     </div>
   </section>
 
-  <!-- 區段：所有文章 -->
   <section class="section">
     <h2 class="h2">所有文章</h2>
     <div class="card-grid">
@@ -128,11 +115,7 @@ title: 蚯蚓貓的資工人生
         {% if title_txt == nil or title_txt == "" %}{% assign title_txt = post.name %}{% endif %}
 
         {% assign parts = post.content | split: "---" %}
-        {% if parts.size >= 3 %}
-          {% assign body_html = parts[2] %}
-        {% else %}
-          {% assign body_html = post.content %}
-        {% endif %}
+        {% if parts.size >= 3 %}{% assign body_html = parts[2] %}{% else %}{% assign body_html = post.content %}{% endif %}
 
         {% assign thumb = "" %}
         {% assign im0 = post.content | split: " image:" %}
@@ -170,21 +153,17 @@ title: 蚯蚓貓的資工人生
           {% endif %}
         {% endif %}
 
-        {% assign base = site.baseurl | default: "" %}
-        {% assign base_slash = base | append: "/" %}
-        {% assign bsize = base_slash | size %}
-        {% if thumb %}
-          {% assign prefix = thumb | slice: 0, bsize %}
+        {% assign thumb_id = "" %}
+        {% assign tid0 = post.content | split: "_thumbnail_id:" %}
+        {% if tid0.size > 1 %}
+          {% assign tid1 = tid0[1] | split: "\n" | first | strip %}
+          {% assign thumb_id = tid1 | replace: '"', "" | replace: "'", "" | replace: ",", "" | strip %}
         {% endif %}
 
-        <article class="card">
+        <article class="card" data-thumb-id="{{ thumb_id }}">
           <a class="card-thumb" href="{{ post.url | relative_url }}">
             {% if thumb_ok == 'yes' %}
-              {% if thumb contains '://' or prefix == base_slash %}
-                <img src="{{ thumb }}" alt="{{ title_txt | escape }}">
-              {% else %}
-                <img src="{{ thumb | relative_url }}" alt="{{ title_txt | escape }}">
-              {% endif %}
+              <img src="{{ thumb | relative_url }}" alt="{{ title_txt | escape }}">
             {% else %}
               <div class="thumb-fallback">No Image</div>
             {% endif %}
