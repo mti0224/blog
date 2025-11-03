@@ -15,23 +15,30 @@ layout: default
 <main class="container">
 
   <article class="post-inner">
-    <header class="post-header">
-      <h1 class="post-title">{{ page.title }}</h1>
-      <div class="post-meta">
-        <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%Y-%m-%d" }}</time>
-        {%- if page.tags and page.tags.size > 0 -%}
-          · 標籤：
-          {%- for t in page.tags -%}
-            {{ t }}{%- if forloop.last == false -%}, {% endif -%}
-          {%- endfor -%}
-        {%- endif -%}
-      </div>
-      {%- if page.image -%}
-        <div class="post-hero">
-          <img src="{{ site.baseurl }}{{ page.image }}" alt="{{ page.title | escape }}">
-        </div>
-      {%- endif -%}
-    </header>
+<header class="post-header">
+  <h1 class="post-title">{{ page.title }}</h1>
+  <div class="post-meta">
+    <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%Y-%m-%d" }}</time>
+    {% if page.tags and page.tags.size > 0 %}· 標籤：{{ page.tags | join: ", " }}{% endif %}
+  </div>
+
+  {%- comment -%}
+    決定 hero 圖：featured_image > image > thumbnail
+  {%- endcomment -%}
+  {%- assign hero = page.featured_image | default: page.image | default: page.thumbnail -%}
+
+  {%- if hero and hero != "" -%}
+    {%- if hero contains '://' -%}
+      {%- assign hero_url = hero -%}
+    {%- else -%}
+      {%- assign hero_url = hero | prepend: site.baseurl -%} {# baseurl 通常是 /blog #}
+    {%- endif -%}
+    <div class="post-hero">
+      <img src="{{ hero_url }}" alt="{{ page.title }}" loading="lazy">
+    </div>
+  {%- endif -%}
+</header>
+
 
     <div class="post-content">
       {{ content }}
