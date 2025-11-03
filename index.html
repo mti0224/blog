@@ -11,9 +11,18 @@ title: 蚯蚓貓的資工人生
     <h2 class="h2">最新精選</h2>
     <div class="card-grid">
       {% for post in posts_all limit:3 %}
-        {% assign title_txt = post.title | default: post.name %}
+        {% comment %} 標題：front-matter；若無則從內容中的 title: 行抽取；再無才用檔名 {% endcomment %}
+        {% assign title_txt = post.title %}
+        {% if title_txt == nil or title_txt == "" %}
+          {% assign t1 = post.content | split: "title:" %}
+          {% if t1.size > 1 %}
+            {% assign t2 = t1[1] | split: "date:" | first %}
+            {% assign title_txt = t2 | replace: '"', "" | replace: "'", "" | strip %}
+          {% endif %}
+        {% endif %}
+        {% if title_txt == nil or title_txt == "" %}{% assign title_txt = post.name %}{% endif %}
 
-        {%- comment -%} 摘要：取第二個 --- 之後的內容 {%- endcomment -%}
+        {% comment %} 摘要：取第二個 --- 之後的內容 {% endcomment %}
         {% assign parts = post.content | split: "---" %}
         {% if parts.size >= 3 %}
           {% assign body_html = parts[2] %}
@@ -21,7 +30,7 @@ title: 蚯蚓貓的資工人生
           {% assign body_html = post.content %}
         {% endif %}
 
-        {%- comment -%} 縮圖：只抓第一張 <img> {%- endcomment -%}
+        {% comment %} 縮圖：只抓第一張 <img>，避免抓到 permalink 等錯誤路徑 {% endcomment %}
         {% assign thumb = "" %}
         {% assign spl = post.content | split: "<img " %}
         {% if spl.size > 1 %}
@@ -39,17 +48,22 @@ title: 蚯蚓貓的資工人生
 
         {% assign thumb_ok = 'no' %}
         {% if thumb != "" %}
-          {% if thumb contains ".png" %}{% assign thumb_ok = 'yes' %}{% endif %}
-          {% if thumb_ok == 'no' and thumb contains ".jpg" %}{% assign thumb_ok = 'yes' %}{% endif %}
-          {% if thumb_ok == 'no' and thumb contains ".jpeg" %}{% assign thumb_ok = 'yes' %}{% endif %}
-          {% if thumb_ok == 'no' and thumb contains ".webp" %}{% assign thumb_ok = 'yes' %}{% endif %}
-          {% if thumb_ok == 'no' and thumb contains ".gif" %}{% assign thumb_ok = 'yes' %}{% endif %}
+          {% if thumb contains ".png" or thumb contains ".jpg" or thumb contains ".jpeg" or thumb contains ".webp" or thumb contains ".gif" %}
+            {% assign thumb_ok = 'yes' %}
+          {% endif %}
+        {% endif %}
+
+        {% assign base = site.baseurl | default: "" %}
+        {% assign base_slash = base | append: "/" %}
+        {% assign bsize = base_slash | size %}
+        {% if thumb %}
+          {% assign prefix = thumb | slice: 0, bsize %}
         {% endif %}
 
         <article class="card">
           <a class="card-thumb" href="{{ post.url | relative_url }}">
             {% if thumb_ok == 'yes' %}
-              {% if thumb contains "://" %}
+              {% if thumb contains '://' or prefix == base_slash %}
                 <img src="{{ thumb }}" alt="{{ title_txt | escape }}">
               {% else %}
                 <img src="{{ thumb | relative_url }}" alt="{{ title_txt | escape }}">
@@ -73,7 +87,15 @@ title: 蚯蚓貓的資工人生
     <h2 class="h2">所有文章</h2>
     <div class="card-grid">
       {% for post in posts_all offset:3 limit:30 %}
-        {% assign title_txt = post.title | default: post.name %}
+        {% assign title_txt = post.title %}
+        {% if title_txt == nil or title_txt == "" %}
+          {% assign t1 = post.content | split: "title:" %}
+          {% if t1.size > 1 %}
+            {% assign t2 = t1[1] | split: "date:" | first %}
+            {% assign title_txt = t2 | replace: '"', "" | replace: "'", "" | strip %}
+          {% endif %}
+        {% endif %}
+        {% if title_txt == nil or title_txt == "" %}{% assign title_txt = post.name %}{% endif %}
 
         {% assign parts = post.content | split: "---" %}
         {% if parts.size >= 3 %}
@@ -99,17 +121,22 @@ title: 蚯蚓貓的資工人生
 
         {% assign thumb_ok = 'no' %}
         {% if thumb != "" %}
-          {% if thumb contains ".png" %}{% assign thumb_ok = 'yes' %}{% endif %}
-          {% if thumb_ok == 'no' and thumb contains ".jpg" %}{% assign thumb_ok = 'yes' %}{% endif %}
-          {% if thumb_ok == 'no' and thumb contains ".jpeg" %}{% assign thumb_ok = 'yes' %}{% endif %}
-          {% if thumb_ok == 'no' and thumb contains ".webp" %}{% assign thumb_ok = 'yes' %}{% endif %}
-          {% if thumb_ok == 'no' and thumb contains ".gif" %}{% assign thumb_ok = 'yes' %}{% endif %}
+          {% if thumb contains ".png" or thumb contains ".jpg" or thumb contains ".jpeg" or thumb contains ".webp" or thumb contains ".gif" %}
+            {% assign thumb_ok = 'yes' %}
+          {% endif %}
+        {% endif %}
+
+        {% assign base = site.baseurl | default: "" %}
+        {% assign base_slash = base | append: "/" %}
+        {% assign bsize = base_slash | size %}
+        {% if thumb %}
+          {% assign prefix = thumb | slice: 0, bsize %}
         {% endif %}
 
         <article class="card">
           <a class="card-thumb" href="{{ post.url | relative_url }}">
             {% if thumb_ok == 'yes' %}
-              {% if thumb contains "://" %}
+              {% if thumb contains '://' or prefix == base_slash %}
                 <img src="{{ thumb }}" alt="{{ title_txt | escape }}">
               {% else %}
                 <img src="{{ thumb | relative_url }}" alt="{{ title_txt | escape }}">
