@@ -74,3 +74,64 @@ img{max-width:100%;height:auto}
 /* -------- Misc -------- */
 .tag-list{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
 .tag{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:.1rem .5rem;border-radius:999px;background:#fff}
+
+/* ====== 統一文章內容寬度 & 置中 ====== */
+/* 想調整文章內容與圖片的固定寬度，在這裡改即可 */
+:root { --post-content-width: 760px; }
+
+/* 包住標題、首圖、內文的軌道（統一寬度 & 置中） */
+.post-rail{
+  max-width: var(--post-content-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 讓標題與中繼資訊也跟著置中（可保留或移除） */
+.post-header, .post-title, .post-meta { text-align: center; }
+
+/* 文章內容盒：同寬、置中 */
+.post-hero, .post-content{
+  max-width: var(--post-content-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 所有圖片滿版充滿內容寬度、維持比例、置中 */
+.post-content img,
+.post-hero img,
+.post-content figure img{
+  display: block;
+  width: 100% !important;      /* 蓋掉 WP 內嵌 style="width:700px" 之類 */
+  height: auto !important;
+  margin: 0 auto;
+}
+
+/* figure 與 WP 區塊統一置中、同寬 */
+.post-content figure,
+.post-content .wp-block-image,
+.post-content .alignwide,
+.post-content .alignfull{
+  max-width: var(--post-content-width) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* 讓一般段落、清單與表格也沿用同寬（避免貼上時外擴） */
+.post-content > p,
+.post-content > ul,
+.post-content > ol,
+.post-content > table,
+.post-content > blockquote,
+.post-content > div{
+  max-width: var(--post-content-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 表格溢出時可橫向捲動 */
+.post-content table{ width: 100%; border-collapse: collapse; }
+.post-content .table-wrap{ overflow-x: auto; }
+
+/* YouTube 16:9 外框（你已有 yt-embed.js，這裡只確保同寬） */
+.yt-16x9{ max-width: var(--post-content-width); margin-left:auto; margin-right:auto; }
+
