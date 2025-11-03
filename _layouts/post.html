@@ -1,29 +1,35 @@
----
-layout: default
----
-
-<article class="post-page">
-  <header class="post-header">
-    <h1 class="post-title">{{ page.title }}</h1>
-    <div class="meta">{{ page.date | date: "%Y-%m-%d" }}</div>
-    {% if page.image %}
-      <img class="post-hero" src="{{ page.image | relative_url }}" alt="{{ page.title }}">
-    {% endif %}
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ page.title }} | {{ site.title }}</title>
+  <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/assets/custom.css' | relative_url }}">
+</head>
+<body>
+  <header class="site-topbar">
+    <div class="container flex-between">
+      <a class="brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+      <nav class="nav">
+        <a href="{{ '/' | relative_url }}">首頁</a>
+        <a href="{{ '/feed.xml' | relative_url }}">RSS</a>
+      </nav>
+    </div>
   </header>
 
-  <div id="post-content" class="post-content">
-    {{ content }}
-  </div>
-</article>
+  <main class="container">
+    <article class="post">
+      <h1>{{ page.title }}</h1>
+      <div class="meta">{{ page.date | date: "%Y-%m-%d" }}
+        {% if page.tags and page.tags.size > 0 %} · {{ page.tags | join:', ' }}{% endif %}
+      </div>
+      <div class="content">
+        {{ content }}
+      </div>
+    </article>
+  </main>
 
-<script>
-/* 把文章開頭若出現的 "image: /assets/..." 文字行隱藏（有些匯入檔會把它留在內文） */
-(function(){
-  var el = document.getElementById('post-content');
-  if (!el) return;
-  var first = el.firstElementChild;
-  if (first && first.tagName === 'P' && /^image:\s*\/assets\//i.test(first.textContent.trim())) {
-    first.style.display = 'none';
-  }
-})();
-</script>
+  <script src="{{ '/assets/yt-embed.js' | relative_url }}"></script>
+</body>
+</html>
