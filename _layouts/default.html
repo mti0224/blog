@@ -25,7 +25,7 @@
     .wc-nav a{margin-left:12px}
   </style>
 </head>
-<body>
+<body data-collection="{{ page.collection | default: '' }}">
   <header class="wc-header">
     <div class="wc-header-inner">
       <div class="wc-brand">
@@ -57,6 +57,8 @@
   <script>
   (function(){
     var base = window.__BASEURL__ || '';
+    var wrap = document.getElementById('post-content');
+    if(!wrap) return;
 
     function isHome(){
       try{
@@ -66,8 +68,7 @@
     }
     if (isHome()) document.body.classList.add('wc-home');
 
-    var wrap = document.getElementById('post-content');
-    if (!wrap) return;
+    var isPost = (document.body.getAttribute('data-collection') === 'posts');
 
     function addBase(u){
       if(!u) return '';
@@ -91,35 +92,42 @@
         .then(cb).catch(function(){cb(null)});
     }
 
-    var rawHTML = wrap.innerHTML;
+    // -------- 先把殘留的前言 / 雜訊從畫面上清掉（不論是否在 <p> 裡） --------
+    (function cleanFrontMatter(){
+      // 1) 移除整段 YAML-like 區塊：--- layout: ... ---
+      wrap.innerHTML = wrap.innerHTML.replace(/(^|\n|\r)\s*---\s*layout:[\s\S]*?---/i, '$1');
 
-    // 標題：優先抓「post title:」→ 再抓「posttitle:」→ 再抓「title:」→ 才退回 page.title
+      // 2) 隱藏常見雜訊行（不一定在 <p> 裡）
+      var noiseRe = /^(?:layout:|type:|status:|password:|categories:|tags:|meta:|_thumbnail_id:|_oembed_|firehose_sent:|timeline_notification:|_publicize_job_id:|_publicize_shares:|_elasticsearch_data_sharing_indexed_on:|permalink:|display_name:|image:\s|post title:|posttitle:)/i;
+
+      Array.prototype.slice.call(wrap.childNodes).forEach(function(n){
+        if(n.nodeType === 3){ // 純文字
+          var t = (n.nodeValue||'').trim();
+          if(noiseRe.test(t) || t === '---') n.parentNode.removeChild(n);
+        }else if(n.nodeType === 1){
+          var txt = (n.innerText||'').trim();
+          if(noiseRe.test(txt) || txt === '---') n.style.display='none';
+        }
+      });
+    })();
+
+    // 重新抓一次內容（清理後）
+    var raw = wrap.innerHTML;
+
+    // 標題：post title -> posttitle -> title -> page.title
     var metaTitle =
-      pick(/post title:\s*["']?([^"\n\r']+)["']?/i, rawHTML) ||
-      pick(/posttitle:\s*["']?([^"\n\r']+)["']?/i, rawHTML) ||
-      pick(/title:\s*["']?([^"\n\r']+)["']?/i, rawHTML) || '';
+      pick(/post title:\s*["']?([^"\n\r']+)["']?/i, raw) ||
+      pick(/posttitle:\s*["']?([^"\n\r']+)["']?/i, raw) ||
+      pick(/title:\s*["']?([^"\n\r']+)["']?/i, raw) || '';
     var pageTitle = "{{ page.title | escape }}";
     var finalTitle = metaTitle || pageTitle;
 
-    // 精選圖：優先 _thumbnail_id 對照；沒有才用 image:
-    var thumbId = pick(/_thumbnail_id:\s*["']?(\d+)["']?/i, rawHTML);
-    var featuredLine = pick(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i, rawHTML);
+    // 精選圖：_thumbnail_id（優先） -> image:
+    var thumbId = pick(/_thumbnail_id:\s*["']?(\d+)["']?/i, raw);
+    var featuredLine = pick(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i, raw);
 
-    // 移除/隱藏殘留的 front-matter 文本（更完整）
-    try{
-      var hideKeys = /(---\s*layout:|^layout:|^type:|^status:|^password:|^categories:|^tags:|^meta:|^_thumbnail_id:|^_oembed_|^firehose_sent:|^timeline_notification:|^_publicize_job_id:|^_publicize_shares:|^_elasticsearch_data_sharing_indexed_on:|^permalink:|^display_name:|^image:\s|^post title:|^posttitle:)/i;
-      Array.prototype.forEach.call(wrap.childNodes, function(n){
-        if(n.nodeType === 1 && n.tagName === 'P'){
-          var t = (n.textContent||'').trim();
-          if(hideKeys.test(t)) n.style.display='none';
-        }
-      });
-    }catch(e){}
-
-    // 文章頁 Hero
-    (function(){
-      if(!finalTitle && !thumbId && !featuredLine) return;
-
+    // -------- 文章頁才插入 Hero --------
+    if (isPost && (finalTitle || thumbId || featuredLine)){
       var hero = document.createElement('section');
       hero.className = 'wc-article-hero';
 
@@ -152,21 +160,28 @@
       }else if (featuredLine){
         put(toLocalUpload(featuredLine));
       }
-    })();
+    }
 
-    // 首頁卡片縮圖替換：用 data-thumb-id → 對照成精選圖
+    // -------- 首頁卡片縮圖：沒有 <img> 也能建立再替換 --------
     if (isHome()){
       var cards = Array.prototype.slice.call(document.querySelectorAll('.card[data-thumb-id]'));
-      var list = cards.filter(function(c){ return c.getAttribute('data-thumb-id'); });
-      if (list.length){
+      var need = cards.filter(function(c){ return c.getAttribute('data-thumb-id'); });
+      if (need.length){
         fetchMap(function(map){
           if(!map) return;
-          list.forEach(function(c){
+          need.forEach(function(c){
             var id = c.getAttribute('data-thumb-id');
             var local = map[id];
             if(local){
-              var img = c.querySelector('.card-thumb img');
-              if(img) img.src = addBase(local);
+              var a = c.querySelector('.card-thumb');
+              var img = a.querySelector('img');
+              if(!img){
+                img = new Image();
+                img.alt = (c.querySelector('.card-title')||{}).textContent || '';
+                a.innerHTML = '';
+                a.appendChild(img);
+              }
+              img.src = addBase(local);
             }
           });
         });
