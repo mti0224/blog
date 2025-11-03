@@ -4,54 +4,70 @@ title: 蚯蚓貓的資工人生
 ---
 
 <div class="home">
-  {% comment %}
-    先拿 Jekyll 的 posts；若站上沒有 _posts，則退回用 pages（挑出 URL 形如 /YYYY/ 的文章頁）
-  {% endcomment %}
   {% assign posts_all = site.posts | sort: "date" | reverse %}
   {% if posts_all.size == 0 %}
     {% assign pages_all = site.pages %}
     {% assign posts_all = "" | split: "" %}
     {% for p in pages_all %}
-      {% if p.url contains '/202' %}{% assign posts_all = posts_all | push: p %}{% endif %}
+      {% if p.url contains '/202' %}
+        {% assign posts_all = posts_all | push: p %}
+      {% endif %}
     {% endfor %}
+    {% assign posts_all = posts_all | sort: "date" | reverse %}
   {% endif %}
 
-  {% assign posts_all = posts_all | sort: "date" | reverse %}
+  {% assign make_excerpt = "yes" %}
 
-  <!-- 區段：最新精選 -->
+  {% comment %}
+    工具：從 post.content 取「front-matter 後的本文」
+  {% endcomment %}
+  {% macro capture_body post %}
+    {% assign parts = post.content | split: '---' %}
+    {% if parts.size >= 3 %}
+      {{ parts[2] }}
+    {% else %}
+      {{ post.content }}
+    {% endif %}
+  {% endmacro %}
+
+  {% comment %}
+    工具：抓縮圖
+  {% endcomment %}
+  {% macro pick_thumb post %}
+    {% assign thumb = post.image | default: post.thumbnail | default: post.featured_image %}
+    {% if thumb == nil or thumb == "" %}
+      {% assign parts_dq = post.content | split:'src="' %}
+      {% if parts_dq.size > 1 %}
+        {% assign seg2 = parts_dq[1] | split:'"' %}
+        {% assign thumb = seg2[0] %}
+      {% else %}
+        {% assign parts_sq = post.content | split:"src='" %}
+        {% if parts_sq.size > 1 %}
+          {% assign seg2 = parts_sq[1] | split:"'" %}
+          {% assign thumb = seg2[0] %}
+        {% endif %}
+      {% endif %}
+      {% if thumb == nil or thumb == "" %}
+        {# 從殘留 front-matter 行抓 image: /path.png--- #}
+        {% assign im1 = post.content | split:'image:' %}
+        {% if im1.size > 1 %}
+          {% assign im2 = im1[1] | split:'---' | first | strip %}
+          {% assign thumb = im2 %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+    {{ thumb }}
+  {% endmacro %}
+
+  <!-- 最新精選 -->
   <section class="section">
     <h2 class="h2">最新精選</h2>
     <div class="card-grid">
       {% for post in posts_all limit:3 %}
-        {% assign thumb = post.thumbnail | default: post.image | default: post.featured_image %}
-        {% if thumb == nil or thumb == "" %}
-          {% assign parts_dq = post.content | split:'src="' %}
-          {% if parts_dq.size > 1 %}
-            {% assign seg2 = parts_dq[1] | split:'"' %}
-            {% assign thumb = seg2[0] %}
-          {% else %}
-            {% assign parts_sq = post.content | split:"src='" %}
-            {% if parts_sq.size > 1 %}
-              {% assign seg2 = parts_sq[1] | split:"'" %}
-              {% assign thumb = seg2[0] %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-
-        {% assign title_txt = post.title %}
-        {% if title_txt == nil or title_txt == "" %}
-          {% assign h1s = post.content | split:'<h1>' %}
-          {% if h1s.size > 1 %}
-            {% assign title_txt = h1s[1] | split:'</h1>' | first | strip_html | strip_newlines %}
-          {% else %}
-            {% assign strongs = post.content | split:'<strong>' %}
-            {% if strongs.size > 1 %}
-              {% assign title_txt = strongs[1] | split:'</strong>' | first | strip_html | strip_newlines %}
-            {% else %}
-              {% assign title_txt = post.content | strip_html | strip_newlines | truncate: 28 %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
+        {% assign title_txt = post.title | default: post.name %}
+        {% assign body_html = post.content | split:'---' | size | gt:2
+           | ternary: (post.content | split:'---' | slice:2 | first), post.content %}
+        {% assign thumb = post | pick_thumb %}
 
         <article class="card">
           <a class="card-thumb" href="{{ post.url | relative_url }}">
@@ -68,47 +84,28 @@ title: 蚯蚓貓的資工人生
           <div class="card-body">
             <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
-            <p class="card-excerpt">{{ post.excerpt | default: post.content | strip_html | strip_newlines | truncate: 110 }}</p>
+            <p class="card-excerpt">
+              {{
+                body_html
+                | strip_html | strip_newlines | replace: '---', ' '
+                | truncate: 110
+              }}
+            </p>
           </div>
         </article>
       {% endfor %}
     </div>
   </section>
 
-  <!-- 區段：所有文章 -->
+  <!-- 所有文章 -->
   <section class="section">
     <h2 class="h2">所有文章</h2>
     <div class="card-grid">
       {% for post in posts_all offset:3 limit:30 %}
-        {% assign thumb = post.thumbnail | default: post.image | default: post.featured_image %}
-        {% if thumb == nil or thumb == "" %}
-          {% assign parts_dq = post.content | split:'src="' %}
-          {% if parts_dq.size > 1 %}
-            {% assign seg2 = parts_dq[1] | split:'"' %}
-            {% assign thumb = seg2[0] %}
-          {% else %}
-            {% assign parts_sq = post.content | split:"src='" %}
-            {% if parts_sq.size > 1 %}
-              {% assign seg2 = parts_sq[1] | split:"'" %}
-              {% assign thumb = seg2[0] %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-
-        {% assign title_txt = post.title %}
-        {% if title_txt == nil or title_txt == "" %}
-          {% assign h1s = post.content | split:'<h1>' %}
-          {% if h1s.size > 1 %}
-            {% assign title_txt = h1s[1] | split:'</h1>' | first | strip_html | strip_newlines %}
-          {% else %}
-            {% assign strongs = post.content | split:'<strong>' %}
-            {% if strongs.size > 1 %}
-              {% assign title_txt = strongs[1] | split:'</strong>' | first | strip_html | strip_newlines %}
-            {% else %}
-              {% assign title_txt = post.content | strip_html | strip_newlines | truncate: 28 %}
-            {% endif %}
-          {% endif %}
-        {% endif %}
+        {% assign title_txt = post.title | default: post.name %}
+        {% assign body_html = post.content | split:'---' | size | gt:2
+           | ternary: (post.content | split:'---' | slice:2 | first), post.content %}
+        {% assign thumb = post | pick_thumb %}
 
         <article class="card">
           <a class="card-thumb" href="{{ post.url | relative_url }}">
@@ -125,7 +122,13 @@ title: 蚯蚓貓的資工人生
           <div class="card-body">
             <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
-            <p class="card-excerpt">{{ post.excerpt | default: post.content | strip_html | strip_newlines | truncate: 110 }}</p>
+            <p class="card-excerpt">
+              {{
+                body_html
+                | strip_html | strip_newlines | replace: '---', ' '
+                | truncate: 110
+              }}
+            </p>
           </div>
         </article>
       {% endfor %}
