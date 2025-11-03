@@ -1,75 +1,77 @@
 ---
 layout: default
-title: 首頁
+title: 蚯蚓貓的資工人生
 ---
 
 <div class="home">
-  <!-- 特色置頂：最新 3 篇 -->
+  <!-- 最新精選（取最近 3 篇） -->
   <section class="section">
     <h2 class="h2">最新精選</h2>
     <div class="card-grid">
-      {% assign latest = site.posts | slice: 0, 3 %}
-      {% for post in latest %}
-      <article class="card">
-        <a class="card-thumb" href="{{ post.url | relative_url }}">
-          {% assign hero = post.featured_image | default: post.image %}
-          {% if hero %}
-            <img src="{{ hero | relative_url }}" alt="{{ post.title | escape }}">
-          {% else %}
-            <div class="thumb-fallback">No Image</div>
+      {% assign posts_all = site.posts | sort: "date" | reverse %}
+      {% for post in posts_all limit:3 %}
+        {% assign thumb = post.thumbnail | default: post.image | default: post.featured_image %}
+        {% if thumb == nil or thumb == "" %}
+          {% assign segs = post.content | split:'src="' %}
+          {% if segs.size > 1 %}
+            {% assign seg2 = segs[1] | split:'"' %}
+            {% assign thumb = seg2[0] %}
           {% endif %}
-        </a>
-        <div class="card-body">
-          <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
-          <div class="card-meta">
-            <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%Y-%m-%d" }}</time>
+        {% endif %}
+        <article class="card">
+          <a class="card-thumb" href="{{ post.url | relative_url }}">
+            {% if thumb and thumb != "" %}
+              {% if thumb contains "://" %}
+                <img src="{{ thumb }}" alt="{{ post.title | escape }}">
+              {% else %}
+                <img src="{{ thumb | relative_url }}" alt="{{ post.title | escape }}">
+              {% endif %}
+            {% else %}
+              <div class="thumb-fallback">No Image</div>
+            {% endif %}
+          </a>
+          <div class="card-body">
+            <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
+            <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ post.title | default: post.name }}</a></h3>
+            <p class="card-excerpt">{{ post.excerpt | strip_html | strip_newlines | truncate: 110 }}</p>
           </div>
-        </div>
-      </article>
+        </article>
       {% endfor %}
     </div>
   </section>
 
-  <!-- 分頁列表：使用 jekyll-paginate -->
+  <!-- 所有文章（從第 4 篇開始列出，可自行調整 limit） -->
   <section class="section">
     <h2 class="h2">所有文章</h2>
     <div class="card-grid">
-      {% for post in paginator.posts %}
-      <article class="card">
-        <a class="card-thumb" href="{{ post.url | relative_url }}">
-          {% assign hero = post.featured_image | default: post.image %}
-          {% if hero %}
-            <img src="{{ hero | relative_url }}" alt="{{ post.title | escape }}">
-          {% else %}
-            <div class="thumb-fallback">No Image</div>
+      {% for post in posts_all offset:3 limit:30 %}
+        {% assign thumb = post.thumbnail | default: post.image | default: post.featured_image %}
+        {% if thumb == nil or thumb == "" %}
+          {% assign segs = post.content | split:'src="' %}
+          {% if segs.size > 1 %}
+            {% assign seg2 = segs[1] | split:'"' %}
+            {% assign thumb = seg2[0] %}
           {% endif %}
-        </a>
-        <div class="card-body">
-          <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
-          <div class="card-meta">
-            <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%Y-%m-%d" }}</time>
+        {% endif %}
+        <article class="card">
+          <a class="card-thumb" href="{{ post.url | relative_url }}">
+            {% if thumb and thumb != "" %}
+              {% if thumb contains "://" %}
+                <img src="{{ thumb }}" alt="{{ post.title | escape }}">
+              {% else %}
+                <img src="{{ thumb | relative_url }}" alt="{{ post.title | escape }}">
+              {% endif %}
+            {% else %}
+              <div class="thumb-fallback">No Image</div>
+            {% endif %}
+          </a>
+          <div class="card-body">
+            <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
+            <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ post.title | default: post.name }}</a></h3>
+            <p class="card-excerpt">{{ post.excerpt | strip_html | strip_newlines | truncate: 110 }}</p>
           </div>
-          {% if post.excerpt %}
-          <p class="card-excerpt">{{ post.excerpt | strip_html | truncate: 120 }}</p>
-          {% endif %}
-        </div>
-      </article>
+        </article>
       {% endfor %}
     </div>
-
-    <!-- 正確的上一頁／下一頁（會自動產出 /page2/、/page3/…） -->
-    <nav class="pager">
-      <div class="pager-left">
-        {% if paginator.previous_page %}
-          <a class="btn" href="{{ paginator.previous_page_path | relative_url }}">← 上一頁</a>
-        {% endif %}
-      </div>
-      <div class="pager-center">第 {{ paginator.page }} / {{ paginator.total_pages }} 頁</div>
-      <div class="pager-right">
-        {% if paginator.next_page %}
-          <a class="btn" href="{{ paginator.next_page_path | relative_url }}">下一頁 →</a>
-        {% endif %}
-      </div>
-    </nav>
   </section>
 </div>
