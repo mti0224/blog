@@ -1,61 +1,60 @@
 ---
-layout: default
+permalink: /
 title: 首頁
 ---
 
-<link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/assets/custom.css' | relative_url }}">
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title }} | {{ site.title | default: "蚯蚓貓的資工人生" }}</title>
+  <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/assets/custom.css' | relative_url }}">
+</head>
+<body>
+  <header class="site-topbar">
+    <div class="container flex-between">
+      <a class="brand" href="{{ site.baseurl }}/">{{ site.title | default: "蚯蚓貓的資工人生" }}</a>
+      <nav class="nav">
+        <a href="{{ site.baseurl }}/">首頁</a>
+        <a href="{{ '/feed.xml' | relative_url }}">RSS</a>
+      </nav>
+    </div>
+  </header>
 
-<div class="container">
-
-  {%- comment -%}
-  特色大 Banner：抓有 image 的最新 3 篇
-  {%- endcomment -%}
-  {%- assign featured = site.posts | where_exp: "p","p.image" | slice: 0, 3 -%}
-  {% if featured and featured.size > 0 %}
-  <section class="featured-grid">
-    {% for p in featured %}
-    <a class="feat-card" href="{{ p.url | relative_url }}">
-      <img class="feat-img" src="{{ p.image | relative_url }}" alt="{{ p.title | escape }}">
-      <div class="feat-cap">{{ p.title }}</div>
-    </a>
-    {% endfor %}
-  </section>
-  {% endif %}
-
-  {%- comment -%}
-  所有貼文卡片：標題用 post.title（不要再做 url_encode），
-  縮圖先用 front-matter image；若沒有就從內文取第一張 <img> 當備援
-  {%- endcomment -%}
-  <div class="post-grid">
-    {% for post in site.posts %}
-      {%- assign img = post.image -%}
-      {% if img == nil or img == '' %}
-        {%- assign parts = post.content | split:'src="' -%}
-        {% if parts.size > 1 %}
-          {%- assign rest = parts[1] -%}
-          {%- assign img = rest | split:'"' | first -%}
+  <main class="container">
+    <div class="post-grid">
+      {% assign posts_list = site.posts %}
+      {% for post in posts_list %}
+        {%- comment -%}
+        取封面圖：優先 image / thumbnail / featured_image，其次抓內文第一張 <img>
+        並修正：移除重複 baseurl、尾端殘留 '---'
+        {%- endcomment -%}
+        {% assign raw = post.image | default: post.thumbnail | default: post.featured_image %}
+        {% if raw %}{% assign img = raw | replace: site.baseurl, '' | split: '---' | first | strip %}{% endif %}
+        {% if img == nil or img == '' %}
+          {% assign firstimg = post.content | split:'src="' | slice:1,1 | first | split:'"' | first %}
+          {% assign img = firstimg | replace: site.baseurl, '' | strip %}
         {% endif %}
-      {% endif %}
 
-      <a class="card" href="{{ post.url | relative_url }}">
-        <div class="card-img">
-          {% if img %}
-            <img src="{{ img | relative_url }}" alt="{{ post.title | escape }}">
-          {% else %}
-            <div class="noimg">No Image</div>
-          {% endif %}
-        </div>
-        <div class="card-body">
-          <div class="card-title">{{ post.title }}</div>
-          <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
-          <div class="card-excerpt">
-            {{ post.excerpt | strip_html | truncate: 80 }}
+        <a class="card" href="{{ post.url | relative_url }}">
+          <div class="card-img">
+            {% if img and img != '' %}
+              <img src="{{ img | relative_url }}" alt="{{ post.title | escape }}">
+            {% else %}
+              <div class="noimg">No Image</div>
+            {% endif %}
           </div>
-        </div>
-      </a>
-    {% endfor %}
-  </div>
-</div>
+          <div class="card-body">
+            <div class="card-title">{{ post.title | default: post.slug | escape }}</div>
+            <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </main>
 
-<script src="{{ '/assets/yt-embed.js' | relative_url }}"></script>
+  <script src="{{ '/assets/yt-embed.js' | relative_url }}"></script>
+</body>
+</html>
