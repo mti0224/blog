@@ -1,139 +1,106 @@
+/* === 文章閱讀寬度 / 字級 & Header 品牌強化 === */
+
+/* 文章主欄最大寬度（比原本 860px 再窄一點） */
 :root{
-  --bg: #0f1115;
-  --panel: #161a22;
-  --text: #e6e6e6;
-  --muted: #a6adbb;
-  --accent: #6ea8ff; /* 亮一點的藍 */
-  --maxw: 980px;
-  --radius: 14px;
-  --shadow: 0 6px 24px rgba(0,0,0,.25);
+  /* 原本就有的變數保留… */
+  --postw: 740px;           /* ← 你要再窄一點可以調 700~760 之間 */
 }
 
-html,body{ background: var(--bg); color: var(--text); }
-img{ max-width:100%; height:auto; }
-
-.container{ max-width: var(--maxw); margin: 0 auto; padding: 0 18px; }
-
-.site-topbar{
-  position: sticky; top: 0; z-index: 10;
-  background: rgba(15,17,21,.8); backdrop-filter: blur(8px);
-  border-bottom: 1px solid #20242d;
-}
+/* Header 品牌加大（+4~6 號） */
 .site-topbar .brand{
-  display: inline-block;
-  padding: 14px 0;
-  font-weight: 800; letter-spacing: .2px;
-  color: var(--text); text-decoration: none;
-}
-.site-topbar .brand:hover{ color: #fff; }
-
-main.container{ padding: 28px 18px 60px; }
-
-/* 版面與排版（行高/字級） */
-.post-content, .home{
-  line-height: 1.9;
-  font-size: 17.5px;
-}
-.post-content p{ margin: 1em 0; color: var(--text); }
-.post-content a{ color: var(--accent); text-decoration: underline; }
-
-/* 首頁區塊 */
-.section{ margin: 28px 0; }
-.h2{ font-size: 22px; font-weight: 800; margin: 8px 0 14px; }
-
-.card-grid{
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-@media (max-width: 900px){
-  .card-grid{ grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 620px){
-  .card-grid{ grid-template-columns: 1fr; }
+  font-size: clamp(30px, 3.4vw, 36px);  /* 大螢幕 ~36px，手機約30px */
+  line-height: 1.1;
 }
 
-.card{
-  background: var(--panel);
-  border: 1px solid #20242d;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow: hidden;
+/* 文章區塊置中（內容左對齊） */
+.post-header,
+.post-content{
+  max-width: var(--postw);
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
 }
-.card-thumb{
-  display:block; aspect-ratio: 16/9; background:#0d0f14;
-}
-.card-thumb img{
-  width:100%; height:100%; object-fit: cover; display:block;
-}
-.thumb-fallback{
-  display:flex; align-items:center; justify-content:center;
-  width:100%; height:100%; color: var(--muted); font-size: 12px;
-}
-.card-body{ padding: 14px; }
-.card-title{
-  font-weight: 800; margin: 2px 0 6px;
-}
-.card-title a{ color: var(--text); text-decoration:none; }
-.card-title a:hover{ color: #fff; }
-.card-meta{ color: var(--muted); font-size: 13px; }
-.card-excerpt{ color: #cfd6e4; font-size: 15px; margin-top: 8px; }
 
-/* 分頁 */
-.pager{
-  display:grid; grid-template-columns: 1fr auto 1fr; align-items:center;
-  gap: 10px; margin-top: 20px;
+/* 文章整體字體 +2~3 號（原 ~17.5px → ~20px） */
+.post-content{
+  font-size: 20px;
+  line-height: 1.95;
 }
-.pager-left{ text-align:left; }
-.pager-center{ text-align:center; color: var(--muted); }
-.pager-right{ text-align:right; }
-.btn{
-  display:inline-block; padding: 8px 12px; border-radius: 10px;
-  background:#232836; color:#fff; text-decoration:none;
-  border:1px solid #2c3242;
+
+/* 文章標題與內文標題也同步放大一些 */
+.post-title{
+  font-size: 32px;        /* 原 28px → 32px */
+  line-height: 1.28;
+  margin: 6px 0 10px;
+  font-weight: 900;
 }
-.btn:hover{ background:#2b3142; }
+.post-content h1{ font-size: 28px; line-height: 1.3; }
+.post-content h2{ font-size: 24px; line-height: 1.35; }
+.post-content h3{ font-size: 21px; line-height: 1.4; }
+.post-content h4{ font-size: 19px; line-height: 1.45; }
 
-/* 文章頁 */
-.post-inner{ max-width: var(--maxw); margin: 0 auto; }
-.post-header{ margin-bottom: 18px; }
-.post-title{ font-size: 28px; line-height:1.3; margin: 6px 0 8px; font-weight: 900; }
-.post-meta{ color: var(--muted); font-size: 14px; }
-
-/* Hero 圖（文章精選圖）— 等寬置中、維持比例 */
+/* 文章 Hero 圖：等寬、置中 */
 .post-hero{
   margin-top: 12px; margin-bottom: 10px;
   display:flex; justify-content:center;
 }
 .post-hero img{
   width: 100%;
-  max-width: 860px;   /* 文章主欄最大寬度 */
-  height: auto; display:block; border-radius: 10px;
+  max-width: var(--postw);
+  height: auto;
+  display:block;
+  border-radius: 10px;
 }
 
 /* 內文所有圖片：與文字欄等寬、置中 */
-.post-content figure, .post-content p > img{
-  margin: 14px auto; display:block;
-  max-width: 860px; width: 100%; height: auto;
+.post-content figure,
+.post-content p > img{
+  margin: 14px auto;
+  display:block;
+  max-width: var(--postw);
+  width: 100%;
+  height: auto;
 }
-.post-content figure img{ width: 100%; height:auto; display:block; }
+.post-content figure img{
+  width: 100%;
+  height:auto;
+  display:block;
+}
 
-/* 讓 WP 匯出的 YouTube 連結、iframe 變成等寬 16:9 外觀 */
+/* 影片 iframe 等寬 16:9、置中 */
 .post-content iframe{
-  width: 100%; max-width: 860px; aspect-ratio: 16/9; border:0; display:block; margin: 14px auto;
+  width: 100%;
+  max-width: var(--postw);
+  aspect-ratio: 16/9;
+  border:0;
+  display:block;
+  margin: 14px auto;
 }
 
-/* 表格/清單 */
+/* 表格等寬、置中 */
 .post-content table{
-  width: 100%; border-collapse: collapse; margin: 12px auto; max-width: 860px;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px auto;
+  max-width: var(--postw);
 }
 .post-content th, .post-content td{
-  border: 1px solid #2a3040; padding: 8px 10px;
+  border: 1px solid #2a3040;
+  padding: 10px 12px;   /* 放大一點，搭配字級 */
+  font-size: 16.5px;
 }
 .post-content thead th{ background: #1d2230; }
 
-/* code 區塊 */
-.post-content pre{
-  background: #0c0f15; border: 1px solid #23283a;
-  padding: 12px; border-radius: 10px; overflow:auto;
+/* 程式碼區塊字級微調，閱讀更舒適 */
+.post-content pre,
+.post-content code{
+  font-size: 15.5px;
+}
+
+/* 小螢幕再微調一下標題大小，避免過大換行過多 */
+@media (max-width: 520px){
+  .post-title{ font-size: 28px; }
+  .post-content h1{ font-size: 25px; }
+  .post-content h2{ font-size: 22px; }
+  .post-content h3{ font-size: 20px; }
 }
