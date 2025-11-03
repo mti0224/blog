@@ -3,24 +3,42 @@ name: Apply featured images from WXR
 on:
   workflow_dispatch: {}
 
+# 允許這個 workflow 寫入 repo（才能 push）
+permissions:
+  contents: write
+
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { persist-credentials: false }
+        with:
+          # 需要保留憑證，push 才會成功
+          persist-credentials: true
+
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
-      - run: npm i xml2js
-      - run: node scripts/apply_featured_from_wxr.js import/export.xml _posts
-      - name: Commit & push if changed
+        with:
+          node-version: 20
+
+      # 安裝 xml2js 只給執行期用，不寫入 package.json
+      - run: npm install xml2js --no-save
+
+      - name: Apply featured images from WXR
+        run: node scripts/apply_featured_from_wxr.js import/export.xml _posts
+
+      - name: Commit & push ONLY post changes
         run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            git config user.name  "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # 清掉暫時依賴，避免被誤納入
+          rm -rf node_modules package-lock.json package.json
+
+          # 只提交 _posts 的變更（不要再 add -A）
+          if [ -n "$(git status --porcelain _posts)" ]; then
+            git add _posts
             git commit -m "chore: apply featured images from WXR"
             git push
           else
-            echo "No changes."
+            echo "No post changes."
           fi
