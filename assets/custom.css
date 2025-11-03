@@ -1,10 +1,9 @@
-/* === Warmycat 風格（更新版） =========================================
-   - Header 加寬（與文章寬度分離）
-   - 社群 icon only
-   - 首頁 1~3 欄自適應；文章頁維持單欄 700px
+/* === Warmycat 風格（更新） ===========================================
+   - Header 加寬 + 社群 icon 改用圖片
+   - 首頁 1~3 欄自適應；文章頁維持 700px
    - YouTube 影片等寬（16:9）
-   - 特定表格可縮小 60%（.shrink-60）
-   - 隱藏文章內 Header 下方的「回首頁」字樣
+   - 指定元素縮小 40%：.shrink-40（表格/圖片皆可）
+   - 隱藏文章內 Header 下方的「回首頁」字樣（由 JS 輔助）
 ===================================================================== */
 
 :root{
@@ -40,7 +39,7 @@ img{max-width:100%;height:auto;border-radius:12px}
 figure{margin:1.2rem 0}
 figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
 
-/* ===== Header（加寬＋icon only） ===== */
+/* ===== Header（加寬 + icon 圖片） ===== */
 .wc-header{
   position:sticky; top:0; z-index:40;
   background:rgba(255,255,255,.92);
@@ -59,13 +58,17 @@ figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
 }
 .wc-site-title a{color:inherit;text-decoration:none}
 .wc-site-subtitle{margin:0;color:var(--wc-muted);font-size:.95rem}
+
+/* icon only */
 .wc-nav{margin-left:auto;display:flex;align-items:center;gap:10px}
 .wc-nav a{
   display:grid; place-items:center;
   width:36px; height:36px; border-radius:10px; color:var(--wc-text);
 }
 .wc-nav a:hover{color:var(--wc-accent);text-decoration:none;background:rgba(239,102,102,.08)}
-.wc-ico{width:18px;height:18px;opacity:.95}
+.wc-ico-img{width:18px;height:18px;display:block;}
+
+/* 避免桌面版站名被拆行；手機照常換行 */
 @media (min-width:768px){ .wc-site-title{white-space:nowrap} }
 
 /* ===== 主要內容容器 ===== */
@@ -135,7 +138,7 @@ body.is-home .wc-prose{ width:min(var(--homew), calc(100vw - 32px)); }
 .post-content figure,.post-content p > img{display:block; margin:14px auto}
 .post-content figure img,.post-content p > img{display:block; width:100% !important; height:auto !important}
 
-/* ===== 讓 YouTube 影片等寬（與圖片同寬） ===== */
+/* ===== YouTube 影片等寬 ===== */
 .wc-prose iframe[src*="youtube"],
 .post-content iframe[src*="youtube"],
 .wc-prose iframe[allowfullscreen]{
@@ -148,16 +151,16 @@ body.is-home .wc-prose{ width:min(var(--homew), calc(100vw - 32px)); }
   margin:12px auto;
 }
 
-/* ===== 指定元素縮小 60%（JS 會加 .shrink-60 到那張表格/圖片） ===== */
-.shrink-60{
-  width:60% !important;
+/* ===== 縮小 40%（表格/圖片/figure/p 都可套用） ===== */
+.shrink-40{
+  width:40% !important;
   margin-left:auto !important;
   margin-right:auto !important;
   display:block;
 }
-.shrink-60 img{width:100% !important; height:auto !important}
+.shrink-40 img{width:100% !important; height:auto !important}
 
-/* ===== 隱藏文章內、Header 下方的「回首頁」小連結 ===== */
+/* ===== 隱藏文章內 Header 下方的「回首頁」小連結（CSS 端做保險） ===== */
 .wc-prose > a[href="/"],
 .wc-prose > a[href="/blog/"],
 .wc-prose > a[rel="home"],
