@@ -124,3 +124,29 @@ main.container{padding-bottom:56px}
   .featured{grid-template-columns:1fr}
   .featured .col{grid-template-rows:auto}
 }
+/* 文章主欄寬度 */
+.container { max-width: 1160px; padding: 0 16px; margin: 0 auto; }
+.post-body { max-width: 920px; margin: 0 auto; }
+
+/* 內文圖片與區塊：同寬、置中 */
+.post-body img,
+.post-body figure,
+.post-body .wp-block-image {
+  display: block;
+  max-width: 920px;
+  width: 100%;
+  height: auto;
+  margin: 16px auto;
+}
+.post-body figure img { width: 100%; height: auto; object-fit: contain; }
+
+/* YouTube 可回應式 16:9 */
+.embed-youtube, .wp-block-embed-youtube { max-width: 920px; margin: 16px auto; }
+.yt-16by9 { position: relative; width: 100%; padding-top: 56.25%; }
+.yt-16by9 iframe { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* 首頁卡片縮圖也填滿容器 */
+.post-grid .card-img img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+
