@@ -11,18 +11,25 @@ title: 蚯蚓貓的資工人生
     <h2 class="h2">最新精選</h2>
     <div class="card-grid">
       {% for post in posts_all limit:3 %}
-        {% comment %} 標題：front-matter；若無則從內容中的 title: 行抽取；再無才用檔名 {% endcomment %}
+        {%- comment -%} 標題：posttitle: > title: > 檔名 {%- endcomment -%}
         {% assign title_txt = post.title %}
         {% if title_txt == nil or title_txt == "" %}
-          {% assign t1 = post.content | split: "title:" %}
-          {% if t1.size > 1 %}
-            {% assign t2 = t1[1] | split: "date:" | first %}
-            {% assign title_txt = t2 | replace: '"', "" | replace: "'", "" | strip %}
+          {% assign t0 = post.content | split: "posttitle:" %}
+          {% if t0.size > 1 %}
+            {% assign t1 = t0[1] | split: "date:" | first %}
+            {% assign title_txt = t1 | replace: '"', "" | replace: "'", "" | strip %}
+          {% endif %}
+        {% endif %}
+        {% if title_txt == nil or title_txt == "" %}
+          {% assign t2a = post.content | split: "title:" %}
+          {% if t2a.size > 1 %}
+            {% assign t2b = t2a[1] | split: "date:" | first %}
+            {% assign title_txt = t2b | replace: '"', "" | replace: "'", "" | strip %}
           {% endif %}
         {% endif %}
         {% if title_txt == nil or title_txt == "" %}{% assign title_txt = post.name %}{% endif %}
 
-        {% comment %} 摘要：取第二個 --- 之後的內容 {% endcomment %}
+        {%- comment -%} 摘要：取第二個 --- 之後的內容 {%- endcomment -%}
         {% assign parts = post.content | split: "---" %}
         {% if parts.size >= 3 %}
           {% assign body_html = parts[2] %}
@@ -30,22 +37,37 @@ title: 蚯蚓貓的資工人生
           {% assign body_html = post.content %}
         {% endif %}
 
-        {% comment %} 縮圖：只抓第一張 <img>，避免抓到 permalink 等錯誤路徑 {% endcomment %}
+        {%- comment -%} 精選圖：優先抓 image: 路徑，否則抓第一張 <img> {%- endcomment -%}
         {% assign thumb = "" %}
-        {% assign spl = post.content | split: "<img " %}
-        {% if spl.size > 1 %}
-          {% assign after_img = spl[1] %}
-          {% assign try_dq = after_img | split: 'src="' %}
-          {% if try_dq.size > 1 %}
-            {% assign thumb = try_dq[1] | split: '"' | first %}
-          {% else %}
-            {% assign try_sq = after_img | split: "src='" %}
-            {% if try_sq.size > 1 %}
-              {% assign thumb = try_sq[1] | split: "'" | first %}
+        {% assign im0 = post.content | split: " image:" %}
+        {% if im0.size > 1 %}
+          {% assign line0 = im0[1] | split: "\n" | first | strip %}
+          {% assign thumb = line0 | replace: '"', "" | replace: "'", "" | replace: "---", "" | strip %}
+        {% endif %}
+        {% if thumb == "" %}
+          {% assign im1 = post.content | split: "image:" %}
+          {% if im1.size > 1 %}
+            {% assign line1 = im1[1] | split: "\n" | first | strip %}
+            {% assign thumb = line1 | replace: '"', "" | replace: "'", "" | replace: "---", "" | strip %}
+          {% endif %}
+        {% endif %}
+        {% if thumb == "" %}
+          {% assign spl = post.content | split: "<img " %}
+          {% if spl.size > 1 %}
+            {% assign after_img = spl[1] %}
+            {% assign try_dq = after_img | split: 'src="' %}
+            {% if try_dq.size > 1 %}
+              {% assign thumb = try_dq[1] | split: '"' | first %}
+            {% else %}
+              {% assign try_sq = after_img | split: "src='" %}
+              {% if try_sq.size > 1 %}
+                {% assign thumb = try_sq[1] | split: "'" | first %}
+              {% endif %}
             {% endif %}
           {% endif %}
         {% endif %}
 
+        {% comment %} 驗證副檔名 {%- endcomment -%}
         {% assign thumb_ok = 'no' %}
         {% if thumb != "" %}
           {% if thumb contains ".png" or thumb contains ".jpg" or thumb contains ".jpeg" or thumb contains ".webp" or thumb contains ".gif" %}
@@ -53,6 +75,7 @@ title: 蚯蚓貓的資工人生
           {% endif %}
         {% endif %}
 
+        {% comment %} 避免 /blog/blog/：若 thumb 已含 baseurl 前綴，直接輸出 {% endcomment %}
         {% assign base = site.baseurl | default: "" %}
         {% assign base_slash = base | append: "/" %}
         {% assign bsize = base_slash | size %}
@@ -89,10 +112,17 @@ title: 蚯蚓貓的資工人生
       {% for post in posts_all offset:3 limit:30 %}
         {% assign title_txt = post.title %}
         {% if title_txt == nil or title_txt == "" %}
-          {% assign t1 = post.content | split: "title:" %}
-          {% if t1.size > 1 %}
-            {% assign t2 = t1[1] | split: "date:" | first %}
-            {% assign title_txt = t2 | replace: '"', "" | replace: "'", "" | strip %}
+          {% assign t0 = post.content | split: "posttitle:" %}
+          {% if t0.size > 1 %}
+            {% assign t1 = t0[1] | split: "date:" | first %}
+            {% assign title_txt = t1 | replace: '"', "" | replace: "'", "" | strip %}
+          {% endif %}
+        {% endif %}
+        {% if title_txt == nil or title_txt == "" %}
+          {% assign t2a = post.content | split: "title:" %}
+          {% if t2a.size > 1 %}
+            {% assign t2b = t2a[1] | split: "date:" | first %}
+            {% assign title_txt = t2b | replace: '"', "" | replace: "'", "" | strip %}
           {% endif %}
         {% endif %}
         {% if title_txt == nil or title_txt == "" %}{% assign title_txt = post.name %}{% endif %}
@@ -105,16 +135,30 @@ title: 蚯蚓貓的資工人生
         {% endif %}
 
         {% assign thumb = "" %}
-        {% assign spl = post.content | split: "<img " %}
-        {% if spl.size > 1 %}
-          {% assign after_img = spl[1] %}
-          {% assign try_dq = after_img | split: 'src="' %}
-          {% if try_dq.size > 1 %}
-            {% assign thumb = try_dq[1] | split: '"' | first %}
-          {% else %}
-            {% assign try_sq = after_img | split: "src='" %}
-            {% if try_sq.size > 1 %}
-              {% assign thumb = try_sq[1] | split: "'" | first %}
+        {% assign im0 = post.content | split: " image:" %}
+        {% if im0.size > 1 %}
+          {% assign line0 = im0[1] | split: "\n" | first | strip %}
+          {% assign thumb = line0 | replace: '"', "" | replace: "'", "" | replace: "---", "" | strip %}
+        {% endif %}
+        {% if thumb == "" %}
+          {% assign im1 = post.content | split: "image:" %}
+          {% if im1.size > 1 %}
+            {% assign line1 = im1[1] | split: "\n" | first | strip %}
+            {% assign thumb = line1 | replace: '"', "" | replace: "'", "" | replace: "---", "" | strip %}
+          {% endif %}
+        {% endif %}
+        {% if thumb == "" %}
+          {% assign spl = post.content | split: "<img " %}
+          {% if spl.size > 1 %}
+            {% assign after_img = spl[1] %}
+            {% assign try_dq = after_img | split: 'src="' %}
+            {% if try_dq.size > 1 %}
+              {% assign thumb = try_dq[1] | split: '"' | first %}
+            {% else %}
+              {% assign try_sq = after_img | split: "src='" %}
+              {% if try_sq.size > 1 %}
+                {% assign thumb = try_sq[1] | split: "'" | first %}
+              {% endif %}
             {% endif %}
           {% endif %}
         {% endif %}
