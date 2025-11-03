@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% if page.title %}{{ page.title }} | {% endif %}{{ site.title }}</title>
 
+  <!-- 先載 main.css（若你的 GitHub 有），再由 custom.css 覆蓋 -->
   <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
   <link rel="stylesheet" href="{{ "/assets/custom.css" | relative_url }}">
 </head>
 <body class="{% if page.url == '/' or page.url == site.baseurl or page.url == '/blog/' %}is-home{% endif %}">
 
-  <!-- Header（icon 圖片版） -->
+  <!-- Header（icon = 圖片版） -->
   <header class="wc-header">
     <div class="wc-header-inner">
       <div class="wc-brand">
@@ -38,75 +39,85 @@
     </div>
   </main>
 
-  <!-- JS：縮小指定表格為 40% + 隱藏文章內的「回首頁」字樣 -->
+  <!-- 修復：清掉文章內殘留的 Front-matter 與「回首頁」連結；縮表格 40% 已保留 -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      /* 1) 指定表格縮小為 40% */
-      try {
-        var keys = [
-          '下表是為各種減礦時的礦物量',
-          '下表為各種減礦時的礦物量'
-        ];
-        var container = document.querySelector('.post-content') || document.querySelector('.wc-prose') || document;
-        var paras = container.querySelectorAll('p');
-        var targetNext = null;
+      var wrap = document.querySelector('.post-content') || document.querySelector('.wc-prose');
 
+      /* A) 隱藏文章開頭殘留的 Front-matter（--- layout: ... 到結束） */
+      try {
+        if (wrap) {
+          var kids = Array.prototype.slice.call(wrap.children || []);
+          var inYaml = false, touched = false;
+          for (var i = 0; i < Math.min(kids.length, 60); i++) {
+            var el = kids[i];
+            if (el.tagName !== 'P') break; // front-matter 通常以 <p> 逐行出現
+            var txt = (el.textContent || '').trim();
+
+            if (!touched && (txt.startsWith('---') || txt.startsWith('layout:') || txt.startsWith('title:'))) {
+              inYaml = true; touched = true;
+            }
+            if (inYaml) {
+              el.style.display = 'none';
+              // YAML 結束條件
+              if (txt === '---') break;
+              // 若遇到正常內容就停止
+              if (!/^[_\w-]+:\s/.test(txt) && txt !== '---') {
+                // 這一行看起來不像 key:value，就恢復顯示並停掉
+                el.style.display = '';
+                break;
+              }
+            } else {
+              break;
+            }
+          }
+        }
+      } catch(e){}
+
+      /* B) 移除文章內、Header 下方的「回首頁/站名」小連結（只清內容區） */
+      try {
+        if (wrap) {
+          var siteName = '蚯蚓貓的資工人生';
+          var links = wrap.querySelectorAll('a[href="/"], a[href="/blog/"], a[rel="home"]');
+          links.forEach(function(a){
+            var text = (a.textContent || '').replace(/\s+/g,'').trim();
+            if (text === siteName || text === '' || text.length <= 15) {
+              if (a.parentElement && a.parentElement.tagName === 'P' && a.parentElement.children.length === 1) {
+                a.parentElement.style.display = 'none';
+              } else {
+                a.style.display = 'none';
+              }
+            }
+          });
+        }
+      } catch(e){}
+
+      /* C) 讓「減礦量」表格縮為 40%（你之前的需求，保留） */
+      try {
+        var keys = ['下表是為各種減礦時的礦物量','下表為各種減礦時的礦物量'];
+        var paras = (wrap || document).querySelectorAll('p');
+        var targetNext = null;
         for (var i = 0; i < paras.length; i++) {
           var t = (paras[i].textContent || '').trim();
           if (keys.some(function(k){ return t.indexOf(k) === 0; })) {
-            // 找「下一個可視元素」，最多往後找 3 個兄弟節點
             var sib = paras[i].nextElementSibling;
-            for (var step = 0; step < 3 && sib; step++, sib = sib.nextElementSibling) {
+            for (var step=0; step<3 && sib; step++, sib = sib.nextElementSibling) {
               if (sib.matches('figure, table, p, img')) { targetNext = sib; break; }
             }
             break;
           }
         }
-
         if (targetNext) {
-          // 若是 figure 包 img，或 p 裡面包 img/table，抓裡面的可縮放元素
           var inner = targetNext;
           if (targetNext.tagName === 'FIGURE' && targetNext.querySelector('img')) inner = targetNext.querySelector('img');
           if (targetNext.tagName === 'P') {
             var img = targetNext.querySelector('img');
             var tbl = targetNext.querySelector('table');
-            if (img) inner = img;
-            else if (tbl) inner = tbl;
+            if (img) inner = img; else if (tbl) inner = tbl;
           }
           inner.classList.add('shrink-40');
         }
-      } catch(e){ /* 靜默失敗即可 */ }
-
-      /* 2) 移除文章內、Header 下方的「蚯蚓貓的資工人生」 */
-      try {
-        var siteName = '蚯蚓貓的資工人生';
-        var wrap = document.querySelector('.wc-prose') || document;
-        var firstH1 = wrap.querySelector('h1');
-        var candidates = [];
-        if (firstH1) {
-          // 收集出現在第一個 H1 之前的所有連結
-          var walker = document.createTreeWalker(wrap, NodeFilter.SHOW_ELEMENT, null);
-          var n; while (n = walker.nextNode()) {
-            if (n === firstH1) break;
-            if (n.tagName === 'A') candidates.push(n);
-          }
-        } else {
-          candidates = wrap.querySelectorAll('a');
-        }
-
-        candidates.forEach(function(a){
-          var text = (a.textContent || '').trim();
-          var href = (a.getAttribute('href') || '').replace(location.origin, '');
-          var isHomeLink = href === '/' || href === '/blog/' || a.rel === 'home';
-          if (isHomeLink || text === siteName) {
-            a.style.display = 'none';
-            // 若在段落中，順便把多餘換行空白壓掉
-            if (a.parentElement && a.parentElement.tagName === 'P' && a.parentElement.textContent.trim() === '') {
-              a.parentElement.style.display = 'none';
-            }
-          }
-        });
-      } catch(e){ /* 靜默失敗即可 */ }
+      } catch(e){}
     });
   </script>
 
