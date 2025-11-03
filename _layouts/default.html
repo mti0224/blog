@@ -9,14 +9,26 @@
   <link rel="stylesheet" href="{{ "/assets/custom.css" | relative_url }}">
 
   <style>
-    /* 置中主欄並拉寬首頁 */
+    /* 主欄置中與寬度 */
     .wc-main{max-width:980px;margin:0 auto;padding:0 16px}
-    body.is-home .wc-main{max-width:1200px}
-    /* 文章頁 Hero */
-    .wc-article-hero{margin:0 0 20px 0}
+    /* 首頁拉寬 */
+    body.wc-home .wc-main{max-width:1200px}
+
+    /* 文章頁 Hero 標題與精選圖 */
+    .wc-article-hero{margin:0 0 20px}
     .wc-article-title{font-size:clamp(28px,4vw,42px);line-height:1.2;margin:0 0 12px;font-weight:800}
     .wc-hero-figure{margin:0}
     .wc-hero-figure img{display:block;width:100%;height:auto;border-radius:12px}
+
+    /* Header 社群 icon 圖片 */
+    .wc-ico-img{width:20px;height:20px;display:inline-block;vertical-align:middle}
+    .wc-header{padding:10px 16px}
+    .wc-header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+    .wc-site-title{margin:0;font-size:22px}
+    .wc-site-title a{text-decoration:none}
+    .wc-site-subtitle{margin:4px 0 0 0;font-size:12px;opacity:.7}
+    .wc-brand{display:flex;flex-direction:column}
+    .wc-nav a{margin-left:12px}
   </style>
 </head>
 <body>
@@ -26,14 +38,14 @@
         <h1 class="wc-site-title"><a href="{{ "/" | relative_url }}">蚯蚓貓的資工人生</a></h1>
         <p class="wc-site-subtitle">Line Rangers 角色介紹與遊戲筆記</p>
       </div>
-      <nav class="wc-nav" aria-label="Primary">
-        <a href="https://www.youtube.com/@WarmyCat" target="_blank" rel="noopener" aria-label="YouTube" title="YouTube">
+      <nav class="wc-nav" aria-label="Social">
+        <a href="https://www.youtube.com/@WarmyCat" target="_blank" rel="noopener">
           <img class="wc-ico-img" src="{{ '/assets/icon/youtube.png' | relative_url }}" alt="YouTube">
         </a>
-        <a href="https://www.instagram.com/ytmit/" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
+        <a href="https://www.instagram.com/ytmit/" target="_blank" rel="noopener">
           <img class="wc-ico-img" src="{{ '/assets/icon/instagram.png' | relative_url }}" alt="Instagram">
         </a>
-        <a href="https://discord.gg/XJ8KPJcdbt" target="_blank" rel="noopener" aria-label="Discord" title="Discord">
+        <a href="https://discord.gg/XJ8KPJcdbt" target="_blank" rel="noopener">
           <img class="wc-ico-img" src="{{ '/assets/icon/discord.png' | relative_url }}" alt="Discord">
         </a>
       </nav>
@@ -46,44 +58,50 @@
     </article>
   </main>
 
-  <!-- 提供 baseurl 給 JS -->
+  <!-- 提供 baseurl 給前端 JS 使用 -->
   <script>window.__BASEURL__="{{ site.baseurl | default: '' }}";</script>
 
-  {% raw %}
   <script>
   (function(){
-    // 判斷首頁（控制寬度樣式）
-    try {
+    var base = window.__BASEURL__ || '';
+
+    // 粗略判斷是否為首頁（/ 或 /blog/）
+    try{
       var p = location.pathname.replace(/index\.html$/,'');
-      if (p === '/' || p.endsWith('/blog/')) document.body.classList.add('is-home');
-    } catch(e){}
+      if (p === '/' || /\/blog\/?$/.test(p)) document.body.classList.add('wc-home');
+    }catch(e){}
 
     var wrap = document.getElementById('post-content');
-    if(!wrap) return;
+    if (!wrap) return;
 
-    // 工具
     function addBase(u){
       if(!u) return '';
       if(/^https?:\/\//i.test(u)) return u;
-      if(u.charAt(0)!=='/') u='/'+u;
-      return (window.__BASEURL__||'')+u;
+      if(u.charAt(0) !== '/') u = '/' + u;
+      return base + u;
     }
-    function fixUploadToLocal(u){
-      if(!u) return '';
-      var m = u.match(/\/wp-content\/uploads(\/.+)$/);
-      if(m) return addBase('/assets/uploads'+m[1]);
-      return addBase(u);
-    }
-    function fetchMap(cb){
-      var url = addBase('/assets/featured-map.json');
-      fetch(url).then(r=>r.json()).then(cb).catch(function(){cb(null)});
-    }
+
+    // 解析 front-matter 殘留的文字欄位
     function pick(re, src){
       var m = re.exec(src);
       return m && m[1] ? (m[1]+'').trim() : '';
     }
 
-    // 先用原始 HTML 解析 metadata（避免清理過就抓不到）
+    // 把 WordPress 的 /wp-content/uploads/... 轉成站內 /assets/uploads/...
+    function toLocalUpload(u){
+      if(!u) return '';
+      var m = u.match(/\/wp-content\/uploads(\/.+)$/);
+      if(m) return addBase('/assets/uploads' + m[1]);
+      return addBase(u);
+    }
+
+    // 讀取 featured-map.json
+    function fetchMap(cb){
+      var url = addBase('/assets/featured-map.json');
+      fetch(url).then(function(r){return r.json()}).then(cb).catch(function(){cb(null)});
+    }
+
+    // 從原始 HTML 擷取 meta
     var rawHTML = wrap.innerHTML;
     var metaTitle =
       pick(/posttitle:\s*["']?([^"\n\r']+)["']?/i, rawHTML) ||
@@ -91,23 +109,10 @@
     var featuredLine = pick(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i, rawHTML);
     var thumbId = pick(/_thumbnail_id:\s*["']?(\d+)["']?/i, rawHTML);
 
-    // 清掉混入的 front-matter 區塊
-    try{
-      var html = wrap.innerHTML;
-      var s = html.search(/---\s*layout\s*:\s*post/i);
-      if(s<0) s = html.search(/layout\s*:\s*post/i);
-      if(s>=0){
-        var a = html.lastIndexOf('---', s); if(a<0) a=s;
-        var b = html.indexOf('---', s+3);
-        if(b>a) html = html.slice(0,a)+html.slice(b+3);
-        wrap.innerHTML = html;
-      }
-    }catch(e){}
-
-    // 清雜訊（含媒體只清字、不隱藏）
+    // 清除顯示在文章內的 metadata 噪音段落（但保留媒體）
     try{
       var noise=/(^|\s)(_oembed_[^\n<]+|firehose_sent:[^\n<]+|timeline_notification:[^\n<]+|_publicize_job_id:[^\n<]+|_publicize_shares:[^\n<]+|_elasticsearch_data_sharing_indexed_on:[^\n<]+|permalink:[^\n<]+)/gi;
-      [].forEach.call(wrap.querySelectorAll('p'),function(p){
+      Array.prototype.forEach.call(wrap.querySelectorAll('p'),function(p){
         var media=p.querySelector('img,iframe,video');
         var t=(p.textContent||'').trim();
         if(!t) return;
@@ -118,83 +123,68 @@
       });
     }catch(e){}
 
-    // 文章頁：文首插入 Hero（標題 + 精選圖）
+    // 文章頁：插入 Hero（標題＋精選圖）
     (function(){
-      // 若沒拿到，再退到第一個 H1
-      if(!metaTitle){
-        var h1=wrap.querySelector('h1');
-        if(h1) metaTitle=(h1.textContent||'').trim();
-      }
-      // 先建立 hero（有任一就建立）
-      if(metaTitle || featuredLine || thumbId){
-        var hero=document.createElement('section');
-        hero.className='wc-article-hero';
-        if(metaTitle){
-          var h=document.createElement('h1');
-          h.className='wc-article-title';
-          h.textContent=metaTitle;
-          hero.appendChild(h);
-        }
-        var fig=document.createElement('figure');
-        fig.className='wc-hero-figure';
-        hero.appendChild(fig);
-        wrap.insertBefore(hero, wrap.firstChild);
+      // 盡量用 page.title；若無則用 metaTitle
+      var pageTitle = "{{ page.title | escape }}".trim();
+      var finalTitle = pageTitle || metaTitle;
 
-        // 1) 若 image: 已有 → 直接用（也會自動轉成本地 /assets/uploads）
-        if(featuredLine){
-          var img=document.createElement('img');
-          img.src=fixUploadToLocal(featuredLine);
-          img.alt=metaTitle||'';
-          fig.appendChild(img);
-        }
-        // 2) 若沒有 image: 但有 _thumbnail_id → 查對照表
-        else if(thumbId){
-          fetchMap(function(map){
-            if(!map) return;
-            var local=map[thumbId];
-            if(!local) return;
-            // 若此時還沒有圖再插入
-            if(!fig.querySelector('img')){
-              var img=document.createElement('img');
-              img.src=addBase(local);
-              img.alt=metaTitle||'';
-              fig.appendChild(img);
-            }
-          });
-        }
+      // 有標題或有精選圖訊息才建立 hero
+      if(!finalTitle && !featuredLine && !thumbId) return;
+
+      var hero = document.createElement('section');
+      hero.className = 'wc-article-hero';
+      if(finalTitle){
+        var h = document.createElement('h1');
+        h.className = 'wc-article-title';
+        h.textContent = finalTitle;
+        hero.appendChild(h);
+      }
+      var fig = document.createElement('figure');
+      fig.className = 'wc-hero-figure';
+      hero.appendChild(fig);
+
+      // 插在文章最前面
+      wrap.insertBefore(hero, wrap.firstChild);
+
+      // 1) 若 front-matter 有 image:，直接用（也會轉為 /assets/uploads）
+      if (featuredLine){
+        var img = document.createElement('img');
+        img.src = toLocalUpload(featuredLine);
+        img.alt = finalTitle || '';
+        fig.appendChild(img);
+        return;
+      }
+      // 2) 否則用 _thumbnail_id 去對照表
+      if (thumbId){
+        fetchMap(function(map){
+          if(!map) return;
+          var local = map[thumbId];
+          if(!local) return;
+          // 避免重覆插入
+          if(!fig.querySelector('img')){
+            var img = document.createElement('img');
+            img.src = addBase(local);
+            img.alt = finalTitle || '';
+            fig.appendChild(img);
+          }
+        });
       }
     })();
 
-    // 特定表格縮 40%
-    try{
-      var keys=['下表是為各種減礦時的礦物量','下表為各種減礦時的礦物量'];
-      var ps=wrap.querySelectorAll('p');
-      for(var i=0;i<ps.length;i++){
-        var t=(ps[i].innerText||'').trim();
-        if(keys.some(function(k){return t.indexOf(k)===0;})){
-          var sib=ps[i].nextElementSibling, inner=sib;
-          if(!sib) break;
-          if(sib.tagName==='FIGURE'&&sib.querySelector('img')) inner=sib.querySelector('img');
-          if(sib.tagName==='P') inner=sib.querySelector('img')||sib.querySelector('table')||sib;
-          if(inner) inner.classList.add('shrink-40');
-          break;
-        }
-      }
-    }catch(e){}
-
-    // 首頁卡片：用 data-thumb-id → featured-map.json 替換縮圖
-    if(document.body.classList.contains('is-home')){
-      var cards=[].slice.call(document.querySelectorAll('.card[data-thumb-id]'));
-      var need=cards.filter(function(c){return c.getAttribute('data-thumb-id');});
-      if(need.length){
+    // 首頁卡片縮圖：用 data-thumb-id → 對照表換成精選圖
+    if (document.body.classList.contains('wc-home')){
+      var cards = Array.prototype.slice.call(document.querySelectorAll('.card[data-thumb-id]'));
+      var need = cards.filter(function(c){ return c.getAttribute('data-thumb-id'); });
+      if (need.length){
         fetchMap(function(map){
           if(!map) return;
           need.forEach(function(c){
-            var id=c.getAttribute('data-thumb-id');
-            var local=map[id];
+            var id = c.getAttribute('data-thumb-id');
+            var local = map[id];
             if(local){
-              var img=c.querySelector('.card-thumb img');
-              if(img) img.src=addBase(local);
+              var img = c.querySelector('.card-thumb img');
+              if(img) img.src = addBase(local);
             }
           });
         });
@@ -202,8 +192,5 @@
     }
   })();
   </script>
-  {% endraw %}
-
-  <script src="{{ "/assets/yt-embed.js" | relative_url }}"></script>
 </body>
 </html>
