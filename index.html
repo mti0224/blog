@@ -1,45 +1,75 @@
 ---
 layout: default
-title: 蚯蚓貓的資工人生
-permalink: /index.html
+title: 首頁
 ---
 
-<header class="site-topbar">
-  <div class="container">
-    <a class="brand" href="{{ '/' | relative_url }}">蚯蚓貓的資工人生</a>
-  </div>
-</header>
-
-<main class="container" style="padding:22px 0 60px;">
-  <div class="post-grid">
-    {%- assign posts_col = paginator.posts | default: site.posts -%}
-    {%- for post in posts_col -%}
-      {%- assign hero = post.hero | default: post.image | default: post.thumbnail -%}
+<div class="home">
+  <!-- 特色置頂：最新 3 篇 -->
+  <section class="section">
+    <h2 class="h2">最新精選</h2>
+    <div class="card-grid">
+      {% assign latest = site.posts | slice: 0, 3 %}
+      {% for post in latest %}
       <article class="card">
-        <a href="{{ post.url | relative_url }}" aria-label="{{ post.title | escape }}">
-          {%- if hero -%}
-            <img class="card-thumb" src="{{ hero | relative_url }}" alt="">
-          {%- else -%}
-            <img class="card-thumb" src="{{ '/assets/fallback-thumb.png' | relative_url }}" alt="">
-          {%- endif -%}
-          <div class="card-body">
-            <h2 class="card-title">{{ post.title }}</h2>
-            <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
-          </div>
+        <a class="card-thumb" href="{{ post.url | relative_url }}">
+          {% assign hero = post.featured_image | default: post.image %}
+          {% if hero %}
+            <img src="{{ hero | relative_url }}" alt="{{ post.title | escape }}">
+          {% else %}
+            <div class="thumb-fallback">No Image</div>
+          {% endif %}
         </a>
+        <div class="card-body">
+          <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
+          <div class="card-meta">
+            <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%Y-%m-%d" }}</time>
+          </div>
+        </div>
       </article>
-    {%- endfor -%}
-  </div>
+      {% endfor %}
+    </div>
+  </section>
 
-  {%- if paginator.total_pages and paginator.total_pages > 1 -%}
-  <nav class="container" style="display:flex;gap:10px;justify-content:center;margin-top:22px;">
-    {%- if paginator.previous_page -%}
-      <a href="{{ paginator.previous_page_path | relative_url }}">上一頁</a>
-    {%- endif -%}
-    <span>第 {{ paginator.page }} / {{ paginator.total_pages }} 頁</span>
-    {%- if paginator.next_page -%}
-      <a href="{{ paginator.next_page_path | relative_url }}">下一頁</a>
-    {%- endif -%}
-  </nav>
-  {%- endif -%}
-</main>
+  <!-- 分頁列表：使用 jekyll-paginate -->
+  <section class="section">
+    <h2 class="h2">所有文章</h2>
+    <div class="card-grid">
+      {% for post in paginator.posts %}
+      <article class="card">
+        <a class="card-thumb" href="{{ post.url | relative_url }}">
+          {% assign hero = post.featured_image | default: post.image %}
+          {% if hero %}
+            <img src="{{ hero | relative_url }}" alt="{{ post.title | escape }}">
+          {% else %}
+            <div class="thumb-fallback">No Image</div>
+          {% endif %}
+        </a>
+        <div class="card-body">
+          <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
+          <div class="card-meta">
+            <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%Y-%m-%d" }}</time>
+          </div>
+          {% if post.excerpt %}
+          <p class="card-excerpt">{{ post.excerpt | strip_html | truncate: 120 }}</p>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    <!-- 正確的上一頁／下一頁（會自動產出 /page2/、/page3/…） -->
+    <nav class="pager">
+      <div class="pager-left">
+        {% if paginator.previous_page %}
+          <a class="btn" href="{{ paginator.previous_page_path | relative_url }}">← 上一頁</a>
+        {% endif %}
+      </div>
+      <div class="pager-center">第 {{ paginator.page }} / {{ paginator.total_pages }} 頁</div>
+      <div class="pager-right">
+        {% if paginator.next_page %}
+          <a class="btn" href="{{ paginator.next_page_path | relative_url }}">下一頁 →</a>
+        {% endif %}
+      </div>
+    </nav>
+  </section>
+</div>
