@@ -1,17 +1,34 @@
 title: 蚯蚓貓的資工人生
-description: 我的文章搬家到 GitHub Pages
+description: 個人筆記與 LINE Rangers
+theme: minima
+
+# 你的 GitHub Pages 網址
 url: https://mti0224.github.io
+# 你的子路徑
 baseurl: /blog
 
-theme: minima
+# 語系
+lang: zh-Hant
+
+# 分頁（GitHub Pages 支援的舊版 paginate）
 paginate: 12
 paginate_path: "/page:num/"
 
-permalink: /:year/:month/:day/:title/
-timezone: Asia/Taipei
-
 plugins:
   - jekyll-paginate
-  - jekyll-feed
-  - jekyll-seo-tag
-  - jekyll-sitemap
+
+# 文章連結樣式（保留你現在的年/月/日/標題）
+permalink: /:year/:month/:day/:title/
+
+# 讓 markdown 和 highlighter 正常
+markdown: kramdown
+highlighter: rouge
+
+# 靜態檔案路徑
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+# 注意：此檔案後面不要再有任何 CSS/HTML 文字！
