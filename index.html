@@ -1,60 +1,87 @@
 ---
-permalink: /
+layout: default
 title: 首頁
 ---
 
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ page.title }} | {{ site.title | default: "蚯蚓貓的資工人生" }}</title>
-  <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
-  <link rel="stylesheet" href="{{ '/assets/custom.css' | relative_url }}">
-</head>
-<body>
-  <header class="site-topbar">
-    <div class="container flex-between">
-      <a class="brand" href="{{ site.baseurl }}/">{{ site.title | default: "蚯蚓貓的資工人生" }}</a>
-      <nav class="nav">
-        <a href="{{ site.baseurl }}/">首頁</a>
-        <a href="{{ '/feed.xml' | relative_url }}">RSS</a>
-      </nav>
-    </div>
-  </header>
+<header class="site-topbar">
+  <div class="container flex-between" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0">
+    <a class="brand" href="{{ site.baseurl }}/">蚯蚓貓的資工人生</a>
+    <nav class="nav">
+      <a href="{{ site.baseurl }}/">首頁</a>
+      <a href="{{ site.baseurl }}/feed.xml">RSS</a>
+    </nav>
+  </div>
+</header>
 
-  <main class="container">
-    <div class="post-grid">
-      {% assign posts_list = site.posts %}
-      {% for post in posts_list %}
-        {%- comment -%}
-        取封面圖：優先 image / thumbnail / featured_image，其次抓內文第一張 <img>
-        並修正：移除重複 baseurl、尾端殘留 '---'
-        {%- endcomment -%}
-        {% assign raw = post.image | default: post.thumbnail | default: post.featured_image %}
-        {% if raw %}{% assign img = raw | replace: site.baseurl, '' | split: '---' | first | strip %}{% endif %}
-        {% if img == nil or img == '' %}
-          {% assign firstimg = post.content | split:'src="' | slice:1,1 | first | split:'"' | first %}
-          {% assign img = firstimg | replace: site.baseurl, '' | strip %}
-        {% endif %}
+<main class="container">
 
-        <a class="card" href="{{ post.url | relative_url }}">
-          <div class="card-img">
-            {% if img and img != '' %}
-              <img src="{{ img | relative_url }}" alt="{{ post.title | escape }}">
-            {% else %}
-              <div class="noimg">No Image</div>
-            {% endif %}
-          </div>
-          <div class="card-body">
-            <div class="card-title">{{ post.title | default: post.slug | escape }}</div>
-            <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
+  {%- comment -%}
+  精選 Banner：取最新有圖片的 3 篇；若不足就用最新 3 篇
+  {%- endcomment -%}
+  {%- assign img_posts = site.posts | where_exp:'p','p.image' -%}
+  {%- if img_posts.size >= 3 -%}
+    {%- assign featured = img_posts | slice: 0, 3 -%}
+  {%- else -%}
+    {%- assign featured = site.posts | slice: 0, 3 -%}
+  {%- endif -%}
+
+  <section class="featured">
+    {%- assign P0 = featured[0] -%}
+    <article class="big">
+      <a href="{{ site.baseurl }}{{ P0.url }}" style="display:block">
+        {%- if P0.image -%}
+          <img class="img" src="{{ site.baseurl }}{{ P0.image }}" alt="{{ P0.title | escape }}">
+        {%- else -%}
+          <div class="img" style="background:#0f1218"></div>
+        {%- endif -%}
+        <div class="label">FEATURED</div>
+        <div class="meta">
+          <h3><a href="{{ site.baseurl }}{{ P0.url }}">{{ P0.title }}</a></h3>
+          <div class="date">{{ P0.date | date: "%Y-%m-%d" }}</div>
+        </div>
+      </a>
+    </article>
+
+    <div class="col">
+      {%- for P in featured offset:1 -%}
+      <article class="sm">
+        <a href="{{ site.baseurl }}{{ P.url }}" style="display:block">
+          {%- if P.image -%}
+            <img class="img" src="{{ site.baseurl }}{{ P.image }}" alt="{{ P.title | escape }}">
+          {%- else -%}
+            <div class="img" style="background:#0f1218"></div>
+          {%- endif -%}
+          <div class="meta">
+            <h3 style="font-size:16px"><a href="{{ site.baseurl }}{{ P.url }}">{{ P.title }}</a></h3>
+            <div class="date">{{ P.date | date: "%Y-%m-%d" }}</div>
           </div>
         </a>
-      {% endfor %}
+      </article>
+      {%- endfor -%}
     </div>
-  </main>
+  </section>
 
-  <script src="{{ '/assets/yt-embed.js' | relative_url }}"></script>
-</body>
-</html>
+  <!-- 全部貼文卡片 -->
+  <section class="post-grid">
+    {%- for post in site.posts -%}
+    <a class="card" href="{{ site.baseurl }}{{ post.url }}">
+      <div class="card-img">
+        {%- if post.image -%}
+          <img class="img" src="{{ site.baseurl }}{{ post.image }}" alt="{{ post.title | escape }}">
+        {%- else -%}
+          <div class="noimg">No Image</div>
+        {%- endif -%}
+      </div>
+      <div class="card-body">
+        <div class="card-title">{{ post.title }}</div>
+        <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
+        <div class="card-excerpt">
+          {{ post.excerpt | strip_html | truncate: 88 }}
+        </div>
+      </div>
+    </a>
+    {%- endfor -%}
+  </section>
+</main>
+
+<script src="{{ site.baseurl }}/assets/yt-embed.js"></script>
