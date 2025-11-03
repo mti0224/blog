@@ -31,74 +31,108 @@
     </div>
   </header>
 
-  <!-- 主要內容 -->
+  <!-- 內容 -->
   <main class="wc-main">
     <article id="post-content" class="wc-prose">
       {{ content }}
     </article>
   </main>
 
+  <!-- 把 baseurl 傳給 JS（這段不要包 raw） -->
+  <script>
+    window.__BASEURL__ = "{{ site.baseurl | default: '' }}"; // 例如 "/blog"
+  </script>
+
+  <!-- 其餘 JS 包 raw，避免 Liquid 解析 -->
   {% raw %}
   <script>
-    (function () {
-      // 判斷首頁以套用首頁寬度/格線
-      try {
-        var p = location.pathname.replace(/index\.html$/,'');
-        if (p === '/' || p.endsWith('/blog/')) document.body.classList.add('is-home');
-      } catch (e) {}
+  (function () {
+    // A) 前端判斷首頁（給首頁格線樣式）
+    try {
+      var p = location.pathname.replace(/index\.html$/,'');
+      if (p === '/' || p.endsWith('/blog/')) document.body.classList.add('is-home');
+    } catch (e) {}
 
-      var wrap = document.getElementById('post-content');
-      if (!wrap) return;
+    var wrap = document.getElementById('post-content');
+    if (!wrap) return;
 
-      // 清掉混入的 front-matter 區塊
-      try {
-        var html = wrap.innerHTML;
-        var start = html.search(/---\s*layout\s*:\s*post/i);
-        if (start < 0) start = html.search(/layout\s*:\s*post/i);
-        if (start >= 0) {
-          var cutStart = html.lastIndexOf('---', start);
-          if (cutStart < 0) cutStart = start;
-          var cutEnd = html.indexOf('---', start + 3);
-          if (cutEnd > cutStart) html = html.slice(0, cutStart) + html.slice(cutEnd + 3);
-          wrap.innerHTML = html;
+    // B) 剔除混入的 front-matter 區塊（--- layout: post ... ---）
+    try {
+      var html = wrap.innerHTML;
+      var start = html.search(/---\s*layout\s*:\s*post/i);
+      if (start < 0) start = html.search(/layout\s*:\s*post/i);
+      if (start >= 0) {
+        var cutStart = html.lastIndexOf('---', start);
+        if (cutStart < 0) cutStart = start;
+        var cutEnd = html.indexOf('---', start + 3);
+        if (cutEnd > cutStart) html = html.slice(0, cutStart) + html.slice(cutEnd + 3);
+        wrap.innerHTML = html;
+      }
+    } catch (e) {}
+
+    // C) 清常見 WP 雜訊：有媒體就「只清字、不隱藏」
+    try {
+      var noiseLine = /(^|\s)(_oembed_[^\n<]+|firehose_sent:[^\n<]+|timeline_notification:[^\n<]+|_publicize_job_id:[^\n<]+|_publicize_shares:[^\n<]+|_elasticsearch_data_sharing_indexed_on:[^\n<]+|permalink:[^\n<]+)/gi;
+      Array.prototype.forEach.call(wrap.querySelectorAll('p'), function(p){
+        var hasMedia = p.querySelector('img,iframe,video');
+        var t = (p.textContent || '').trim();
+        if (!t) return;
+        if (hasMedia) {
+          p.innerHTML = p.innerHTML.replace(noiseLine, '');
+        } else if (/_oembed_|firehose_sent:|timeline_notification:|_publicize_job_id:|_publicize_shares:|_elasticsearch_data_sharing_indexed_on:|^permalink:/i.test(t)) {
+          p.style.display = 'none';
         }
-      } catch (e) {}
+      });
+    } catch (e) {}
 
-      // 清常見 WP 雜訊：若段落含媒體則「只清文字、不隱藏段落」
-      try {
-        var noiseLine = /(^|\s)(_oembed_[^\n<]+|firehose_sent:[^\n<]+|timeline_notification:[^\n<]+|_publicize_job_id:[^\n<]+|_publicize_shares:[^\n<]+|_elasticsearch_data_sharing_indexed_on:[^\n<]+|permalink:[^\n<]+)/gi;
-        Array.prototype.forEach.call(wrap.querySelectorAll('p'), function(p){
-          var hasMedia = p.querySelector('img,iframe,video');
-          var t = (p.textContent || '').trim();
-          if (!t) return;
-          if (hasMedia) {
-            p.innerHTML = p.innerHTML.replace(noiseLine, '');
-            // 有媒體就算文字清空也保持顯示
-          } else {
-            if (/_oembed_|firehose_sent:|timeline_notification:|_publicize_job_id:|_publicize_shares:|_elasticsearch_data_sharing_indexed_on:|^permalink:/i.test(t)) {
-              p.style.display = 'none';
+    // D) 文章文首自動插入「精選圖片」（來源：內文中的 image: 路徑），若尚未有圖
+    try {
+      var hasTopImg = !!wrap.querySelector('img');
+      if (!hasTopImg) {
+        // 從純文字中找 image: /path.png 或 image: "..."
+        var text = wrap.textContent || '';
+        var m = text.match(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i);
+        if (m && m[1]) {
+          var src = m[1];
+          // 補上 baseurl（若需要）
+          if (!/^https?:\/\//i.test(src)) {
+            if (src.charAt(0) !== '/') src = '/' + src;
+            if (window.__BASEURL__ && src.indexOf(window.__BASEURL__ + '/') !== 0) {
+              src = window.__BASEURL__ + src;
             }
           }
-        });
-      } catch (e) {}
-
-      // 「下表是為各種減礦時的礦物量」→ 下一個元素縮 40%
-      try {
-        var keys = ['下表是為各種減礦時的礦物量','下表為各種減礦時的礦物量'];
-        var paras = wrap.querySelectorAll('p');
-        for (var i = 0; i < paras.length; i++) {
-          var t = (paras[i].innerText || '').trim();
-          if (keys.some(function(k){ return t.indexOf(k) === 0; })) {
-            var sib = paras[i].nextElementSibling, inner = sib;
-            if (!sib) break;
-            if (sib.tagName === 'FIGURE' && sib.querySelector('img')) inner = sib.querySelector('img');
-            if (sib.tagName === 'P') inner = sib.querySelector('img') || sib.querySelector('table') || sib;
-            if (inner) inner.classList.add('shrink-40');
-            break;
-          }
+          var fig = document.createElement('figure');
+          var img = document.createElement('img');
+          img.src = src;
+          img.alt = '';
+          img.style.display = 'block';
+          img.style.width = '100%';
+          img.style.height = 'auto';
+          img.style.borderRadius = '12px';
+          fig.style.margin = '0 0 1.25rem 0';
+          fig.appendChild(img);
+          wrap.insertBefore(fig, wrap.firstChild);
         }
-      } catch (e) {}
-    })();
+      }
+    } catch (e) {}
+
+    // E) 「下表是為各種減礦時的礦物量」→ 下一個元素縮 40%
+    try {
+      var keys = ['下表是為各種減礦時的礦物量','下表為各種減礦時的礦物量'];
+      var paras = wrap.querySelectorAll('p');
+      for (var i = 0; i < paras.length; i++) {
+        var t = (paras[i].innerText || '').trim();
+        if (keys.some(function(k){ return t.indexOf(k) === 0; })) {
+          var sib = paras[i].nextElementSibling, inner = sib;
+          if (!sib) break;
+          if (sib.tagName === 'FIGURE' && sib.querySelector('img')) inner = sib.querySelector('img');
+          if (sib.tagName === 'P') inner = sib.querySelector('img') || sib.querySelector('table') || sib;
+          if (inner) inner.classList.add('shrink-40');
+          break;
+        }
+      }
+    } catch (e) {}
+  })();
   </script>
   {% endraw %}
 
