@@ -1,0 +1,70 @@
+---
+layout: default
+---
+
+<header class="site-topbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0">
+    <a class="brand" href="{{ site.baseurl }}/">蚯蚓貓的資工人生</a>
+    <nav class="nav">
+      <a href="{{ site.baseurl }}/">首頁</a>
+      <a href="{{ site.baseurl }}/feed.xml">RSS</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <article class="post-inner">
+    <header class="post-header">
+      <h1 class="post-title">{{ page.title }}</h1>
+      <div class="post-meta">
+        <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%Y-%m-%d" }}</time>
+        {%- if page.tags and page.tags.size > 0 -%}
+          · 標籤：
+          {%- for t in page.tags -%}
+            {{ t }}{%- if forloop.last == false -%}, {% endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      </div>
+      {%- if page.image -%}
+        <div class="post-hero">
+          <img src="{{ site.baseurl }}{{ page.image }}" alt="{{ page.title | escape }}">
+        </div>
+      {%- endif -%}
+    </header>
+
+    <div class="post-content">
+      {{ content }}
+    </div>
+  </article>
+</main>
+
+<!-- 把文章內「純 YouTube 連結」或 WP 轉出的 embed 變成等寬 16:9 -->
+<script>
+(function(){
+  const root = document.querySelector('.post-content');
+  if(!root) return;
+
+  // 1) 將純文字/純 <a> 的 YouTube 連結轉成 iframe
+  const ytRe = /https?:\/\/(www\.)?youtube\.com\/watch\?v=([A-Za-z0-9_\-]+)/;
+  root.querySelectorAll('a').forEach(a=>{
+    const m = a.href && a.href.match(ytRe);
+    if(m){
+      const id = m[2];
+      const wrap = document.createElement('div');
+      const iframe = document.createElement('iframe');
+      wrap.style.margin = '18px 0';
+      iframe.src = `https://www.youtube.com/embed/${id}`;
+      iframe.setAttribute('allow','accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+      iframe.setAttribute('allowfullscreen','true');
+      wrap.appendChild(iframe);
+      a.replaceWith(wrap);
+    }
+  });
+
+  // 2) 若文章內本來就有 <iframe>，強制加上等寬樣式（CSS 已處理寬/高比例）
+  root.querySelectorAll('iframe').forEach(f=>{
+    f.loading = 'lazy';
+  });
+})();
+</script>

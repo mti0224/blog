@@ -1,0 +1,44 @@
+---
+layout: default
+---
+
+{%- assign latest = site.posts | where_exp:'p','p.image' | slice: 0, 3 -%}
+
+<section class="home-hero">
+  {% if latest.size > 0 %}
+    {% assign p0 = latest[0] %}
+    <a class="hero-main" href="{{ p0.url | relative_url }}">
+      <img src="{{ p0.image | relative_url }}" alt="{{ p0.title }}">
+      <div class="hero-caption">{{ p0.title }}</div>
+    </a>
+  {% endif %}
+
+  <div class="hero-side">
+    {% for p in latest offset:1 %}
+      <a class="hero-card" href="{{ p.url | relative_url }}">
+        <img src="{{ p.image | relative_url }}" alt="{{ p.title }}">
+        <div class="hero-mini-title">{{ p.title }}</div>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+<h1 class="home-heading">首頁</h1>
+
+<section class="post-grid">
+  {%- for post in site.posts -%}
+    <article class="post-card">
+      <a class="thumb" href="{{ post.url | relative_url }}">
+        {% if post.image %}
+          <img src="{{ post.image | relative_url }}" alt="{{ post.title }}">
+        {% else %}
+          <div class="no-image">No Image</div>
+        {% endif %}
+      </a>
+      <h2 class="post-title">
+        <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+      </h2>
+      <div class="meta">{{ post.date | date: "%Y-%m-%d" }}</div>
+    </article>
+  {%- endfor -%}
+</section>

@@ -1,0 +1,35 @@
+name: Attach featured images
+on:
+  workflow_dispatch:
+    inputs:
+      xml_path:
+        description: 'Path to WXR (default: import/export.xml)'
+        required: false
+        default: 'import/export.xml'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Attach by _thumbnail_id
+        env:
+          XML_PATH: ${{ github.event.inputs.xml_path }}
+        run: node scripts/attach_by_thumbnail_id.js
+
+      - name: Commit changes
+        run: |
+          if [ -n "$(git status --porcelain _posts)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add _posts
+            git commit -m "chore: attach featured images from WXR"
+            git push
+          else
+            echo "No changes"
+          fi

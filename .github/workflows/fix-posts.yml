@@ -1,0 +1,43 @@
+name: Fix posts (attach featured images)
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ main ]
+    paths:
+      - 'scripts/attach_by_thumbnail_id.js'
+      - 'import/*.xml'
+      - '_posts/**'
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install deps for importer
+        run: npm i xml2js@0.6
+
+      - name: Attach featured images into Front-Matter
+        run: node scripts/attach_by_thumbnail_id.js
+
+      - name: Commit changes (if any)
+        run: |
+          if [ -n "$(git status --porcelain _posts)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add _posts
+            git commit -m "fix(posts): move image into Front-Matter and remove stray line"
+            git push
+          else
+            echo "No changes to commit."
+          fi

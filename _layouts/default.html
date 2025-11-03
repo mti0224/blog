@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if page.title %}{{ page.title }} | {% endif %}{{ site.title }}</title>
+
+  {%- comment -%}
+  使用 GitHub Pages 內建的 minima 主題樣式（/assets/main.css）
+  {%- endcomment -%}
+  <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/assets/custom.css' | relative_url }}">
+</head>
+<body>
+  <header class="site-topbar">
+    <div class="container flex-between">
+      <a class="brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+      <nav class="nav">
+        <a href="{{ '/' | relative_url }}">首頁</a>
+        <a href="{{ '/feed.xml' | relative_url }}">RSS</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    {{ content }}
+  </main>
+
+  <script src="{{ '/assets/yt-embed.js' | relative_url }}"></script>
+</body>
+</html>
