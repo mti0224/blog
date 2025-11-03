@@ -1,12 +1,26 @@
-/* === 文章欄寬：與你的圖片一致（可自行改 700px） === */
+/* === Warmycat 風格（精簡版，覆蓋全站） ===
+   - Header 加寬（與文章寬度分離）
+   - 社群 icon only
+   - 首頁 1~3 欄自適應；文章頁維持 700px 單欄
+*/
+
 :root{
-  --postw: 700px;          /* 你原本的設定，保留 */
+  /* 文章頁主欄寬度（維持你原本窄版） */
+  --postw: 700px;
+
+  /* 首頁內容最大寬度（供 1~3 欄卡片使用） */
+  --homew: 1080px;
+
+  /* Header 橫向寬度（避免換行與錯位） */
+  --headw: 1120px;
+
+  /* 色系與字型 */
   --wc-bg: #ffffff;
-  --wc-text: #1f2937;      /* 主文字：深灰 */
-  --wc-muted: #6b7280;     /* 次要文字 */
-  --wc-accent: #ef6666;    /* 溫暖重點色（連結/hover） */
+  --wc-text: #1f2937;
+  --wc-muted: #6b7280;
+  --wc-accent: #ef6666;
   --wc-accent-ink: #b91c1c;
-  --wc-border: #e5e7eb;    /* 淡灰分隔線 */
+  --wc-border: #e5e7eb;
   --wc-shadow: 0 6px 24px rgba(17,24,39,.06);
 
   --wc-font-body: "Noto Sans TC","Inter",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang TC","Microsoft JhengHei",sans-serif;
@@ -29,15 +43,7 @@ img{max-width:100%;height:auto;border-radius:12px}
 figure{margin:1.2rem 0}
 figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
 
-/* 單欄容器（保險覆蓋：避免主題把容器拉太寬） */
-.container, .content, .wrap, .wrapper, .page, .post, .posts, .site-main{
-  max-width: var(--postw) !important;
-  width: min(var(--postw), calc(100vw - 32px)) !important;
-  margin-left:auto !important; margin-right:auto !important;
-  padding-left:0 !important; padding-right:0 !important;
-}
-
-/* ===== Header（把原本的一行純文字變漂亮） ===== */
+/* ===== Header（加寬＋icon only） ===== */
 .wc-header{
   position:sticky; top:0; z-index:40;
   background:rgba(255,255,255,.92);
@@ -46,7 +52,9 @@ figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
 }
 .wc-header-inner{
   display:flex; align-items:center; gap:16px; min-height:64px;
-  width: min(var(--postw), calc(100vw - 32px)); margin:0 auto;
+  width:min(var(--headw), calc(100vw - 32px));   /* 比文章區更寬 */
+  margin:0 auto;
+  padding:0 0;                                   /* 視覺更緊實 */
 }
 .wc-brand{display:flex;flex-direction:column;gap:2px}
 .wc-site-title{
@@ -55,17 +63,26 @@ figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
 }
 .wc-site-title a{color:inherit;text-decoration:none}
 .wc-site-subtitle{margin:0;color:var(--wc-muted);font-size:.95rem}
-.wc-nav{margin-left:auto;display:flex;align-items:center;gap:18px}
+
+/* 導覽列：只保留 icon（按鈕樣式一致） */
+.wc-nav{margin-left:auto;display:flex;align-items:center;gap:10px}
 .wc-nav a{
-  color:var(--wc-text); font-weight:600; font-size:.98rem;
-  padding:8px 10px; border-radius:10px;
+  display:grid; place-items:center;
+  width:36px; height:36px; border-radius:10px;
+  color:var(--wc-text);
 }
 .wc-nav a:hover{color:var(--wc-accent);text-decoration:none;background:rgba(239,102,102,.08)}
-.wc-ico{width:18px;height:18px;vertical-align:-3px;margin-right:6px;opacity:.9}
+.wc-ico{width:18px;height:18px;opacity:.95}
 
-/* ===== 主要內容（首頁 & 文章同寬置中） ===== */
+/* 避免桌面版站名被拆行；手機照常自動換行 */
+@media (min-width: 768px){
+  .wc-site-title{white-space:nowrap}
+}
+
+/* ===== 主要內容容器 ===== */
 .wc-main{padding:28px 0 60px}
 .wc-prose{
+  /* 預設：文章/一般頁面採用窄版 */
   width: min(var(--postw), calc(100vw - 32px));
   margin:0 auto;
 }
@@ -84,10 +101,26 @@ figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
   background:#fff7f7; color:#7c2d2d; border-radius:8px;
 }
 
-/* ===== 首頁卡片格（對應 blog/index.html 現有 class） ===== */
+/* ===== 首頁：放寬容器寬度到 --homew，支援 1~3 欄 ===== */
+/* 讓首頁的主容器比文章頁更寬（文章頁仍維持 700px） */
+body.is-home .wc-prose{
+  width: min(var(--homew), calc(100vw - 32px));
+}
+
+/* 卡片格：最多三欄、平板兩欄、手機單欄 */
+.card-grid{
+  display:grid; gap:16px;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 1024px){
+  .card-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px){
+  .card-grid{ grid-template-columns:1fr; }
+}
+
 .home .section{margin:8px 0 28px}
 .h2{font-size:1.1rem;letter-spacing:.12em;color:var(--wc-muted);text-transform:uppercase;margin:0 0 12px}
-.card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .card{
   display:flex;flex-direction:column;
   border:1px solid var(--wc-border); border-radius:14px; box-shadow:var(--wc-shadow);
@@ -103,7 +136,7 @@ figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
 .card-meta{color:var(--wc-muted);font-size:.95rem;margin-bottom:.35rem}
 .card-excerpt{color:#374151;margin:.4rem 0 0}
 
-/* 分頁器（保留你 index.html 的 pager 結構） */
+/* 分頁器（保留你 index.html 的結構） */
 .pager{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-top:18px}
 .pager-left,.pager-right{display:flex}
 .pager-left{justify-content:flex-start}
@@ -112,30 +145,22 @@ figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
 .btn{display:inline-block;padding:8px 14px;border:1px solid var(--wc-border);border-radius:10px;color:var(--wc-text);text-decoration:none}
 .btn:hover{border-color:var(--wc-accent);color:var(--wc-accent)}
 
-/* ===== 文章頁寬度與置中（保留你原本規則） ===== */
+/* ===== 文章頁寬度與置中（維持你原本規則） ===== */
 .post-header, .post-content{
   box-sizing:border-box;
   max-width: var(--postw);
-  width: min(var(--postw), calc(100vw - 32px)); /* 手機避免超出螢幕 */
+  width: min(var(--postw), calc(100vw - 32px));
   margin-left:auto; margin-right:auto;
-  text-align:left; /* 區塊置中、內容靠左 */
+  text-align:left;
 }
-/* 內文所有直屬區塊：統一寬度與置中（p、figure、table、iframe…） */
 .post-content > *{
   max-width: var(--postw) !important;
   width: 100% !important;
   margin-left:auto !important;
   margin-right:auto !important;
 }
-/* 內文圖片（含 figure 內）保持等比例，與欄寬一致 */
-.post-content figure,
-.post-content p > img{
-  display:block; margin:14px auto;
-}
-.post-content figure img,
-.post-content p > img{
-  display:block; width:100% !important; height:auto !important;
-}
+.post-content figure, .post-content p > img{display:block; margin:14px auto}
+.post-content figure img, .post-content p > img{display:block; width:100% !important; height:auto !important}
 
 /* 表格、Code 區塊 */
 table{border-collapse:collapse;width:100%;margin:1rem auto;max-width:var(--postw)}
@@ -147,10 +172,7 @@ pre{background:#0b10211a;padding:14px 16px;border-radius:12px;overflow:auto;bord
 /* Footer（若有） */
 footer{margin-top:48px;border-top:1px solid var(--wc-border);padding:22px 0;color:var(--wc-muted);font-size:.95rem}
 
-/* 小螢幕：單欄、字級微調 */
+/* 小螢幕微調 */
 @media (max-width:640px){
   .wc-site-title{font-size:1.28rem}
-  .wc-nav{gap:10px}
-  .wc-nav a{padding:8px}
-  .card-grid{grid-template-columns:1fr}
 }
