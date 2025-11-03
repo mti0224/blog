@@ -1,106 +1,89 @@
-/* === 文章閱讀寬度 / 字級 & Header 品牌強化 === */
-
-/* 文章主欄最大寬度（比原本 860px 再窄一點） */
+/* === 統一文章欄寬：與 /assets/uploads/2025/10/linerangerse681a9e790b4.png 相同 === */
 :root{
-  /* 原本就有的變數保留… */
-  --postw: 740px;           /* ← 你要再窄一點可以調 700~760 之間 */
+  /* 若未來你改那張圖的寬，就改這個數值即可 */
+  --postw: 700px;
 }
 
-/* Header 品牌加大（+4~6 號） */
-.site-topbar .brand{
-  font-size: clamp(30px, 3.4vw, 36px);  /* 大螢幕 ~36px，手機約30px */
-  line-height: 1.1;
-}
-
-/* 文章區塊置中（內容左對齊） */
+/* 文章標題區與內文欄位：置中、統一寬度（手機自動縮） */
 .post-header,
 .post-content{
+  box-sizing: border-box;
   max-width: var(--postw);
+  width: min(var(--postw), calc(100vw - 32px)); /* 手機避免超出螢幕 */
   margin-left: auto;
   margin-right: auto;
-  text-align: left;
+  text-align: left; /* 區塊置中、內容仍靠左 */
 }
 
-/* 文章整體字體 +2~3 號（原 ~17.5px → ~20px） */
-.post-content{
-  font-size: 20px;
-  line-height: 1.95;
+/* 標題、日期/標籤列也跟著同寬 */
+.post-title,
+.post-meta{
+  max-width: var(--postw);
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* 文章標題與內文標題也同步放大一些 */
-.post-title{
-  font-size: 32px;        /* 原 28px → 32px */
-  line-height: 1.28;
-  margin: 6px 0 10px;
-  font-weight: 900;
-}
-.post-content h1{ font-size: 28px; line-height: 1.3; }
-.post-content h2{ font-size: 24px; line-height: 1.35; }
-.post-content h3{ font-size: 21px; line-height: 1.4; }
-.post-content h4{ font-size: 19px; line-height: 1.45; }
-
-/* 文章 Hero 圖：等寬、置中 */
+/* Hero 精選圖：等寬、置中 */
 .post-hero{
-  margin-top: 12px; margin-bottom: 10px;
-  display:flex; justify-content:center;
+  display: flex;
+  justify-content: center;
+  margin: 12px auto 10px;
+  max-width: var(--postw);
+  width: 100%;
 }
 .post-hero img{
+  display: block;
   width: 100%;
-  max-width: var(--postw);
   height: auto;
-  display:block;
   border-radius: 10px;
 }
 
-/* 內文所有圖片：與文字欄等寬、置中 */
+/* 內文所有直屬區塊：統一寬度與置中（p、figure、table、iframe…） */
+.post-content > *{
+  max-width: var(--postw) !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* 內文圖片（含 figure 內）保持等比例，與欄寬一致 */
 .post-content figure,
 .post-content p > img{
+  display: block;
   margin: 14px auto;
-  display:block;
-  max-width: var(--postw);
-  width: 100%;
-  height: auto;
 }
-.post-content figure img{
-  width: 100%;
-  height:auto;
-  display:block;
+.post-content figure img,
+.post-content p > img{
+  display: block;
+  width: 100% !important;
+  height: auto !important;
 }
 
-/* 影片 iframe 等寬 16:9、置中 */
+/* 影片 iframe 也統一欄寬並維持 16:9 */
 .post-content iframe{
-  width: 100%;
+  display: block;
+  width: 100% !important;
   max-width: var(--postw);
-  aspect-ratio: 16/9;
-  border:0;
-  display:block;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border: 0;
   margin: 14px auto;
 }
 
-/* 表格等寬、置中 */
+/* 表格等寬置中 */
 .post-content table{
-  width: 100%;
+  width: 100% !important;
+  max-width: var(--postw);
   border-collapse: collapse;
   margin: 12px auto;
-  max-width: var(--postw);
-}
-.post-content th, .post-content td{
-  border: 1px solid #2a3040;
-  padding: 10px 12px;   /* 放大一點，搭配字級 */
-  font-size: 16.5px;
-}
-.post-content thead th{ background: #1d2230; }
-
-/* 程式碼區塊字級微調，閱讀更舒適 */
-.post-content pre,
-.post-content code{
-  font-size: 15.5px;
 }
 
-/* 小螢幕再微調一下標題大小，避免過大換行過多 */
-@media (max-width: 520px){
-  .post-title{ font-size: 28px; }
-  .post-content h1{ font-size: 25px; }
-  .post-content h2{ font-size: 22px; }
-  .post-content h3{ font-size: 20px; }
+/* 可選：WordPress 匯出的 alignwide / alignfull 也強制回到同寬 */
+.post-content .alignwide,
+.post-content .alignfull{
+  max-width: var(--postw) !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
