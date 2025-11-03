@@ -10,7 +10,7 @@
 </head>
 <body class="{% if page.url == '/' or page.url == site.baseurl or page.url == '/blog/' %}is-home{% endif %}">
 
-  <!-- Header（icon = 圖片版） -->
+  <!-- Header -->
   <header class="wc-header">
     <div class="wc-header-inner">
       <div class="wc-brand">
@@ -38,41 +38,48 @@
     </article>
   </main>
 
-  <!-- 修復腳本：清 front-matter、移除內文「回首頁」、縮表格 40%、解碼首頁亂碼標題 -->
+  <!-- 修復腳本 -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var wrap = document.getElementById('post-content');
 
-      /* A) 清掉文章開頭混入的 front-matter（--- layout: post ...） */
+      /* A) 剔除任何混入內容的 front-matter 區塊（--- layout: post ... ---） */
       try {
         if (wrap) {
           var html = wrap.innerHTML;
 
-          // 1) 若最前面就是 YAML 片段，把從開頭的 --- 一直砍到第一個內容型標籤（iframe/figure/img/h1/h2/p<strong>）
-          var rx = /^\s*---[\s\S]*?(?=(<iframe|<figure|<img|<h1|<h2|<p><strong|<p>))/i;
-          if (rx.test(html)) {
-            html = html.replace(rx, '');
+          // 找到任一個 '--- layout' 或 'layout: post'（不限制在開頭）
+          var startIdx = html.search(/---\s*layout\s*:\s*post/i);
+          if (startIdx < 0) startIdx = html.search(/layout\s*:\s*post/i);
+          if (startIdx >= 0) {
+            // 往前找最近一個 '---' 當區塊起點
+            var cutStart = html.lastIndexOf('---', startIdx);
+            if (cutStart < 0) cutStart = startIdx;
+            // 往後找下一個 '---' 當區塊終點
+            var cutEnd = html.indexOf('---', startIdx + 3);
+            if (cutEnd > cutStart) {
+              wrap.innerHTML = html.slice(0, cutStart) + html.slice(cutEnd + 3);
+            }
           } else {
-            // 2) 有些是單段 <p> + <br> 換行：抓到以 '--- layout:' 起頭的第一個 <p> 整段移除
-            html = html.replace(/<p>[\s\-]*---[\s\S]*?<\/p>/i, '');
+            // 備援：若一開始就有 '---'，砍到下一個 '---'
+            var s = html.indexOf('---');
+            if (s === 0) {
+              var e = html.indexOf('---', 3);
+              if (e > 3) wrap.innerHTML = html.slice(e + 3);
+            }
           }
-          wrap.innerHTML = html;
         }
       } catch(e){}
 
-      /* B) 移除文章內、Header 下方的「蚯蚓貓的資工人生」連結（相對/絕對都處理） */
+      /* B) 移除文章內、Header 下方的「回首頁/站名」連結（只清內容區） */
       try {
         if (wrap) {
           var siteName = '蚯蚓貓的資工人生';
-          var homeUrls = [
-            '/', '/blog/',
-            location.origin + '/', location.origin + '/blog/'
-          ];
+          var homeUrls = ['/', '/blog/', location.origin + '/', location.origin + '/blog/'];
           wrap.querySelectorAll('a').forEach(function(a){
             var txt = (a.textContent || '').trim();
             var href = (a.getAttribute('href') || '').trim();
             if (homeUrls.indexOf(href) >= 0 || txt === siteName) {
-              // 若是單獨一行的 <p> 只包這個連結，整個 <p> 隱藏
               if (a.parentElement && a.parentElement.tagName === 'P' && a.parentElement.children.length === 1) {
                 a.parentElement.style.display = 'none';
               } else {
@@ -83,7 +90,7 @@
         }
       } catch(e){}
 
-      /* C) 讓「下表是為各種減礦時的礦物量」下一個元素縮為 40%（表格/圖片皆可） */
+      /* C) 「減礦量」表格縮 40%（保留） */
       try {
         var keys = ['下表是為各種減礦時的礦物量','下表為各種減礦時的礦物量'];
         var scope = wrap || document;
@@ -94,7 +101,7 @@
           if (keys.some(function(k){ return t.indexOf(k) === 0; })) {
             var sib = paras[i].nextElementSibling;
             for (var step=0; step<4 && sib; step++, sib = sib.nextElementSibling) {
-              if (sib.matches('figure, table, p, img')) { targetNext = sib; break; }
+              if (sib && sib.matches('figure, table, p, img')) { targetNext = sib; break; }
             }
             break;
           }
@@ -107,17 +114,17 @@
             var tbl = targetNext.querySelector('table');
             if (img) inner = img; else if (tbl) inner = tbl;
           }
-          inner.classList.add('shrink-40');
+          if (inner) inner.classList.add('shrink-40');
         }
       } catch(e){}
 
-      /* D) 首頁卡片若標題是 %E8%… 編碼字串，改用 decodeURIComponent 顯示中文 */
+      /* D) 首頁卡片若遇到 URL 編碼的文字（%E8%…），解碼顯示 */
       try {
         if (document.body.classList.contains('is-home')) {
-          document.querySelectorAll('.card-title a').forEach(function(a){
+          document.querySelectorAll('.card-title a, .card-excerpt').forEach(function(a){
             var txt = (a.textContent || '').trim();
             if (/%[0-9A-F]{2}/i.test(txt)) {
-              try { a.textContent = decodeURIComponent(txt); } catch(_) {}
+              try { a.textContent = decodeURIComponent(txt); } catch(_){}
             }
           });
         }
