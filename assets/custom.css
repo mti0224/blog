@@ -1,24 +1,50 @@
-/* 基本變數 */
+/* =========================
+   Warmycat-like Dark Theme
+   ========================= */
+
+/* 調色盤（可自行微調） */
 :root{
-  --page-max: 1080px;
-  --content-max: 760px;
+  --page-max: 1080px;      /* 全站最大寬 */
+  --content-max: 760px;    /* 文章正文欄寬 */
   --radius: 14px;
-  --bg: #0e0f11;
-  --bg-soft:#17181b;
-  --text:#e7e7ea;
-  --text-dim:#a7a8ad;
-  --border:#2a2c31;
-  --brand:#ffffff;
+
+  /* 背景與邊框 */
+  --bg:        #0b0c0f;    /* 主背景，比前版更深 */
+  --bg-soft:   #14161b;    /* 卡片底色 */
+  --bg-softer: #101216;    /* hover/加深 */
+  --border:    #272a31;    /* 邊框色 */
+
+  /* 文字 */
+  --text:      #e8eaed;    /* 主文字 */
+  --text-dim:  #a6adb7;    /* 次要文字 */
+  --text-faint:#8a9099;    /* 更淡的提示 */
+
+  /* 強調色（青藍） */
+  --accent:    #69d0ff;
+  --accent-2:  #7fe0ff;
 }
 
 /* Reset-ish */
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
+*{ box-sizing:border-box }
+html,body{ margin:0; padding:0 }
 body{
-  background:var(--bg);
-  color:var(--text);
-  font: 16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Heiti TC","Microsoft JhengHei",Arial,sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  /* 行高、字距與 warmycat 接近的閱讀感 */
+  font: 17px/1.9 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,
+        "Noto Sans TC","PingFang TC","Heiti TC","Microsoft JhengHei",
+        Arial,sans-serif;
+  letter-spacing: 0.2px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+@media (min-width: 900px){
+  body{ font-size: 18px; line-height: 1.95; }
+}
+
+/* 連結：低飽和青藍，hover 降亮避免刺眼 */
+a{ color: var(--accent); text-decoration: none; }
+a:hover{ color: var(--accent-2); text-decoration: underline; }
 
 /* 容器 */
 .container{
@@ -27,91 +53,141 @@ body{
   margin: 0 auto;
 }
 
-/* 頂部只留品牌 */
+/* ======= Header：僅保留品牌 ======= */
 .site-topbar{
   border-bottom:1px solid var(--border);
-  background: rgba(20,21,24,.7);
+  background: rgba(16,18,22,.6);
   backdrop-filter: blur(6px);
 }
 .site-topbar .brand{
   display:inline-block;
-  color:var(--brand);
+  color:#fff;
   text-decoration:none;
-  font-weight:700;
+  font-weight: 800;
+  letter-spacing:.3px;
   padding:14px 0;
 }
 
-/* 首頁卡片網格 */
+/* ========== 首頁：卡片網格 ========== */
 .post-grid{
   display:grid;
   grid-template-columns: repeat(1,minmax(0,1fr));
-  gap:18px;
+  gap:20px;
 }
-@media (min-width: 680px){ .post-grid{ grid-template-columns: repeat(2,1fr); } }
-@media (min-width: 980px){ .post-grid{ grid-template-columns: repeat(3,1fr); } }
+@media (min-width: 720px){ .post-grid{ grid-template-columns: repeat(2,1fr);} }
+@media (min-width: 1040px){ .post-grid{ grid-template-columns: repeat(3,1fr);} }
 
 .card{
   background: var(--bg-soft);
   border:1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  transition: transform .12s ease, box-shadow .12s ease;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  box-shadow: 0 10px 22px rgba(0,0,0,.22);
 }
-.card:hover{ transform: translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.25); }
-.card a{ color:inherit; text-decoration:none; display:block; }
-.card-thumb{
-  width:100%; aspect-ratio: 16/7; object-fit: cover; display:block;
+.card:hover{
+  transform: translateY(-2px);
+  border-color:#343843;
+  box-shadow: 0 14px 28px rgba(0,0,0,.28);
 }
-.card-body{ padding:12px 14px; }
-.card-title{ font-weight:700; line-height:1.3; margin:0 0 6px; font-size:16px; }
-.card-meta{ font-size:12px; color:var(--text-dim); }
+.card a{ color:inherit; display:block; text-decoration:none; }
 
-/* 文章頁 */
+.card-thumb{
+  width:100%;
+  /* 讓列表的縮圖比例與你站上的橫幅視覺接近 */
+  aspect-ratio: 16/7;
+  object-fit: cover;
+  display:block;
+}
+.card-body{ padding:12px 14px 14px; }
+.card-title{
+  font-weight:800;
+  line-height:1.35;
+  margin:0 0 6px;
+  font-size: 16px;
+  letter-spacing:.2px;
+}
+.card-meta{
+  font-size:12px;
+  color:var(--text-dim);
+}
+
+/* ========== 文章頁 ========== */
 .post-inner{
-  margin: 24px auto 80px;
+  margin: 24px auto 86px;
   max-width: var(--content-max);
 }
-.post-title{ margin: 10px 0 6px; line-height:1.25; }
-.post-meta{ color:var(--text-dim); font-size:14px; margin-bottom:14px; }
+.post-title{
+  margin: 8px 0 6px;
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing:.2px;
+}
+.post-meta{
+  color: var(--text-dim);
+  font-size: 14px;
+  margin-bottom: 14px;
+}
 
-/* 文章首圖（精選圖） */
+/* 文章首圖（精選圖）— 與正文欄寬一致，視覺更飽滿 */
 .post-hero{
   margin: 12px auto 18px;
   border-radius: var(--radius);
   overflow:hidden;
   border:1px solid var(--border);
+  background: var(--bg-softer);
 }
 .post-hero img{
-  display:block; width:100%; height:auto; aspect-ratio: 16/7; object-fit: cover;
+  display:block;
+  width:100%;
+  height:auto;
+  aspect-ratio: 16/7;
+  object-fit: cover;
 }
 
-/* 文章內容寬度與圖片統一、置中 */
+/* 正文：行高與間距更舒適，圖片統一寬度置中 */
 .post-content{
   max-width: var(--content-max);
   margin: 0 auto;
-  font-size: 16px;
+  font-size: 1rem;
+  line-height: 1.95;
 }
-.post-content p{ margin: 0 0 1em; }
-.post-content figure{ margin: 14px auto; max-width: var(--content-max); }
+.post-content p{ margin: 0 0 1.05em; }
+.post-content h2,.post-content h3,.post-content h4{
+  line-height:1.35;
+  margin: 1.2em 0 .6em;
+  font-weight:800;
+}
+.post-content h2{ font-size: 1.55rem; }
+.post-content h3{ font-size: 1.25rem; }
+.post-content h4{ font-size: 1.1rem; color: var(--text); }
+
+.post-content figure{
+  margin: 16px auto;
+  max-width: var(--content-max);
+}
 .post-content img{
   display:block !important;
-  width: 100% !important;        /* 覆蓋內嵌 700px 等寫法 */
+  width: 100% !important;     /* 覆蓋 WP 內嵌寬度（例如 700px） */
   height: auto !important;
   margin: 0 auto;
-  border-radius: 10px;
+  border-radius: 12px;
   border:1px solid var(--border);
+  background: var(--bg-softer);
 }
 
-/* 影片 16:9 自適應 */
+/* 影片 16:9 自適應 + 卡片風格框線 */
 .post-content .video-16x9,
 .yt-wrap{
   position:relative;
   width:100%;
   max-width: var(--content-max);
   margin: 16px auto;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
   border:1px solid var(--border);
+  background: var(--bg-softer);
+  box-shadow: 0 10px 22px rgba(0,0,0,.22);
 }
 .post-content .video-16x9::before,
 .yt-wrap::before{ content:""; display:block; padding-top:56.25%; }
@@ -120,7 +196,49 @@ body{
   position:absolute; inset:0; width:100%; height:100%;
 }
 
-/* 表格與 code */
-.post-content table{ width:100%; border-collapse:collapse; overflow:auto; display:block; }
-.post-content th, .post-content td{ border:1px solid var(--border); padding:8px; }
-.post-content pre{ background:#0b0c0f; border:1px solid var(--border); padding:12px; border-radius:10px; overflow:auto; }
+/* 表格與程式碼 */
+.post-content table{
+  width:100%;
+  border-collapse: collapse;
+  overflow:auto;
+  display:block;
+  margin: 14px 0;
+  border:1px solid var(--border);
+}
+.post-content th, .post-content td{
+  border-top:1px solid var(--border);
+  padding:10px;
+  line-height:1.75;
+}
+.post-content th{
+  background: #0f1115;
+  color:#dfe3e8;
+  text-align:left;
+}
+.post-content pre, .post-content code{
+  font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+}
+.post-content pre{
+  background:#0e1014;
+  border:1px solid var(--border);
+  padding:14px;
+  border-radius:12px;
+  overflow:auto;
+}
+
+/* 區塊引用 */
+.post-content blockquote{
+  margin: 14px 0;
+  padding: 8px 14px;
+  border-left: 3px solid var(--accent);
+  background: #0f1216;
+  color: var(--text);
+}
+
+/* 小元件 */
+hr{ border:0; border-top:1px solid var(--border); margin: 22px 0; }
+small, .muted{ color: var(--text-faint); }
+
+/* 讓圖片連結、文章中超連結看起來更一致 */
+.post-content a{ color: var(--accent); }
+.post-content a:hover{ color: var(--accent-2); text-decoration: underline; }
