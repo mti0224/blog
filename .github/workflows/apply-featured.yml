@@ -1,0 +1,26 @@
+name: Apply featured images from WXR
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm i xml2js
+      - run: node scripts/apply_featured_from_wxr.js import/export.xml _posts
+      - name: Commit & push if changed
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "chore: apply featured images from WXR"
+            git push
+          else
+            echo "No changes."
+          fi
