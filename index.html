@@ -12,6 +12,13 @@ title: 蚯蚓貓的資工人生
       {% for post in posts_all limit:3 %}
         {% assign title_txt = post.title %}
         {% if title_txt == nil or title_txt == "" %}
+          {% assign m0 = post.content | split: "post title:" %}
+          {% if m0.size > 1 %}
+            {% assign m1 = m0[1] | split: "date:" | first %}
+            {% assign title_txt = m1 | replace: '"', "" | replace: "'", "" | strip %}
+          {% endif %}
+        {% endif %}
+        {% if title_txt == nil or title_txt == "" %}
           {% assign s0 = post.content | split: "posttitle:" %}
           {% if s0.size > 1 %}
             {% assign s1 = s0[1] | split: "date:" | first %}
@@ -109,6 +116,13 @@ title: 蚯蚓貓的資工人生
     <div class="card-grid">
       {% for post in posts_all offset:3 limit:30 %}
         {% assign title_txt = post.title %}
+        {% if title_txt == nil or title_txt == "" %}
+          {% assign m0 = post.content | split: "post title:" %}
+          {% if m0.size > 1 %}
+            {% assign m1 = m0[1] | split: "date:" | first %}
+            {% assign title_txt = m1 | replace: '"', "" | replace: "'", "" | strip %}
+          {% endif %}
+        {% endif %}
         {% if title_txt == nil or title_txt == "" %}
           {% assign s0 = post.content | split: "posttitle:" %}
           {% if s0.size > 1 %}
