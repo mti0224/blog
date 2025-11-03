@@ -3,71 +3,59 @@ layout: default
 title: 首頁
 ---
 
-{%- comment -%}
-  取出有 image 的最新三篇（只用最基本的 Liquid 語法）
-{%- endcomment -%}
-{% assign first = nil %}{% assign second = nil %}{% assign third = nil %}
-{% assign count = 0 %}
-{% for p in site.posts %}
-  {% if p.image %}
-    {% assign count = count | plus: 1 %}
-    {% if count == 1 %}{% assign first = p %}
-    {% elsif count == 2 %}{% assign second = p %}
-    {% elsif count == 3 %}{% assign third = p %}
-    {% endif %}
-  {% endif %}
-{% endfor %}
+<link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/assets/custom.css' | relative_url }}">
 
-{% if first %}
-<div class="hero">
-  <div class="hero-grid">
-    <!-- 左側大圖 -->
-    <a class="hero-card hero-large" href="{{ first.url | relative_url }}">
-      {% if first.image %}<img src="{{ first.image | relative_url }}" alt="{{ first.title | escape }}">{% else %}<div class="noimg">No Image</div>{% endif %}
-      <div class="hero-title">{{ first.title }}</div>
+<div class="container">
+
+  {%- comment -%}
+  特色大 Banner：抓有 image 的最新 3 篇
+  {%- endcomment -%}
+  {%- assign featured = site.posts | where_exp: "p","p.image" | slice: 0, 3 -%}
+  {% if featured and featured.size > 0 %}
+  <section class="featured-grid">
+    {% for p in featured %}
+    <a class="feat-card" href="{{ p.url | relative_url }}">
+      <img class="feat-img" src="{{ p.image | relative_url }}" alt="{{ p.title | escape }}">
+      <div class="feat-cap">{{ p.title }}</div>
     </a>
+    {% endfor %}
+  </section>
+  {% endif %}
 
-    <!-- 右側兩張 -->
-    <div style="display:grid; grid-template-rows:1fr 1fr; gap:16px;">
-      <a class="hero-card hero-small" href="{{ (second or first).url | relative_url }}">
-        {% if second and second.image %}
-          <img src="{{ second.image | relative_url }}" alt="{{ second.title | escape }}">
-          <div class="hero-title">{{ second.title }}</div>
-        {% else %}
-          <div class="noimg">No Image</div>
-          <div class="hero-title">{{ first.title }}</div>
+  {%- comment -%}
+  所有貼文卡片：標題用 post.title（不要再做 url_encode），
+  縮圖先用 front-matter image；若沒有就從內文取第一張 <img> 當備援
+  {%- endcomment -%}
+  <div class="post-grid">
+    {% for post in site.posts %}
+      {%- assign img = post.image -%}
+      {% if img == nil or img == '' %}
+        {%- assign parts = post.content | split:'src="' -%}
+        {% if parts.size > 1 %}
+          {%- assign rest = parts[1] -%}
+          {%- assign img = rest | split:'"' | first -%}
         {% endif %}
+      {% endif %}
+
+      <a class="card" href="{{ post.url | relative_url }}">
+        <div class="card-img">
+          {% if img %}
+            <img src="{{ img | relative_url }}" alt="{{ post.title | escape }}">
+          {% else %}
+            <div class="noimg">No Image</div>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <div class="card-title">{{ post.title }}</div>
+          <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
+          <div class="card-excerpt">
+            {{ post.excerpt | strip_html | truncate: 80 }}
+          </div>
+        </div>
       </a>
-      <a class="hero-card hero-small" href="{{ (third or first).url | relative_url }}">
-        {% if third and third.image %}
-          <img src="{{ third.image | relative_url }}" alt="{{ third.title | escape }}">
-          <div class="hero-title">{{ third.title }}</div>
-        {% else %}
-          <div class="noimg">No Image</div>
-          <div class="hero-title">{{ first.title }}</div>
-        {% endif %}
-      </a>
-    </div>
+    {% endfor %}
   </div>
 </div>
-{% endif %}
 
-<!-- 下面是所有貼文卡片 -->
-<div class="post-grid">
-  {% assign posts_sorted = site.posts | sort: "date" | reverse %}
-  {% for post in posts_sorted %}
-    <a class="card" href="{{ post.url | relative_url }}">
-      <div class="card-img">
-        {% if post.image %}
-          <img src="{{ post.image | relative_url }}" alt="{{ post.title | escape }}">
-        {% else %}
-          <div class="noimg">No Image</div>
-        {% endif %}
-      </div>
-      <div class="card-body">
-        <div class="card-title">{{ post.title }}</div>
-        <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
-      </div>
-    </a>
-  {% endfor %}
-</div>
+<script src="{{ '/assets/yt-embed.js' | relative_url }}"></script>
