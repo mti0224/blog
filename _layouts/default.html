@@ -10,7 +10,6 @@
 </head>
 <body class="{% if page.url == '/' or page.url == site.baseurl or page.url == '/blog/' %}is-home{% endif %}">
 
-  <!-- Header -->
   <header class="wc-header">
     <div class="wc-header-inner">
       <div class="wc-brand">
@@ -31,104 +30,75 @@
     </div>
   </header>
 
-  <!-- 主要內容 -->
   <main class="wc-main">
     <article id="post-content" class="wc-prose">
       {{ content }}
     </article>
   </main>
 
-  <!-- 修復腳本 -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var wrap = document.getElementById('post-content');
+      if (!wrap) return;
 
-      /* A) 剔除任何混入內容的 front-matter 區塊（--- layout: post ... ---） */
+      /* 1) 剔除混入內容的 front-matter 區塊（--- layout: post ... ---） */
       try {
-        if (wrap) {
-          var html = wrap.innerHTML;
+        var html = wrap.innerHTML;
+        var start = html.search(/---\s*layout\s*:\s*post/i);
+        if (start < 0) start = html.search(/layout\s*:\s*post/i);
+        if (start >= 0) {
+          var cutStart = html.lastIndexOf('---', start);
+          if (cutStart < 0) cutStart = start;
+          var cutEnd = html.indexOf('---', start + 3);
+          if (cutEnd > cutStart) html = html.slice(0, cutStart) + html.slice(cutEnd + 3);
+          wrap.innerHTML = html;
+        }
+      } catch (e) {}
 
-          // 找到任一個 '--- layout' 或 'layout: post'（不限制在開頭）
-          var startIdx = html.search(/---\s*layout\s*:\s*post/i);
-          if (startIdx < 0) startIdx = html.search(/layout\s*:\s*post/i);
-          if (startIdx >= 0) {
-            // 往前找最近一個 '---' 當區塊起點
-            var cutStart = html.lastIndexOf('---', startIdx);
-            if (cutStart < 0) cutStart = startIdx;
-            // 往後找下一個 '---' 當區塊終點
-            var cutEnd = html.indexOf('---', startIdx + 3);
-            if (cutEnd > cutStart) {
-              wrap.innerHTML = html.slice(0, cutStart) + html.slice(cutEnd + 3);
-            }
-          } else {
-            // 備援：若一開始就有 '---'，砍到下一個 '---'
-            var s = html.indexOf('---');
-            if (s === 0) {
-              var e = html.indexOf('---', 3);
-              if (e > 3) wrap.innerHTML = html.slice(e + 3);
-            }
+      /* 2) 移除文章內、Header 下方的「回首頁/站名」連結（只清內容區） */
+      try {
+        var siteName = '蚯蚓貓的資工人生';
+        var homeUrls = ['/', '/blog/', location.origin + '/', location.origin + '/blog/'];
+        wrap.querySelectorAll('a').forEach(function(a){
+          var txt = (a.textContent || '').trim();
+          var href = (a.getAttribute('href') || '').trim();
+          if (homeUrls.indexOf(href) >= 0 || txt === siteName) {
+            if (a.parentElement && a.parentElement.tagName === 'P' && a.parentElement.children.length === 1) {
+              a.parentElement.style.display = 'none';
+            } else { a.style.display = 'none'; }
           }
-        }
-      } catch(e){}
+        });
+      } catch (e) {}
 
-      /* B) 移除文章內、Header 下方的「回首頁/站名」連結（只清內容區） */
+      /* 3) 清掉 WP 匯出時常見的雜訊鍵（保守地只清這幾個前綴） */
       try {
-        if (wrap) {
-          var siteName = '蚯蚓貓的資工人生';
-          var homeUrls = ['/', '/blog/', location.origin + '/', location.origin + '/blog/'];
-          wrap.querySelectorAll('a').forEach(function(a){
-            var txt = (a.textContent || '').trim();
-            var href = (a.getAttribute('href') || '').trim();
-            if (homeUrls.indexOf(href) >= 0 || txt === siteName) {
-              if (a.parentElement && a.parentElement.tagName === 'P' && a.parentElement.children.length === 1) {
-                a.parentElement.style.display = 'none';
-              } else {
-                a.style.display = 'none';
-              }
-            }
-          });
-        }
-      } catch(e){}
+        var noiseKeys = [
+          /^_oembed_/i, /^firehose_sent:/i, /^timeline_notification:/i,
+          /^_publicize_job_id:/i, /^_publicize_shares:/i,
+          /^_elasticsearch_data_sharing_indexed_on:/i, /^permalink:/i
+        ];
+        wrap.querySelectorAll('p').forEach(function(p){
+          var t = (p.textContent || '').trim();
+          if (noiseKeys.some(function(rx){ return rx.test(t); })) { p.style.display = 'none'; }
+        });
+      } catch (e) {}
 
-      /* C) 「減礦量」表格縮 40%（保留） */
+      /* 4) 指定「減礦量」表格縮 40%（保留） */
       try {
         var keys = ['下表是為各種減礦時的礦物量','下表為各種減礦時的礦物量'];
-        var scope = wrap || document;
-        var paras = scope.querySelectorAll('p');
-        var targetNext = null;
+        var paras = wrap.querySelectorAll('p');
         for (var i = 0; i < paras.length; i++) {
           var t = (paras[i].innerText || '').trim();
           if (keys.some(function(k){ return t.indexOf(k) === 0; })) {
-            var sib = paras[i].nextElementSibling;
-            for (var step=0; step<4 && sib; step++, sib = sib.nextElementSibling) {
-              if (sib && sib.matches('figure, table, p, img')) { targetNext = sib; break; }
-            }
+            var sib = paras[i].nextElementSibling, inner = sib;
+            if (!sib) break;
+            if (sib.tagName === 'FIGURE' && sib.querySelector('img')) inner = sib.querySelector('img');
+            if (sib.tagName === 'P') inner = sib.querySelector('img') || sib.querySelector('table') || sib;
+            if (inner) inner.classList.add('shrink-40');
             break;
           }
         }
-        if (targetNext) {
-          var inner = targetNext;
-          if (targetNext.tagName === 'FIGURE' && targetNext.querySelector('img')) inner = targetNext.querySelector('img');
-          if (targetNext.tagName === 'P') {
-            var img = targetNext.querySelector('img');
-            var tbl = targetNext.querySelector('table');
-            if (img) inner = img; else if (tbl) inner = tbl;
-          }
-          if (inner) inner.classList.add('shrink-40');
-        }
-      } catch(e){}
-
-      /* D) 首頁卡片若遇到 URL 編碼的文字（%E8%…），解碼顯示 */
-      try {
-        if (document.body.classList.contains('is-home')) {
-          document.querySelectorAll('.card-title a, .card-excerpt').forEach(function(a){
-            var txt = (a.textContent || '').trim();
-            if (/%[0-9A-F]{2}/i.test(txt)) {
-              try { a.textContent = decodeURIComponent(txt); } catch(_){}
-            }
-          });
-        }
-      } catch(e){}
+      } catch (e) {}
     });
   </script>
 
