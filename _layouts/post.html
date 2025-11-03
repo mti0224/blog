@@ -1,18 +1,18 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{{ page.title }} | {{ site.title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title | escape }} | {{ site.title | default: "蚯蚓貓的資工人生" }}</title>
   <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/assets/custom.css' | relative_url }}">
 </head>
 <body>
   <header class="site-topbar">
     <div class="container flex-between">
-      <a class="brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+      <a class="brand" href="{{ site.baseurl }}/">{{ site.title | default: "蚯蚓貓的資工人生" }}</a>
       <nav class="nav">
-        <a href="{{ '/' | relative_url }}">首頁</a>
+        <a href="{{ site.baseurl }}/">首頁</a>
         <a href="{{ '/feed.xml' | relative_url }}">RSS</a>
       </nav>
     </div>
@@ -20,11 +20,41 @@
 
   <main class="container">
     <article class="post">
-      <h1>{{ page.title }}</h1>
-      <div class="meta">{{ page.date | date: "%Y-%m-%d" }}
-        {% if page.tags and page.tags.size > 0 %} · {{ page.tags | join:', ' }}{% endif %}
-      </div>
-      <div class="content">
+      <header class="post-header">
+        <h1 class="post-title">{{ page.title | escape }}</h1>
+        <div class="post-meta">
+          {{ page.date | date: "%Y-%m-%d" }}
+          {%- if page.categories and page.categories.size > 0 -%}
+            ・分類：
+            {%- for c in page.categories -%}
+              <span class="tag">{{ c }}</span>
+            {%- endfor -%}
+          {%- endif -%}
+          {%- if page.tags and page.tags.size > 0 -%}
+            ・標籤：
+            {%- for t in page.tags -%}
+              <span class="tag">{{ t }}</span>
+            {%- endfor -%}
+          {%- endif -%}
+        </div>
+      </header>
+
+      {%- comment -%}
+      封面：同首頁邏輯（清理 baseurl 與 '---'，並在缺圖時改抓內文第一張）
+      {%- endcomment -%}
+      {% assign raw = page.image | default: page.thumbnail | default: page.featured_image %}
+      {% if raw %}{% assign cover = raw | replace: site.baseurl, '' | split: '---' | first | strip %}{% endif %}
+      {% if cover == nil or cover == '' %}
+        {% assign firstimg = content | split:'src="' | slice:1,1 | first | split:'"' | first %}
+        {% assign cover = firstimg | replace: site.baseurl, '' | strip %}
+      {% endif %}
+      {% if cover and cover != '' %}
+        <div class="post-hero">
+          <img src="{{ cover | relative_url }}" alt="{{ page.title | escape }}">
+        </div>
+      {% endif %}
+
+      <div class="post-content">
         {{ content }}
       </div>
     </article>
