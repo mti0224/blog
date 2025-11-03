@@ -1,89 +1,156 @@
-/* === 統一文章欄寬：與 /assets/uploads/2025/10/linerangerse681a9e790b4.png 相同 === */
+/* === 文章欄寬：與你的圖片一致（可自行改 700px） === */
 :root{
-  /* 若未來你改那張圖的寬，就改這個數值即可 */
-  --postw: 700px;
+  --postw: 700px;          /* 你原本的設定，保留 */
+  --wc-bg: #ffffff;
+  --wc-text: #1f2937;      /* 主文字：深灰 */
+  --wc-muted: #6b7280;     /* 次要文字 */
+  --wc-accent: #ef6666;    /* 溫暖重點色（連結/hover） */
+  --wc-accent-ink: #b91c1c;
+  --wc-border: #e5e7eb;    /* 淡灰分隔線 */
+  --wc-shadow: 0 6px 24px rgba(17,24,39,.06);
+
+  --wc-font-body: "Noto Sans TC","Inter",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang TC","Microsoft JhengHei",sans-serif;
+  --wc-font-heading: var(--wc-font-body);
 }
 
-/* 文章標題區與內文欄位：置中、統一寬度（手機自動縮） */
-.post-header,
-.post-content{
-  box-sizing: border-box;
+/* ===== 基礎排版（字級 +2~3、較大行高） ===== */
+html{scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--wc-bg); color:var(--wc-text);
+  font-family:var(--wc-font-body);
+  font-size:18px; line-height:1.9;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+a{color:var(--wc-accent);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+a:active{color:var(--wc-accent-ink)}
+img{max-width:100%;height:auto;border-radius:12px}
+figure{margin:1.2rem 0}
+figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
+
+/* 單欄容器（保險覆蓋：避免主題把容器拉太寬） */
+.container, .content, .wrap, .wrapper, .page, .post, .posts, .site-main{
+  max-width: var(--postw) !important;
+  width: min(var(--postw), calc(100vw - 32px)) !important;
+  margin-left:auto !important; margin-right:auto !important;
+  padding-left:0 !important; padding-right:0 !important;
+}
+
+/* ===== Header（把原本的一行純文字變漂亮） ===== */
+.wc-header{
+  position:sticky; top:0; z-index:40;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:saturate(150%) blur(6px);
+  border-bottom:1px solid var(--wc-border);
+}
+.wc-header-inner{
+  display:flex; align-items:center; gap:16px; min-height:64px;
+  width: min(var(--postw), calc(100vw - 32px)); margin:0 auto;
+}
+.wc-brand{display:flex;flex-direction:column;gap:2px}
+.wc-site-title{
+  font-family:var(--wc-font-heading);
+  font-size:1.6rem; font-weight:800; letter-spacing:.2px; margin:0; line-height:1.2;
+}
+.wc-site-title a{color:inherit;text-decoration:none}
+.wc-site-subtitle{margin:0;color:var(--wc-muted);font-size:.95rem}
+.wc-nav{margin-left:auto;display:flex;align-items:center;gap:18px}
+.wc-nav a{
+  color:var(--wc-text); font-weight:600; font-size:.98rem;
+  padding:8px 10px; border-radius:10px;
+}
+.wc-nav a:hover{color:var(--wc-accent);text-decoration:none;background:rgba(239,102,102,.08)}
+.wc-ico{width:18px;height:18px;vertical-align:-3px;margin-right:6px;opacity:.9}
+
+/* ===== 主要內容（首頁 & 文章同寬置中） ===== */
+.wc-main{padding:28px 0 60px}
+.wc-prose{
+  width: min(var(--postw), calc(100vw - 32px));
+  margin:0 auto;
+}
+.wc-prose p{margin:1.1rem 0}
+.wc-prose h1,.wc-prose h2,.wc-prose h3,.wc-prose h4{
+  font-family:var(--wc-font-heading); line-height:1.35; margin:1.4rem 0 .8rem;
+}
+.wc-prose h1{font-size:2rem;font-weight:900}
+.wc-prose h2{font-size:1.55rem;font-weight:800}
+.wc-prose h3{font-size:1.25rem;font-weight:700}
+.wc-prose h4{font-size:1.05rem;font-weight:700}
+.wc-prose ul, .wc-prose ol{padding-left:1.4rem}
+.wc-prose blockquote{
+  margin:1rem 0; padding:.9rem 1.1rem;
+  border-left:3px solid var(--wc-accent);
+  background:#fff7f7; color:#7c2d2d; border-radius:8px;
+}
+
+/* ===== 首頁卡片格（對應 blog/index.html 現有 class） ===== */
+.home .section{margin:8px 0 28px}
+.h2{font-size:1.1rem;letter-spacing:.12em;color:var(--wc-muted);text-transform:uppercase;margin:0 0 12px}
+.card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.card{
+  display:flex;flex-direction:column;
+  border:1px solid var(--wc-border); border-radius:14px; box-shadow:var(--wc-shadow);
+  overflow:hidden; background:#fff;
+}
+.card-thumb{display:block;position:relative}
+.card-thumb img{display:block;width:100%;height:auto;border-radius:0}
+.thumb-fallback{display:flex;align-items:center;justify-content:center;height:160px;color:var(--wc-muted);background:#fafafa}
+.card-body{padding:14px 14px 16px}
+.card-title{font-size:1.1rem;margin:.1rem 0 .35rem}
+.card-title a{text-decoration:none;color:var(--wc-text)}
+.card-title a:hover{text-decoration:underline;text-underline-offset:3px}
+.card-meta{color:var(--wc-muted);font-size:.95rem;margin-bottom:.35rem}
+.card-excerpt{color:#374151;margin:.4rem 0 0}
+
+/* 分頁器（保留你 index.html 的 pager 結構） */
+.pager{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-top:18px}
+.pager-left,.pager-right{display:flex}
+.pager-left{justify-content:flex-start}
+.pager-right{justify-content:flex-end}
+.pager-center{color:var(--wc-muted);font-weight:600}
+.btn{display:inline-block;padding:8px 14px;border:1px solid var(--wc-border);border-radius:10px;color:var(--wc-text);text-decoration:none}
+.btn:hover{border-color:var(--wc-accent);color:var(--wc-accent)}
+
+/* ===== 文章頁寬度與置中（保留你原本規則） ===== */
+.post-header, .post-content{
+  box-sizing:border-box;
   max-width: var(--postw);
   width: min(var(--postw), calc(100vw - 32px)); /* 手機避免超出螢幕 */
-  margin-left: auto;
-  margin-right: auto;
-  text-align: left; /* 區塊置中、內容仍靠左 */
+  margin-left:auto; margin-right:auto;
+  text-align:left; /* 區塊置中、內容靠左 */
 }
-
-/* 標題、日期/標籤列也跟著同寬 */
-.post-title,
-.post-meta{
-  max-width: var(--postw);
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* Hero 精選圖：等寬、置中 */
-.post-hero{
-  display: flex;
-  justify-content: center;
-  margin: 12px auto 10px;
-  max-width: var(--postw);
-  width: 100%;
-}
-.post-hero img{
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 10px;
-}
-
 /* 內文所有直屬區塊：統一寬度與置中（p、figure、table、iframe…） */
 .post-content > *{
   max-width: var(--postw) !important;
   width: 100% !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
 }
-
 /* 內文圖片（含 figure 內）保持等比例，與欄寬一致 */
 .post-content figure,
 .post-content p > img{
-  display: block;
-  margin: 14px auto;
+  display:block; margin:14px auto;
 }
 .post-content figure img,
 .post-content p > img{
-  display: block;
-  width: 100% !important;
-  height: auto !important;
+  display:block; width:100% !important; height:auto !important;
 }
 
-/* 影片 iframe 也統一欄寬並維持 16:9 */
-.post-content iframe{
-  display: block;
-  width: 100% !important;
-  max-width: var(--postw);
-  aspect-ratio: 16 / 9;
-  height: auto;
-  border: 0;
-  margin: 14px auto;
-}
+/* 表格、Code 區塊 */
+table{border-collapse:collapse;width:100%;margin:1rem auto;max-width:var(--postw)}
+th,td{border:1px solid var(--wc-border);padding:.55rem .7rem}
+th{background:#fafafa;text-align:left}
+pre, code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+pre{background:#0b10211a;padding:14px 16px;border-radius:12px;overflow:auto;border:1px solid var(--wc-border)}
 
-/* 表格等寬置中 */
-.post-content table{
-  width: 100% !important;
-  max-width: var(--postw);
-  border-collapse: collapse;
-  margin: 12px auto;
-}
+/* Footer（若有） */
+footer{margin-top:48px;border-top:1px solid var(--wc-border);padding:22px 0;color:var(--wc-muted);font-size:.95rem}
 
-/* 可選：WordPress 匯出的 alignwide / alignfull 也強制回到同寬 */
-.post-content .alignwide,
-.post-content .alignfull{
-  max-width: var(--postw) !important;
-  width: 100% !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
+/* 小螢幕：單欄、字級微調 */
+@media (max-width:640px){
+  .wc-site-title{font-size:1.28rem}
+  .wc-nav{gap:10px}
+  .wc-nav a{padding:8px}
+  .card-grid{grid-template-columns:1fr}
 }
