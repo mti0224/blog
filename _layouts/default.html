@@ -9,18 +9,12 @@
   <link rel="stylesheet" href="{{ "/assets/custom.css" | relative_url }}">
 
   <style>
-    /* 主欄置中與寬度 */
     .wc-main{max-width:980px;margin:0 auto;padding:0 16px}
-    /* 首頁拉寬 */
     body.wc-home .wc-main{max-width:1200px}
-
-    /* 文章頁 Hero 標題與精選圖 */
     .wc-article-hero{margin:0 0 20px}
     .wc-article-title{font-size:clamp(28px,4vw,42px);line-height:1.2;margin:0 0 12px;font-weight:800}
     .wc-hero-figure{margin:0}
     .wc-hero-figure img{display:block;width:100%;height:auto;border-radius:12px}
-
-    /* Header 社群 icon 圖片 */
     .wc-ico-img{width:20px;height:20px;display:inline-block;vertical-align:middle}
     .wc-header{padding:10px 16px}
     .wc-header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
@@ -58,18 +52,19 @@
     </article>
   </main>
 
-  <!-- 提供 baseurl 給前端 JS 使用 -->
   <script>window.__BASEURL__="{{ site.baseurl | default: '' }}";</script>
 
   <script>
   (function(){
     var base = window.__BASEURL__ || '';
 
-    // 粗略判斷是否為首頁（/ 或 /blog/）
-    try{
-      var p = location.pathname.replace(/index\.html$/,'');
-      if (p === '/' || /\/blog\/?$/.test(p)) document.body.classList.add('wc-home');
-    }catch(e){}
+    function isHome(){
+      try{
+        var p = location.pathname.replace(/index\.html$/,'');
+        return (p === '/' || /\/blog\/?$/.test(p));
+      }catch(e){ return false; }
+    }
+    if (isHome()) document.body.classList.add('wc-home');
 
     var wrap = document.getElementById('post-content');
     if (!wrap) return;
@@ -80,60 +75,54 @@
       if(u.charAt(0) !== '/') u = '/' + u;
       return base + u;
     }
-
-    // 解析 front-matter 殘留的文字欄位
     function pick(re, src){
       var m = re.exec(src);
       return m && m[1] ? (m[1]+'').trim() : '';
     }
-
-    // 把 WordPress 的 /wp-content/uploads/... 轉成站內 /assets/uploads/...
     function toLocalUpload(u){
       if(!u) return '';
       var m = u.match(/\/wp-content\/uploads(\/.+)$/);
       if(m) return addBase('/assets/uploads' + m[1]);
       return addBase(u);
     }
-
-    // 讀取 featured-map.json
     function fetchMap(cb){
-      var url = addBase('/assets/featured-map.json');
-      fetch(url).then(function(r){return r.json()}).then(cb).catch(function(){cb(null)});
+      fetch(addBase('/assets/featured-map.json'))
+        .then(function(r){return r.json()})
+        .then(cb).catch(function(){cb(null)});
     }
 
-    // 從原始 HTML 擷取 meta
     var rawHTML = wrap.innerHTML;
+
+    // 標題：優先抓「post title:」→ 再抓「posttitle:」→ 再抓「title:」→ 才退回 page.title
     var metaTitle =
+      pick(/post title:\s*["']?([^"\n\r']+)["']?/i, rawHTML) ||
       pick(/posttitle:\s*["']?([^"\n\r']+)["']?/i, rawHTML) ||
       pick(/title:\s*["']?([^"\n\r']+)["']?/i, rawHTML) || '';
-    var featuredLine = pick(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i, rawHTML);
-    var thumbId = pick(/_thumbnail_id:\s*["']?(\d+)["']?/i, rawHTML);
+    var pageTitle = "{{ page.title | escape }}";
+    var finalTitle = metaTitle || pageTitle;
 
-    // 清除顯示在文章內的 metadata 噪音段落（但保留媒體）
+    // 精選圖：優先 _thumbnail_id 對照；沒有才用 image:
+    var thumbId = pick(/_thumbnail_id:\s*["']?(\d+)["']?/i, rawHTML);
+    var featuredLine = pick(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i, rawHTML);
+
+    // 移除/隱藏殘留的 front-matter 文本（更完整）
     try{
-      var noise=/(^|\s)(_oembed_[^\n<]+|firehose_sent:[^\n<]+|timeline_notification:[^\n<]+|_publicize_job_id:[^\n<]+|_publicize_shares:[^\n<]+|_elasticsearch_data_sharing_indexed_on:[^\n<]+|permalink:[^\n<]+)/gi;
-      Array.prototype.forEach.call(wrap.querySelectorAll('p'),function(p){
-        var media=p.querySelector('img,iframe,video');
-        var t=(p.textContent||'').trim();
-        if(!t) return;
-        if(media){ p.innerHTML=p.innerHTML.replace(noise,''); }
-        else if(/_oembed_|firehose_sent:|timeline_notification:|_publicize_job_id:|_publicize_shares:|_elasticsearch_data_sharing_indexed_on:|^permalink:/i.test(t)){
-          p.style.display='none';
+      var hideKeys = /(---\s*layout:|^layout:|^type:|^status:|^password:|^categories:|^tags:|^meta:|^_thumbnail_id:|^_oembed_|^firehose_sent:|^timeline_notification:|^_publicize_job_id:|^_publicize_shares:|^_elasticsearch_data_sharing_indexed_on:|^permalink:|^display_name:|^image:\s|^post title:|^posttitle:)/i;
+      Array.prototype.forEach.call(wrap.childNodes, function(n){
+        if(n.nodeType === 1 && n.tagName === 'P'){
+          var t = (n.textContent||'').trim();
+          if(hideKeys.test(t)) n.style.display='none';
         }
       });
     }catch(e){}
 
-    // 文章頁：插入 Hero（標題＋精選圖）
+    // 文章頁 Hero
     (function(){
-      // 盡量用 page.title；若無則用 metaTitle
-      var pageTitle = "{{ page.title | escape }}".trim();
-      var finalTitle = pageTitle || metaTitle;
-
-      // 有標題或有精選圖訊息才建立 hero
-      if(!finalTitle && !featuredLine && !thumbId) return;
+      if(!finalTitle && !thumbId && !featuredLine) return;
 
       var hero = document.createElement('section');
       hero.className = 'wc-article-hero';
+
       if(finalTitle){
         var h = document.createElement('h1');
         h.className = 'wc-article-title';
@@ -144,42 +133,35 @@
       fig.className = 'wc-hero-figure';
       hero.appendChild(fig);
 
-      // 插在文章最前面
       wrap.insertBefore(hero, wrap.firstChild);
 
-      // 1) 若 front-matter 有 image:，直接用（也會轉為 /assets/uploads）
-      if (featuredLine){
+      function put(src){
+        if(!src) return;
+        if(fig.querySelector('img')) return;
         var img = document.createElement('img');
-        img.src = toLocalUpload(featuredLine);
+        img.src = src;
         img.alt = finalTitle || '';
         fig.appendChild(img);
-        return;
       }
-      // 2) 否則用 _thumbnail_id 去對照表
+
       if (thumbId){
         fetchMap(function(map){
-          if(!map) return;
-          var local = map[thumbId];
-          if(!local) return;
-          // 避免重覆插入
-          if(!fig.querySelector('img')){
-            var img = document.createElement('img');
-            img.src = addBase(local);
-            img.alt = finalTitle || '';
-            fig.appendChild(img);
-          }
+          if(map && map[thumbId]) put(addBase(map[thumbId]));
+          else if (featuredLine) put(toLocalUpload(featuredLine));
         });
+      }else if (featuredLine){
+        put(toLocalUpload(featuredLine));
       }
     })();
 
-    // 首頁卡片縮圖：用 data-thumb-id → 對照表換成精選圖
-    if (document.body.classList.contains('wc-home')){
+    // 首頁卡片縮圖替換：用 data-thumb-id → 對照成精選圖
+    if (isHome()){
       var cards = Array.prototype.slice.call(document.querySelectorAll('.card[data-thumb-id]'));
-      var need = cards.filter(function(c){ return c.getAttribute('data-thumb-id'); });
-      if (need.length){
+      var list = cards.filter(function(c){ return c.getAttribute('data-thumb-id'); });
+      if (list.length){
         fetchMap(function(map){
           if(!map) return;
-          need.forEach(function(c){
+          list.forEach(function(c){
             var id = c.getAttribute('data-thumb-id');
             var local = map[id];
             if(local){
