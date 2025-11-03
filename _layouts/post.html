@@ -1,59 +1,70 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ page.title | escape }} | {{ site.title | default: "蚯蚓貓的資工人生" }}</title>
-  <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
-  <link rel="stylesheet" href="{{ '/assets/custom.css' | relative_url }}">
-</head>
-<body>
-  <header class="site-topbar">
-    <div class="container flex-between">
-      <a class="brand" href="{{ site.baseurl }}/">{{ site.title | default: "蚯蚓貓的資工人生" }}</a>
-      <nav class="nav">
-        <a href="{{ site.baseurl }}/">首頁</a>
-        <a href="{{ '/feed.xml' | relative_url }}">RSS</a>
-      </nav>
-    </div>
-  </header>
+---
+layout: default
+---
 
-  <main class="container">
-    <article class="post">
-      <div class="post-rail">
-        <header class="post-header">
-          <h1 class="post-title">{{ page.title | escape }}</h1>
-          <div class="post-meta">
-            {{ page.date | date: "%Y-%m-%d" }}
-            {%- if page.categories and page.categories.size > 0 -%}
-              ・分類：
-              {%- for c in page.categories -%}<span class="tag">{{ c }}</span>{%- endfor -%}
-            {%- endif -%}
-            {%- if page.tags and page.tags.size > 0 -%}
-              ・標籤：
-              {%- for t in page.tags -%}<span class="tag">{{ t }}</span>{%- endfor -%}
-            {%- endif -%}
-          </div>
-        </header>
-    
-        {%- assign raw = page.image | default: page.thumbnail | default: page.featured_image -%}
-        {%- if raw -%}{%- assign cover = raw | replace: site.baseurl, '' | split: '---' | first | strip -%}{%- endif -%}
-        {%- if cover == nil or cover == '' -%}
-          {%- assign firstimg = content | split:'src="' | slice:1,1 | first | split:'"' | first -%}
-          {%- assign cover = firstimg | replace: site.baseurl, '' | strip -%}
+<header class="site-topbar">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0">
+    <a class="brand" href="{{ site.baseurl }}/">蚯蚓貓的資工人生</a>
+    <nav class="nav">
+      <a href="{{ site.baseurl }}/">首頁</a>
+      <a href="{{ site.baseurl }}/feed.xml">RSS</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <article class="post-inner">
+    <header class="post-header">
+      <h1 class="post-title">{{ page.title }}</h1>
+      <div class="post-meta">
+        <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%Y-%m-%d" }}</time>
+        {%- if page.tags and page.tags.size > 0 -%}
+          · 標籤：
+          {%- for t in page.tags -%}
+            {{ t }}{%- if forloop.last == false -%}, {% endif -%}
+          {%- endfor -%}
         {%- endif -%}
-        {%- if cover and cover != '' -%}
-          <div class="post-hero">
-            <img src="{{ cover | relative_url }}" alt="{{ page.title | escape }}">
-          </div>
-        {%- endif -%}
-    
-        <div class="post-content">
-          {{ content }}
-        </div>
       </div>
-    </article>
-  </main>
-  <script src="{{ '/assets/yt-embed.js' | relative_url }}"></script>
-</body>
-</html>
+      {%- if page.image -%}
+        <div class="post-hero">
+          <img src="{{ site.baseurl }}{{ page.image }}" alt="{{ page.title | escape }}">
+        </div>
+      {%- endif -%}
+    </header>
+
+    <div class="post-content">
+      {{ content }}
+    </div>
+  </article>
+</main>
+
+<!-- 把文章內「純 YouTube 連結」或 WP 轉出的 embed 變成等寬 16:9 -->
+<script>
+(function(){
+  const root = document.querySelector('.post-content');
+  if(!root) return;
+
+  // 1) 將純文字/純 <a> 的 YouTube 連結轉成 iframe
+  const ytRe = /https?:\/\/(www\.)?youtube\.com\/watch\?v=([A-Za-z0-9_\-]+)/;
+  root.querySelectorAll('a').forEach(a=>{
+    const m = a.href && a.href.match(ytRe);
+    if(m){
+      const id = m[2];
+      const wrap = document.createElement('div');
+      const iframe = document.createElement('iframe');
+      wrap.style.margin = '18px 0';
+      iframe.src = `https://www.youtube.com/embed/${id}`;
+      iframe.setAttribute('allow','accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+      iframe.setAttribute('allowfullscreen','true');
+      wrap.appendChild(iframe);
+      a.replaceWith(wrap);
+    }
+  });
+
+  // 2) 若文章內本來就有 <iframe>，強制加上等寬樣式（CSS 已處理寬/高比例）
+  root.querySelectorAll('iframe').forEach(f=>{
+    f.loading = 'lazy';
+  });
+})();
+</script>
