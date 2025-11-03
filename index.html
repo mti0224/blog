@@ -30,7 +30,7 @@ title: 蚯蚓貓的資工人生
         {% assign parts = post.content | split: "---" %}
         {% if parts.size >= 3 %}{% assign body_html = parts[2] %}{% else %}{% assign body_html = post.content %}{% endif %}
 
-        {# 取 image: 作為初始縮圖；真正精選圖會由前端用 data-thumb-id 替換 #}
+        {%- comment -%} 抓縮圖初值（image: > 第一張 <img>） {%- endcomment -%}
         {% assign thumb = "" %}
         {% assign im0 = post.content | split: " image:" %}
         {% if im0.size > 1 %}
@@ -60,6 +60,7 @@ title: 蚯蚓貓的資工人生
           {% endif %}
         {% endif %}
 
+        {%- comment -%} 只接受常見圖片副檔名，避免把 YouTube 等非圖連結拿來用 {%- endcomment -%}
         {% assign thumb_ok = 'no' %}
         {% if thumb != "" %}
           {% if thumb contains ".png" or thumb contains ".jpg" or thumb contains ".jpeg" or thumb contains ".webp" or thumb contains ".gif" %}
@@ -67,7 +68,7 @@ title: 蚯蚓貓的資工人生
           {% endif %}
         {% endif %}
 
-        {# 從內容抓 _thumbnail_id，作為前端替換用 #}
+        {%- comment -%} 從內容抓 _thumbnail_id，交給前端 JS 用 map 替換真正精選圖 {%- endcomment -%}
         {% assign thumb_id = "" %}
         {% assign tid0 = post.content | split: "_thumbnail_id:" %}
         {% if tid0.size > 1 %}
@@ -75,10 +76,18 @@ title: 蚯蚓貓的資工人生
           {% assign thumb_id = tid1 | replace: '"', "" | replace: "'", "" | replace: ",", "" | strip %}
         {% endif %}
 
+        {%- comment -%} 絕對網址就不要套 relative_url；相對路徑才套 {%- endcomment -%}
+        {% assign parts_abs = thumb | split: "://" %}
+        {% if parts_abs.size > 1 %}
+          {% assign thumb_final = thumb %}
+        {% else %}
+          {% assign thumb_final = thumb | relative_url %}
+        {% endif %}
+
         <article class="card" data-thumb-id="{{ thumb_id }}">
           <a class="card-thumb" href="{{ post.url | relative_url }}">
-            {% if thumb_ok == 'yes' %}
-              <img src="{{ thumb | relative_url }}" alt="{{ title_txt | escape }}">
+            {% if thumb_ok == 'yes' and thumb_final != "" %}
+              <img src="{{ thumb_final }}" alt="{{ title_txt | escape }}">
             {% else %}
               <div class="thumb-fallback">No Image</div>
             {% endif %}
@@ -160,21 +169,8 @@ title: 蚯蚓貓的資工人生
           {% assign thumb_id = tid1 | replace: '"', "" | replace: "'", "" | replace: ",", "" | strip %}
         {% endif %}
 
-        <article class="card" data-thumb-id="{{ thumb_id }}">
-          <a class="card-thumb" href="{{ post.url | relative_url }}">
-            {% if thumb_ok == 'yes' %}
-              <img src="{{ thumb | relative_url }}" alt="{{ title_txt | escape }}">
-            {% else %}
-              <div class="thumb-fallback">No Image</div>
-            {% endif %}
-          </a>
-          <div class="card-body">
-            <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
-            <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
-            <p class="card-excerpt">{{ body_html | strip_html | strip_newlines | replace: '---', ' ' | truncate: 110 }}</p>
-          </div>
-        </article>
-      {% endfor %}
-    </div>
-  </section>
-</div>
+        {% assign parts_abs = thumb | split: "://" %}
+        {% if parts_abs.size > 1 %}
+          {% assign thumb_final = thumb %}
+        {% else %}
+          {% assign thumb_final = thumb | relativ_
