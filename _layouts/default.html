@@ -7,6 +7,16 @@
 
   <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
   <link rel="stylesheet" href="{{ "/assets/custom.css" | relative_url }}">
+
+  <!-- 文章 Hero 區塊的極簡樣式 -->
+  <style>
+    .wc-article-hero{margin:0 0 1.25rem 0;padding:0}
+    .wc-article-title{font-size:clamp(28px,4vw,42px);line-height:1.2;margin:0 0 .75rem 0;font-weight:800}
+    .wc-hero-figure{margin:0 0 1.25rem 0}
+    .wc-hero-figure>img{display:block;width:100%;height:auto;border-radius:12px}
+    /* 讓首頁有較寬的主欄 */
+    body.is-home .wc-main{max-width:1200px}
+  </style>
 </head>
 <body>
 
@@ -38,16 +48,15 @@
     </article>
   </main>
 
-  <!-- 把 baseurl 傳給 JS（這段不要包 raw） -->
+  <!-- 把 baseurl 傳給 JS（不可包 raw） -->
   <script>
     window.__BASEURL__ = "{{ site.baseurl | default: '' }}"; // 例如 "/blog"
   </script>
 
-  <!-- 其餘 JS 包 raw，避免 Liquid 解析 -->
   {% raw %}
   <script>
   (function () {
-    // A) 前端判斷首頁（給首頁格線樣式）
+    // 判斷首頁（控制首頁格線寬度等）
     try {
       var p = location.pathname.replace(/index\.html$/,'');
       if (p === '/' || p.endsWith('/blog/')) document.body.classList.add('is-home');
@@ -56,7 +65,23 @@
     var wrap = document.getElementById('post-content');
     if (!wrap) return;
 
-    // B) 剔除混入的 front-matter 區塊（--- layout: post ... ---）
+    // ===== Step 0：抓「原始內容」做 metadata 解析（避免之後清掉找不到） =====
+    var rawHTML = wrap.innerHTML;
+    function pick(re, src){
+      var m = re.exec(src);
+      return m && m[1] ? m[1].trim() : '';
+    }
+
+    // 標題優先：posttitle: > title: > 內文第一個 <h1> > 檔名替代
+    var metaTitle =
+      pick(/posttitle:\s*["']?([^"\n\r']+)["']?/i, rawHTML) ||
+      pick(/title:\s*["']?([^"\n\r']+)["']?/i, rawHTML)   || '';
+
+    // 精選圖優先：image: 路徑（支援引號/無引號、相對/絕對）
+    var featured =
+      pick(/image:\s*["']?([^\s"'<>\)]+?\.(?:png|jpe?g|webp|gif))["']?/i, rawHTML) || '';
+
+    // ===== Step 1：清掉混入的 front-matter 區塊（--- layout: post ... ---） =====
     try {
       var html = wrap.innerHTML;
       var start = html.search(/---\s*layout\s*:\s*post/i);
@@ -70,7 +95,7 @@
       }
     } catch (e) {}
 
-    // C) 清常見 WP 雜訊：有媒體就「只清字、不隱藏」
+    // ===== Step 2：清常見 WP 雜訊鍵（但含媒體的段落只清字、不隱藏） =====
     try {
       var noiseLine = /(^|\s)(_oembed_[^\n<]+|firehose_sent:[^\n<]+|timeline_notification:[^\n<]+|_publicize_job_id:[^\n<]+|_publicize_shares:[^\n<]+|_elasticsearch_data_sharing_indexed_on:[^\n<]+|permalink:[^\n<]+)/gi;
       Array.prototype.forEach.call(wrap.querySelectorAll('p'), function(p){
@@ -85,16 +110,29 @@
       });
     } catch (e) {}
 
-    // D) 文章文首自動插入「精選圖片」（來源：內文中的 image: 路徑），若尚未有圖
+    // ===== Step 3：在文首插入「Hero：標題 + 精選圖」 =====
     try {
-      var hasTopImg = !!wrap.querySelector('img');
-      if (!hasTopImg) {
-        // 從純文字中找 image: /path.png 或 image: "..."
-        var text = wrap.textContent || '';
-        var m = text.match(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i);
-        if (m && m[1]) {
-          var src = m[1];
-          // 補上 baseurl（若需要）
+      // 若沒有從 metadata 取到，再嘗試內文第一個 <h1>
+      if (!metaTitle) {
+        var h1 = wrap.querySelector('h1');
+        if (h1) metaTitle = (h1.textContent || '').trim();
+      }
+
+      // 建立 Hero 區塊（只要有標題或精選圖其中之一就建立）
+      if (metaTitle || featured) {
+        var hero = document.createElement('section');
+        hero.className = 'wc-article-hero';
+
+        if (metaTitle) {
+          var h1El = document.createElement('h1');
+          h1El.className = 'wc-article-title';
+          h1El.textContent = metaTitle;
+          hero.appendChild(h1El);
+        }
+
+        // 轉成可用的 src（相對路徑要補 baseurl）
+        if (featured) {
+          var src = featured;
           if (!/^https?:\/\//i.test(src)) {
             if (src.charAt(0) !== '/') src = '/' + src;
             if (window.__BASEURL__ && src.indexOf(window.__BASEURL__ + '/') !== 0) {
@@ -102,21 +140,20 @@
             }
           }
           var fig = document.createElement('figure');
+          fig.className = 'wc-hero-figure';
           var img = document.createElement('img');
           img.src = src;
-          img.alt = '';
-          img.style.display = 'block';
-          img.style.width = '100%';
-          img.style.height = 'auto';
-          img.style.borderRadius = '12px';
-          fig.style.margin = '0 0 1.25rem 0';
+          img.alt = metaTitle || '';
           fig.appendChild(img);
-          wrap.insertBefore(fig, wrap.firstChild);
+          hero.appendChild(fig);
         }
+
+        // 插到文章最前
+        wrap.insertBefore(hero, wrap.firstChild);
       }
     } catch (e) {}
 
-    // E) 「下表是為各種減礦時的礦物量」→ 下一個元素縮 40%
+    // ===== Step 4：「下表是為各種減礦時的礦物量」→ 下一個元素縮 40% =====
     try {
       var keys = ['下表是為各種減礦時的礦物量','下表為各種減礦時的礦物量'];
       var paras = wrap.querySelectorAll('p');
