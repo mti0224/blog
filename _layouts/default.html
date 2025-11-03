@@ -38,22 +38,19 @@
     </article>
   </main>
 
-  <!-- 以 RAW 包 JS，避免 Liquid 解析 -->
   {% raw %}
   <script>
     (function () {
-      // A) 在前端判斷首頁，加上 is-home（讓首頁 1~3 欄的格線樣式生效）
+      // 判斷首頁以套用首頁寬度/格線
       try {
         var p = location.pathname.replace(/index\.html$/,'');
-        if (p === '/' || p.endsWith('/blog/')) {
-          document.body.classList.add('is-home');
-        }
+        if (p === '/' || p.endsWith('/blog/')) document.body.classList.add('is-home');
       } catch (e) {}
 
       var wrap = document.getElementById('post-content');
       if (!wrap) return;
 
-      // B) 剔除混入內容的 front-matter 區塊（--- layout: post ... ---）
+      // 清掉混入的 front-matter 區塊
       try {
         var html = wrap.innerHTML;
         var start = html.search(/---\s*layout\s*:\s*post/i);
@@ -67,7 +64,7 @@
         }
       } catch (e) {}
 
-      // C) 清除常見 WP 雜訊鍵，但「若段落含有圖片/iframe 就只刪掉雜訊文字，保留媒體」
+      // 清常見 WP 雜訊：若段落含媒體則「只清文字、不隱藏段落」
       try {
         var noiseLine = /(^|\s)(_oembed_[^\n<]+|firehose_sent:[^\n<]+|timeline_notification:[^\n<]+|_publicize_job_id:[^\n<]+|_publicize_shares:[^\n<]+|_elasticsearch_data_sharing_indexed_on:[^\n<]+|permalink:[^\n<]+)/gi;
         Array.prototype.forEach.call(wrap.querySelectorAll('p'), function(p){
@@ -75,10 +72,8 @@
           var t = (p.textContent || '').trim();
           if (!t) return;
           if (hasMedia) {
-            // 只移除雜訊文字，不移除圖片
             p.innerHTML = p.innerHTML.replace(noiseLine, '');
-            // 如果整段只剩空白，則隱藏
-            if (p.textContent.trim() === '') p.style.display = 'none';
+            // 有媒體就算文字清空也保持顯示
           } else {
             if (/_oembed_|firehose_sent:|timeline_notification:|_publicize_job_id:|_publicize_shares:|_elasticsearch_data_sharing_indexed_on:|^permalink:/i.test(t)) {
               p.style.display = 'none';
@@ -87,7 +82,7 @@
         });
       } catch (e) {}
 
-      // D) 「下表是為各種減礦時的礦物量」下一個表格/圖片縮為 40%
+      // 「下表是為各種減礦時的礦物量」→ 下一個元素縮 40%
       try {
         var keys = ['下表是為各種減礦時的礦物量','下表為各種減礦時的礦物量'];
         var paras = wrap.querySelectorAll('p');
