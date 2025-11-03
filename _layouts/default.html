@@ -1,173 +1,73 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% if page.title %}{{ page.title }} | {% endif %}{{ site.title }}</title>
-
-  <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
-  <link rel="stylesheet" href="{{ "/assets/custom.css" | relative_url }}">
-
+  <title>{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}</title>
+  {%- if site.description %}<meta name="description" content="{{ site.description }}">{% endif -%}
+  <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
   <style>
-    .wc-main{max-width:980px;margin:0 auto;padding:0 16px}
-    body.wc-home .wc-main{max-width:1200px}
-    .wc-article-hero{margin:0 0 20px}
-    .wc-article-title{font-size:clamp(28px,4vw,42px);line-height:1.2;margin:0 0 12px;font-weight:800}
-    .wc-hero-figure{margin:0}
-    .wc-hero-figure img{display:block;width:100%;height:auto;border-radius:12px}
-    .wc-ico-img{width:20px;height:20px;display:inline-block;vertical-align:middle}
-    .wc-header{padding:10px 16px}
-    .wc-header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
-    .wc-site-title{margin:0;font-size:22px}
-    .wc-site-title a{text-decoration:none}
-    .wc-site-subtitle{margin:4px 0 0 0;font-size:12px;opacity:.7}
-    .wc-brand{display:flex;flex-direction:column}
-    .wc-nav a{margin-left:12px}
-    .wc-video{position:relative;width:100%;padding-top:56.25%;margin:14px 0;border-radius:12px;overflow:hidden;background:#000}
-    .wc-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+    /* YouTube 16:9 響應式容器 */
+    .video-embed { position: relative; width: 100%; padding-top: 56.25%; margin: 1rem 0; border-radius: 12px; overflow: hidden; }
+    .video-embed iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    /* 文章內容區常見寬度控制，可之後再微調 */
+    .post-content { max-width: 760px; margin: 0 auto; line-height: 1.8; }
   </style>
 </head>
-<body data-collection="{{ page.collection | default: '' }}">
-  <header class="wc-header">
-    <div class="wc-header-inner">
-      <div class="wc-brand">
-        <h1 class="wc-site-title"><a href="{{ "/" | relative_url }}">蚯蚓貓的資工人生</a></h1>
-        <p class="wc-site-subtitle">Line Rangers 角色介紹與遊戲筆記</p>
-      </div>
-      <nav class="wc-nav" aria-label="Social">
-        <a href="https://www.youtube.com/@WarmyCat" target="_blank" rel="noopener">
-          <img class="wc-ico-img" src="{{ '/assets/icon/youtube.png' | relative_url }}" alt="YouTube">
-        </a>
-        <a href="https://www.instagram.com/ytmit/" target="_blank" rel="noopener">
-          <img class="wc-ico-img" src="{{ '/assets/icon/instagram.png' | relative_url }}" alt="Instagram">
-        </a>
-        <a href="https://discord.gg/XJ8KPJcdbt" target="_blank" rel="noopener">
-          <img class="wc-ico-img" src="{{ '/assets/icon/discord.png' | relative_url }}" alt="Discord">
-        </a>
-      </nav>
-    </div>
+<body>
+  <header>
+    <h1><a href="{{ '/' | relative_url }}">{{ site.title | default: "蚯蚓貓的資工人生" }}</a></h1>
   </header>
 
-  <main class="wc-main">
-    <article id="post-content" class="wc-prose">
-      {{ content }}
-    </article>
-  </main>
+  <div class="container">
+    {{ content }}
+  </div>
+
+  <footer>
+    <p>&copy; {{ site.time | date: "%Y" }} {{ site.author | default: site.title }}</p>
+  </footer>
 
   <script>
-  (function(){
-    // baseurl 推算
-    var BASE=(function(){
-      var b="{{ site.baseurl | default: '' }}";
-      try{
-        if(!b){
-          var link=document.querySelector('link[href*="/assets/main.css"]');
-          if(link){
-            var m=link.getAttribute('href').match(/^(.*)\/assets\/main\.css/);
-            if(m) return m[1]||"";
+    // 將文章內容中的 YouTube 連結（a 標籤）轉成 16:9 iframe
+    (function () {
+      function toEmbedUrl(href) {
+        try {
+          var u = new URL(href);
+          if (u.hostname.includes('youtu.be')) {
+            // https://youtu.be/VIDEO_ID
+            return 'https://www.youtube.com/embed/' + u.pathname.slice(1);
           }
-          var p=location.pathname, i=p.indexOf('/blog/');
-          if(i>=0) return p.slice(0,i+5);
-        }
-      }catch(e){}
-      return b||"";
-    })();
-    function addBase(u){ if(!u) return ""; if(/^https?:\/\//i.test(u)) return u; if(u.charAt(0)!="/") u="/"+u; return BASE+u; }
-    function isHome(){ try{var p=location.pathname.replace(/index\.html$/,""); return (p==="/"||/\/blog\/?$/.test(p));}catch(e){return false;} }
-
-    if(isHome()) document.body.classList.add('wc-home');
-
-    var isPost=(document.body.getAttribute('data-collection')==='posts');
-    var wrap=document.getElementById('post-content'); if(!wrap) return;
-
-    // 先從原始內文解析標題/縮圖資訊
-    var rawFull=wrap.innerHTML;
-    function pick(re, src){var m=re.exec(src);return (m&&m[1])?(m[1]+'').trim():"";}
-    var metaTitle= pick(/post title:\s*["']?([^"\n\r']+)["']?/i,rawFull)
-                || pick(/post_title:\s*["']?([^"\n\r']+)["']?/i,rawFull)
-                || pick(/posttitle:\s*["']?([^"\n\r']+)["']?/i,rawFull)
-                || pick(/title:\s*["']?([^"\n\r']+)["']?/i,rawFull) || '';
-    var pageTitle="{{ page.title | escape }}";
-    var finalTitle=metaTitle||pageTitle;
-    var thumbId = pick(/_thumbnail_id:\s*["']?(\d+)["']?/i,rawFull);
-    var featuredLine = pick(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i,rawFull);
-
-    // 清理殘留 front-matter/雜訊
-    wrap.innerHTML = wrap.innerHTML
-      .replace(/(^|\n|\r)\s*---\s*layout:[\s\S]*?---/i,'$1')
-      .replace(/(^|\s)---(\s|$)/g,' ');
-    (function(){
-      var noise=/^(?:layout:|type:|status:|password:|categories:|tags:|meta:|_thumbnail_id:|_oembed_|firehose_sent:|timeline_notification:|_publicize_job_id:|_publicize_shares|_elasticsearch_data_sharing_indexed_on|permalink:|display_name:|image:\s|post title:|post_title:|posttitle:)/i;
-      Array.prototype.slice.call(wrap.childNodes).forEach(function(n){
-        if(n.nodeType===3){var t=(n.nodeValue||'').trim(); if(noise.test(t)) n.parentNode.removeChild(n);}
-        else if(n.nodeType===1){var tx=(n.innerText||'').trim(); if(noise.test(tx)) n.style.display='none';}
-      });
-    })();
-
-    // 文章頁 Hero
-    function toLocalUpload(u){
-      if(!u) return '';
-      var m=u.match(/\/wp-content\/uploads(\/.+)$/);
-      if(m) return addBase('/assets/uploads'+m[1]);
-      return addBase(u);
-    }
-    function fetchMap(cb){
-      fetch(addBase('/assets/featured-map.json'))
-        .then(function(r){return r.json()}).then(cb).catch(function(){cb(null)});
-    }
-
-    if(isPost && (finalTitle || thumbId || featuredLine)){
-      var hero=document.createElement('section'); hero.className='wc-article-hero';
-      if(finalTitle){ var h=document.createElement('h1'); h.className='wc-article-title'; h.textContent=finalTitle; hero.appendChild(h); }
-      var fig=document.createElement('figure'); fig.className='wc-hero-figure'; hero.appendChild(fig);
-      wrap.insertBefore(hero, wrap.firstChild);
-
-      function put(src){ if(!src || fig.querySelector('img')) return; var img=new Image(); img.src=src; img.alt=finalTitle||''; fig.appendChild(img); }
-      if(thumbId){
-        fetchMap(function(map){ if(map && map[thumbId]) put(addBase(map[thumbId])); else if(featuredLine) put(toLocalUpload(featuredLine)); });
-      }else if(featuredLine){ put(toLocalUpload(featuredLine)); }
-    }
-
-    // YouTube 純文字 / 連結 → 16:9 iframe
-    (function toYouTube(){
-      function getId(u){
-        try{
-          var url=new URL(u,location.origin);
-          if(url.hostname.indexOf('youtu.be')>=0) return url.pathname.replace(/^\//,'');
-          if(url.hostname.indexOf('youtube.com')>=0) return url.searchParams.get('v');
-        }catch(e){}
-        var m=(u||'').match(/youtu\.be\/([A-Za-z0-9_-]{6,})/); if(m) return m[1];
-        m=(u||'').match(/[?&]v=([A-Za-z0-9_-]{6,})/); if(m) return m[1];
+          if (u.hostname.includes('youtube.com')) {
+            // https://www.youtube.com/watch?v=VIDEO_ID
+            var v = u.searchParams.get('v');
+            if (v) return 'https://www.youtube.com/embed/' + v;
+            // https://www.youtube.com/shorts/VIDEO_ID
+            if (u.pathname.startsWith('/shorts/')) {
+              return 'https://www.youtube.com/embed/' + u.pathname.split('/')[2];
+            }
+          }
+        } catch (e) {}
         return null;
       }
-      // 連結
-      Array.prototype.forEach.call(wrap.querySelectorAll('a[href*="youtube.com/watch"],a[href*="youtu.be/"]'), function(a){
-        var id=getId(a.getAttribute('href')); if(!id) return;
-        var box=document.createElement('div'); box.className='wc-video';
-        var ifr=document.createElement('iframe');
-        ifr.src='https://www.youtube.com/embed/'+id;
-        ifr.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-        ifr.allowFullscreen=true;
-        box.appendChild(ifr);
-        a.parentNode.replaceChild(box,a);
-      });
-      // 純文字 URL（獨立一段）
-      Array.prototype.forEach.call(wrap.querySelectorAll('p'), function(p){
-        if(p.querySelector('a,iframe')) return;
-        var txt=(p.textContent||'').trim();
-        var m=txt.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?[^ \n\r]+|youtu\.be\/[A-Za-z0-9_-]+)/);
-        if(!m) return;
-        var id=getId(m[0]); if(!id) return;
-        var box=document.createElement('div'); box.className='wc-video';
-        var ifr=document.createElement('iframe');
-        ifr.src='https://www.youtube.com/embed/'+id;
-        ifr.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-        ifr.allowFullscreen=true;
-        box.appendChild(ifr);
-        p.parentNode.replaceChild(box,p);
+
+      var roots = document.querySelectorAll('.post-content, article, main');
+      roots.forEach(function(root){
+        var links = root.querySelectorAll('a[href*="youtu.be"], a[href*="youtube.com/watch"], a[href*="youtube.com/shorts"]');
+        links.forEach(function(a){
+          var embed = toEmbedUrl(a.getAttribute('href'));
+          if (!embed) return;
+          var wrap = document.createElement('div');
+          wrap.className = 'video-embed';
+          var iframe = document.createElement('iframe');
+          iframe.setAttribute('src', embed);
+          iframe.setAttribute('allowfullscreen', '');
+          iframe.setAttribute('title', 'YouTube video');
+          wrap.appendChild(iframe);
+          // 若 a 只有純網址文字，就直接替換；若 a 在段落中，仍安全替換
+          a.replaceWith(wrap);
+        });
       });
     })();
-  })();
   </script>
 </body>
 </html>
