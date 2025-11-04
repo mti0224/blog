@@ -3,6 +3,7 @@ layout: default
 title: 蚯蚓貓的資工人生
 ---
 
+
 {%- assign baseurl = site.baseurl | default: "" -%}
 {%- assign posts_all = site.posts | sort: "date" | reverse -%}
 
@@ -14,31 +15,29 @@ title: 蚯蚓貓的資工人生
       {%- for post in posts_all limit:3 -%}
         {%- capture body %}{{ post.content }}{%- endcapture %}
 
-        {%- comment -%} 標題：post title:/posttitle:/title: 依序嘗試 {%- endcomment -%}
+        {%- comment -%} 取標題（post title:/posttitle:/title: 任一） {%- endcomment -%}
         {%- assign title_txt = "" -%}
         {%- if body contains 'post title:' -%}
-          {%- assign title_txt = body | split:'post title:' | last | split:'date:' | first | replace:'"','' | strip -%}
+          {%- assign title_txt = body | split:'post title:' | last | split:'date:' | first | remove:'"' | strip -%}
         {%- elsif body contains 'posttitle:' -%}
-          {%- assign title_txt = body | split:'posttitle:' | last | split:'date:' | first | replace:'"','' | strip -%}
+          {%- assign title_txt = body | split:'posttitle:' | last | split:'date:' | first | remove:'"' | strip -%}
         {%- elsif body contains 'title:' -%}
-          {%- assign title_txt = body | split:'title:' | last | split:'date:' | first | replace:'"','' | strip -%}
+          {%- assign title_txt = body | split:'title:' | last | split:'date:' | first | remove:'"' | strip -%}
         {%- endif -%}
         {%- if title_txt == "" -%}
           {%- assign title_txt = post.title | default: post.name -%}
         {%- endif -%}
 
-        {%- comment -%} 取 _thumbnail_id 讓前端用 featured-map.json 覆寫縮圖 {%- endcomment -%}
+        {%- comment -%} 取 _thumbnail_id，稍後用 JS 以 featured-map.json 覆寫縮圖 {%- endcomment -%}
         {%- assign thumbid = "" -%}
         {%- if body contains '_thumbnail_id:' -%}
-          {%- assign thumbid = body | split:'_thumbnail_id:' | last | split:'\n' | first | replace:'"','' | replace:"'","" | strip -%}
+          {%- assign thumb_chunk = body | split:'_thumbnail_id:' | last | strip -%}
+          {%- assign thumbid = thumb_chunk | split:' ' | first | remove:'"' | remove:"'" | remove:',' | remove:'---' | strip -%}
         {%- endif -%}
 
-        {%- comment -%} 縮圖初始值：先 image:，再退回第一張 <img>（嚴格取第一張，避免吃到後面 HTML） {%- endcomment -%}
+        {%- comment -%} 後備縮圖：抓第一張 <img> 的 src （不再依賴 split:'\n'） {%- endcomment -%}
         {%- assign img_src = "" -%}
-        {%- if body contains 'image:' -%}
-          {%- assign img_src = body | split:'image:' | last | split:'\n' | first | replace:'---','' | replace:'"','' | strip -%}
-        {%- endif -%}
-        {%- if img_src == "" and body contains '<img ' -%}
+        {%- if body contains '<img ' -%}
           {%- assign after_img = body | split:'<img ' | last -%}
           {%- if after_img contains 'src="' -%}
             {%- assign after_src = after_img | split:'src="' | last -%}
@@ -61,16 +60,17 @@ title: 蚯蚓貓的資工人生
 
         <article class="card" data-thumbid="{{ thumbid | escape }}">
           <a class="thumb" href="{{ post.url | relative_url }}">
-            {% if thumb != "" %}
+            {%- if thumb != "" -%}
               <img src="{{ thumb | relative_url }}" loading="lazy" alt="{{ title_txt | escape }}">
-            {% else %}
-              <img src="{{ img_src | relative_url }}" loading="lazy" alt="{{ title_txt | escape }}">
-            {% endif %}
+            {%- else -%}
+              <div class="thumb ph">No Image</div>
+            {%- endif -%}
           </a>
           <div class="card-body">
             <time class="card-date">{{ post.date | date: "%Y-%m-%d" }}</time>
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
 
+            {%- comment -%} 三行預覽：去掉前置欄位、去 HTML、截斷到 110 字 {%- endcomment -%}
             {%- assign parts = body | split:'---' -%}
             {%- if parts.size >= 2 -%}
               {%- assign body_html = parts | last -%}
@@ -97,11 +97,11 @@ title: 蚯蚓貓的資工人生
 
         {%- assign title_txt = "" -%}
         {%- if body contains 'post title:' -%}
-          {%- assign title_txt = body | split:'post title:' | last | split:'date:' | first | replace:'"','' | strip -%}
+          {%- assign title_txt = body | split:'post title:' | last | split:'date:' | first | remove:'"' | strip -%}
         {%- elsif body contains 'posttitle:' -%}
-          {%- assign title_txt = body | split:'posttitle:' | last | split:'date:' | first | replace:'"','' | strip -%}
+          {%- assign title_txt = body | split:'posttitle:' | last | split:'date:' | first | remove:'"' | strip -%}
         {%- elsif body contains 'title:' -%}
-          {%- assign title_txt = body | split:'title:' | last | split:'date:' | first | replace:'"','' | strip -%}
+          {%- assign title_txt = body | split:'title:' | last | split:'date:' | first | remove:'"' | strip -%}
         {%- endif -%}
         {%- if title_txt == "" -%}
           {%- assign title_txt = post.title | default: post.name -%}
@@ -109,14 +109,12 @@ title: 蚯蚓貓的資工人生
 
         {%- assign thumbid = "" -%}
         {%- if body contains '_thumbnail_id:' -%}
-          {%- assign thumbid = body | split:'_thumbnail_id:' | last | split:'\n' | first | replace:'"','' | replace:"'","" | strip -%}
+          {%- assign thumb_chunk = body | split:'_thumbnail_id:' | last | strip -%}
+          {%- assign thumbid = thumb_chunk | split:' ' | first | remove:'"' | remove:"'" | remove:',' | remove:'---' | strip -%}
         {%- endif -%}
 
         {%- assign img_src = "" -%}
-        {%- if body contains 'image:' -%}
-          {%- assign img_src = body | split:'image:' | last | split:'\n' | first | replace:'---','' | replace:'"','' | strip -%}
-        {%- endif -%}
-        {%- if img_src == "" and body contains '<img ' -%}
+        {%- if body contains '<img ' -%}
           {%- assign after_img = body | split:'<img ' | last -%}
           {%- if after_img contains 'src="' -%}
             {%- assign after_src = after_img | split:'src="' | last -%}
@@ -140,7 +138,7 @@ title: 蚯蚓貓的資工人生
         <article class="card" data-thumbid="{{ thumbid | escape }}">
           <a class="thumb" href="{{ post.url | relative_url }}">
             {%- if thumb != "" -%}
-              <img src="{{ thumb }}" loading="lazy" alt="{{ title_txt | escape }}">
+              <img src="{{ thumb | relative_url }}" loading="lazy" alt="{{ title_txt | escape }}">
             {%- else -%}
               <div class="thumb ph">No Image</div>
             {%- endif -%}
@@ -205,11 +203,8 @@ title: 蚯蚓貓的資工人生
       var img = card.querySelector("img");
       if (!img) return;
       var val = map[id];
-      // 對照表的路徑請不要含 /blog；這裡會自動補 baseurl
       img.src = /^https?:\/\//i.test(val) ? val : (base + val);
     });
-  }).catch(function () {
-    // 靜默失敗即可；頁面仍會顯示退回的備用圖
-  });
+  }).catch(function () {});
 })();
 </script>
