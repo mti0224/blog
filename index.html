@@ -3,12 +3,11 @@ layout: default
 title: 蚯蚓貓的資工人生
 ---
 
-
 {%- assign baseurl = site.baseurl | default: "" -%}
 {%- assign posts_all = site.posts | sort: "date" | reverse -%}
 
-<div class="home">
-
+<div class="home index-container">
+  <!-- 最新精選：固定 3 篇 -->
   <section class="section">
     <h2 class="h2">最新精選</h2>
     <div class="card-grid">
@@ -28,14 +27,14 @@ title: 蚯蚓貓的資工人生
           {%- assign title_txt = post.title | default: post.name -%}
         {%- endif -%}
 
-        {%- comment -%} 取 _thumbnail_id，稍後用 JS 以 featured-map.json 覆寫縮圖 {%- endcomment -%}
+        {%- comment -%} 取 _thumbnail_id（供 JS 用 featured-map.json 覆寫縮圖） {%- endcomment -%}
         {%- assign thumbid = "" -%}
         {%- if body contains '_thumbnail_id:' -%}
           {%- assign thumb_chunk = body | split:'_thumbnail_id:' | last | strip -%}
           {%- assign thumbid = thumb_chunk | split:' ' | first | remove:'"' | remove:"'" | remove:',' | remove:'---' | strip -%}
         {%- endif -%}
 
-        {%- comment -%} 後備縮圖：抓第一張 <img> 的 src （不再依賴 split:'\n'） {%- endcomment -%}
+        {%- comment -%} 後備縮圖：抓第一張 <img> 的 src（避免換行切不準） {%- endcomment -%}
         {%- assign img_src = "" -%}
         {%- if body contains '<img ' -%}
           {%- assign after_img = body | split:'<img ' | last -%}
@@ -70,18 +69,14 @@ title: 蚯蚓貓的資工人生
             <time class="card-date">{{ post.date | date: "%Y-%m-%d" }}</time>
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
 
-            {%- comment -%} 三行預覽：去掉前置欄位、去 HTML、截斷到 110 字 {%- endcomment -%}
+            {%- comment -%} 三行預覽：去前置欄位、去 HTML、截斷 110 字 {%- endcomment -%}
             {%- assign parts = body | split:'---' -%}
-            {%- if parts.size >= 2 -%}
-              {%- assign body_html = parts | last -%}
-            {%- else -%}
-              {%- assign body_html = body -%}
-            {%- endif -%}
+            {%- assign body_html = parts.size >= 2 ? parts | last : body -%}
             <p class="card-excerpt clamp-3">{{ body_html
               | replace:'layout:','' | replace:'post title:','' | replace:'posttitle:','' | replace:'title:',''
-              | replace:'date:','' | replace:'type:','' | replace:'parent_id:','' | replace:'published:',''
-              | replace:'password:','' | replace:'status:','' | replace:'categories:','' | replace:'tags:',''
-              | replace:'meta:','' | replace:'image:',''
+              | replace:'date:',''   | replace:'type:',''       | replace:'parent_id:','' | replace:'published:',''
+              | replace:'password:',''| replace:'status:',''     | replace:'categories:',''| replace:'tags:',''
+              | replace:'meta:',''   | replace:'image:',''
               | strip_html | strip_newlines | truncate: 110 }}</p>
           </div>
         </article>
@@ -89,6 +84,7 @@ title: 蚯蚓貓的資工人生
     </div>
   </section>
 
+  <!-- 所有文章（offset 3 起） -->
   <section class="section">
     <h2 class="h2">所有文章</h2>
     <div class="card-grid">
@@ -148,63 +144,37 @@ title: 蚯蚓貓的資工人生
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
 
             {%- assign parts = body | split:'---' -%}
-            {%- if parts.size >= 2 -%}
-              {%- assign body_html = parts | last -%}
-            {%- else -%}
-              {%- assign body_html = body -%}
-            {%- endif -%}
-            <p class="card-excerpt">{{ body_html
+            {%- assign body_html = parts.size >= 2 ? parts | last : body -%}
+            <p class="card-excerpt clamp-3">{{ body_html
               | replace:'layout:','' | replace:'post title:','' | replace:'posttitle:','' | replace:'title:',''
-              | replace:'date:','' | replace:'type:','' | replace:'parent_id:','' | replace:'published:',''
-              | replace:'password:','' | replace:'status:','' | replace:'categories:','' | replace:'tags:',''
-              | replace:'meta:','' | replace:'image:',''
+              | replace:'date:',''   | replace:'type:',''       | replace:'parent_id:','' | replace:'published:',''
+              | replace:'password:',''| replace:'status:',''     | replace:'categories:',''| replace:'tags:',''
+              | replace:'meta:',''   | replace:'image:',''
               | strip_html | strip_newlines | truncate: 110 }}</p>
           </div>
         </article>
       {%- endfor -%}
     </div>
   </section>
-
 </div>
 
-<style>
-  .section{max-width:1200px;margin:32px auto;padding:0 16px}
-  .h2{font-weight:800;font-size:22px;margin:0 0 14px}
-  .card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
-  @media (max-width:1024px){.card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-  @media (max-width:640px){.card-grid{grid-template-columns:1fr}}
-  .card{border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);background:#fff;overflow:hidden;border:1px solid rgba(0,0,0,.05)}
-  .thumb{display:block;aspect-ratio:16/9;background:#f3f5f7}
-  .thumb img{display:block;width:100%;height:100%;object-fit:cover}
-  .thumb.ph{display:flex;align-items:center;justify-content:center;color:#98a1a8}
-  .card-body{padding:12px 14px}
-  .card-date{display:block;color:#6b7280;font-size:12px;margin-bottom:6px}
-  .card-title{margin:0 0 6px;font-size:16px;line-height:1.35}
-  .card-title a{color:#111827;text-decoration:none}
-  .card-excerpt{margin:0;color:#374151;font-size:14px;line-height:1.6}
-</style>
-
 <script>
+/* 以 _thumbnail_id → assets/featured-map.json 覆寫縮圖；找不到就保留第一張 <img> */
 (function () {
-  // 讓它自動帶上 /blog
   var base = "{{ site.baseurl | default: '' }}";
-  // 對照表放在 assets 下（不是 _data）
   var mapUrl = base + "/assets/featured-map.json";
-
-  // 找出所有有 data-thumbid 的卡片 → 用對照表覆寫 img.src
-  fetch(mapUrl).then(function (r) {
-    if (!r.ok) throw new Error("map not found");
-    return r.json();
-  }).then(function (map) {
-    if (!map) return;
-    document.querySelectorAll(".card[data-thumbid]").forEach(function (card) {
-      var id = (card.getAttribute("data-thumbid") || "").trim();
-      if (!id || !map[id]) return;
-      var img = card.querySelector("img");
-      if (!img) return;
-      var val = map[id];
-      img.src = /^https?:\/\//i.test(val) ? val : (base + val);
-    });
-  }).catch(function () {});
+  fetch(mapUrl)
+    .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+    .then(function (map) {
+      if (!map) return;
+      document.querySelectorAll(".card[data-thumbid]").forEach(function (card) {
+        var id = (card.getAttribute("data-thumbid") || "").trim();
+        if (!id || !map[id]) return;
+        var img = card.querySelector("img"); if (!img) return;
+        var val = map[id];
+        img.src = /^https?:\/\//i.test(val) ? val : (base + val);
+      });
+    })
+    .catch(function () {});
 })();
 </script>
