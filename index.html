@@ -186,8 +186,12 @@ title: 蚯蚓貓的資工人生
 
 <script>
 (function () {
+  // 讓它自動帶上 /blog
   var base = "{{ site.baseurl | default: '' }}";
+  // 對照表放在 assets 下（不是 _data）
   var mapUrl = base + "/assets/featured-map.json";
+
+  // 找出所有有 data-thumbid 的卡片 → 用對照表覆寫 img.src
   fetch(mapUrl).then(function (r) {
     if (!r.ok) throw new Error("map not found");
     return r.json();
