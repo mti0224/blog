@@ -72,7 +72,11 @@ title: 蚯蚓貓的資工人生
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
 
             {%- assign parts = body | split:'---' -%}
-            {%- assign body_html = parts.size >= 2 ? parts | last : body -%}
+            {%- if parts.size >= 2 -%}
+              {%- assign body_html = parts | last -%}
+            {%- else -%}
+              {%- assign body_html = body -%}
+            {%- endif -%}
             <p class="card-excerpt">{{ body_html
               | replace:'layout:','' | replace:'post title:','' | replace:'posttitle:','' | replace:'title:',''
               | replace:'date:','' | replace:'type:','' | replace:'parent_id:','' | replace:'published:',''
@@ -146,7 +150,11 @@ title: 蚯蚓貓的資工人生
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
 
             {%- assign parts = body | split:'---' -%}
-            {%- assign body_html = parts.size >= 2 ? parts | last : body -%}
+            {%- if parts.size >= 2 -%}
+              {%- assign body_html = parts | last -%}
+            {%- else -%}
+              {%- assign body_html = body -%}
+            {%- endif -%}
             <p class="card-excerpt">{{ body_html
               | replace:'layout:','' | replace:'post title:','' | replace:'posttitle:','' | replace:'title:',''
               | replace:'date:','' | replace:'type:','' | replace:'parent_id:','' | replace:'published:',''
