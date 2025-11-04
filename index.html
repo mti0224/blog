@@ -7,6 +7,7 @@ title: 蚯蚓貓的資工人生
 {%- assign posts_all = site.posts | sort: "date" | reverse -%}
 
 <div class="home index-container">
+
   <!-- 最新精選：固定 3 篇 -->
   <section class="section">
     <h2 class="h2">最新精選</h2>
@@ -14,7 +15,7 @@ title: 蚯蚓貓的資工人生
       {%- for post in posts_all limit:3 -%}
         {%- capture body %}{{ post.content }}{%- endcapture %}
 
-        {%- comment -%} 取標題（post title:/posttitle:/title: 任一） {%- endcomment -%}
+        {%- comment -%} 取標題（post title / posttitle / title 任一） {%- endcomment -%}
         {%- assign title_txt = "" -%}
         {%- if body contains 'post title:' -%}
           {%- assign title_txt = body | split:'post title:' | last | split:'date:' | first | remove:'"' | strip -%}
@@ -23,18 +24,16 @@ title: 蚯蚓貓的資工人生
         {%- elsif body contains 'title:' -%}
           {%- assign title_txt = body | split:'title:' | last | split:'date:' | first | remove:'"' | strip -%}
         {%- endif -%}
-        {%- if title_txt == "" -%}
-          {%- assign title_txt = post.title | default: post.name -%}
-        {%- endif -%}
+        {%- if title_txt == "" -%}{%- assign title_txt = post.title | default: post.name -%}{%- endif -%}
 
-        {%- comment -%} 取 _thumbnail_id（供 JS 用 featured-map.json 覆寫縮圖） {%- endcomment -%}
+        {%- comment -%} 取 _thumbnail_id（供 JS 用 featured-map.json 覆寫） {%- endcomment -%}
         {%- assign thumbid = "" -%}
         {%- if body contains '_thumbnail_id:' -%}
           {%- assign thumb_chunk = body | split:'_thumbnail_id:' | last | strip -%}
           {%- assign thumbid = thumb_chunk | split:' ' | first | remove:'"' | remove:"'" | remove:',' | remove:'---' | strip -%}
         {%- endif -%}
 
-        {%- comment -%} 後備縮圖：抓第一張 <img> 的 src（避免換行切不準） {%- endcomment -%}
+        {%- comment -%} 後備縮圖：抓第一張 <img> 的 src {%- endcomment -%}
         {%- assign img_src = "" -%}
         {%- if body contains '<img ' -%}
           {%- assign after_img = body | split:'<img ' | last -%}
@@ -69,9 +68,13 @@ title: 蚯蚓貓的資工人生
             <time class="card-date">{{ post.date | date: "%Y-%m-%d" }}</time>
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
 
-            {%- comment -%} 三行預覽：去前置欄位、去 HTML、截斷 110 字 {%- endcomment -%}
+            {%- comment -%} 三行預覽（去前置欄位，取第一段，去 HTML，截 110） {%- endcomment -%}
             {%- assign parts = body | split:'---' -%}
-            {%- assign body_html = parts.size >= 2 ? parts | last : body -%}
+            {%- if parts.size > 1 -%}
+              {%- assign body_html = parts | last -%}
+            {%- else -%}
+              {%- assign body_html = body -%}
+            {%- endif -%}
             <p class="card-excerpt clamp-3">{{ body_html
               | replace:'layout:','' | replace:'post title:','' | replace:'posttitle:','' | replace:'title:',''
               | replace:'date:',''   | replace:'type:',''       | replace:'parent_id:','' | replace:'published:',''
@@ -84,7 +87,7 @@ title: 蚯蚓貓的資工人生
     </div>
   </section>
 
-  <!-- 所有文章（offset 3 起） -->
+  <!-- 所有文章（offset: 3 起） -->
   <section class="section">
     <h2 class="h2">所有文章</h2>
     <div class="card-grid">
@@ -99,9 +102,7 @@ title: 蚯蚓貓的資工人生
         {%- elsif body contains 'title:' -%}
           {%- assign title_txt = body | split:'title:' | last | split:'date:' | first | remove:'"' | strip -%}
         {%- endif -%}
-        {%- if title_txt == "" -%}
-          {%- assign title_txt = post.title | default: post.name -%}
-        {%- endif -%}
+        {%- if title_txt == "" -%}{%- assign title_txt = post.title | default: post.name -%}{%- endif -%}
 
         {%- assign thumbid = "" -%}
         {%- if body contains '_thumbnail_id:' -%}
@@ -144,7 +145,11 @@ title: 蚯蚓貓的資工人生
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
 
             {%- assign parts = body | split:'---' -%}
-            {%- assign body_html = parts.size >= 2 ? parts | last : body -%}
+            {%- if parts.size > 1 -%}
+              {%- assign body_html = parts | last -%}
+            {%- else -%}
+              {%- assign body_html = body -%}
+            {%- endif -%}
             <p class="card-excerpt clamp-3">{{ body_html
               | replace:'layout:','' | replace:'post title:','' | replace:'posttitle:','' | replace:'title:',''
               | replace:'date:',''   | replace:'type:',''       | replace:'parent_id:','' | replace:'published:',''
