@@ -61,11 +61,11 @@ title: 蚯蚓貓的資工人生
 
         <article class="card" data-thumbid="{{ thumbid | escape }}">
           <a class="thumb" href="{{ post.url | relative_url }}">
-            {%- if thumb != "" -%}
-              <img src="{{ thumb }}" loading="lazy" alt="{{ title_txt | escape }}">
-            {%- else -%}
-              <div class="thumb ph">No Image</div>
-            {%- endif -%}
+            {% if thumb != "" %}
+              <img src="{{ thumb | relative_url }}" loading="lazy" alt="{{ title_txt | escape }}">
+            {% else %}
+              <img src="{{ img_src | relative_url }}" loading="lazy" alt="{{ title_txt | escape }}">
+            {% endif %}
           </a>
           <div class="card-body">
             <time class="card-date">{{ post.date | date: "%Y-%m-%d" }}</time>
@@ -187,19 +187,29 @@ title: 蚯蚓貓的資工人生
 </style>
 
 <script>
-/* 以 featured-map.json 覆寫每張卡片的縮圖（用 data-thumbid 對應） */
-(function(){
-  var mapUrl = "{{ '/assets/featured-map.json' | relative_url }}";
+(function () {
+  // 讓它自動帶上 /blog
   var base = "{{ site.baseurl | default: '' }}";
-  fetch(mapUrl).then(function(r){return r.json()}).then(function(map){
-    document.querySelectorAll('.card[data-thumbid]').forEach(function(card){
-      var id = (card.getAttribute('data-thumbid')||'').trim();
-      if(!id || !map || !map[id]) return;
-      var img = card.querySelector('img');
-      if(!img) return;
+  // 對照表放在 assets 下（不是 _data）
+  var mapUrl = base + "/assets/featured-map.json";
+
+  // 找出所有有 data-thumbid 的卡片 → 用對照表覆寫 img.src
+  fetch(mapUrl).then(function (r) {
+    if (!r.ok) throw new Error("map not found");
+    return r.json();
+  }).then(function (map) {
+    if (!map) return;
+    document.querySelectorAll(".card[data-thumbid]").forEach(function (card) {
+      var id = (card.getAttribute("data-thumbid") || "").trim();
+      if (!id || !map[id]) return;
+      var img = card.querySelector("img");
+      if (!img) return;
       var val = map[id];
-      img.src = (/^https?:\/\//i.test(val)) ? val : (base + val);
+      // 對照表的路徑請不要含 /blog；這裡會自動補 baseurl
+      img.src = /^https?:\/\//i.test(val) ? val : (base + val);
     });
-  }).catch(function(){});
+  }).catch(function () {
+    // 靜默失敗即可；頁面仍會顯示退回的備用圖
+  });
 })();
 </script>
