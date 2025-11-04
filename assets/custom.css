@@ -8,11 +8,11 @@
 ======================================================================= */
 
 :root{
-  --postw: 700px;      /* 文章頁主欄寬度（傳統頁面用）            */
-  --homew: 1080px;     /* 首頁內容最大寬度                         */
-  --headw: 1120px;     /* Header 寬度                              */
-  --article-media-max: clamp(520px, 72vw, 820px);  /* 傳統圖片上限 */
-  --article-col: clamp(520px, 72vw, 820px);        /* JS 會覆寫     */
+  --postw: 700px;
+  --homew: 1080px;
+  --headw: 1120px;
+  --article-media-max: clamp(520px, 72vw, 820px);
+  --article-col: clamp(520px, 72vw, 820px);
 
   --wc-bg: #ffffff;
   --wc-text: #1f2937;
@@ -26,7 +26,6 @@
   --wc-font-heading: var(--wc-font-body);
 }
 
-/* ===== 基礎排版 ===== */
 html{scroll-behavior:smooth}
 *{box-sizing:border-box}
 body{
@@ -42,22 +41,20 @@ img{max-width:100%;height:auto;border-radius:12px}
 figure{margin:1.2rem 0}
 figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
 
-/* 限縮文章內一般圖片寬度；不影響 Hero 圖與 YouTube 影片 */
+/* 文章內一般圖片寬度（Hero/YouTube 例外） */
 .wc-main :where(p, div, figure, section):not(.wc-video):not(.wc-hero-figure):not(.card) > img {
   display:block;
   width:100%;
   max-width:var(--article-media-max);
   height:auto;
-  margin:14px auto; /* 置中 */
+  margin:14px auto;
 }
 
-/* 若文章有 <figure><img><figcaption>，置中排版 */
+/* figure 標準置中 */
 .wc-main figure:not(.wc-hero-figure){ text-align:center; }
-.wc-main figure:not(.wc-hero-figure) > figcaption{
-  color:#6b7280;font-size:.9rem;margin-top:6px;
-}
+.wc-main figure:not(.wc-hero-figure) > figcaption{ color:#6b7280;font-size:.9rem;margin-top:6px; }
 
-/* ===== Header（加寬 + icon 圖片） ===== */
+/* Header */
 .wc-header{
   position:sticky; top:0; z-index:40;
   background:rgba(255,255,255,.92);
@@ -70,55 +67,37 @@ figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
   margin:0 auto;
 }
 .wc-brand{display:flex;flex-direction:column;gap:2px}
-.wc-site-title{
-  font-family:var(--wc-font-heading);
-  font-size:1.6rem; font-weight:800; letter-spacing:.2px; margin:0; line-height:1.2;
-}
+.wc-site-title{font-family:var(--wc-font-heading);font-size:1.6rem;font-weight:800;letter-spacing:.2px;margin:0;line-height:1.2}
 .wc-site-title a{color:inherit;text-decoration:none}
 .wc-site-subtitle{margin:0;color:var(--wc-muted);font-size:.95rem}
-
-/* icon only */
 .wc-nav{margin-left:auto;display:flex;align-items:center;gap:10px}
-.wc-nav a{
-  display:grid; place-items:center;
-  width:36px; height:36px; border-radius:10px; color:var(--wc-text);
-}
+.wc-nav a{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;color:var(--wc-text)}
 .wc-nav a:hover{color:var(--wc-accent);text-decoration:none;background:rgba(239,102,102,.08)}
 .wc-ico-img{width:18px;height:18px;display:block;}
 @media (min-width:768px){ .wc-site-title{white-space:nowrap} }
 
-/* ===== 主要內容容器 ===== */
+/* 主要內容容器 */
 .wc-main{padding:28px 0 60px}
 
-/* 傳統文章容器（部分舊頁面仍用到） */
+/* 傳統文章容器（兼容） */
 .wc-prose{ width:min(var(--postw), calc(100vw - 32px)); margin:0 auto; }
 .wc-prose p{margin:1.1rem 0}
-.wc-prose h1,.wc-prose h2,.wc-prose h3,.wc-prose h4{
-  font-family:var(--wc-font-heading); line-height:1.35; margin:1.4rem 0 .8rem;
-}
+.wc-prose h1,.wc-prose h2,.wc-prose h3,.wc-prose h4{font-family:var(--wc-font-heading);line-height:1.35;margin:1.4rem 0 .8rem}
 .wc-prose h1{font-size:2rem;font-weight:900}
 .wc-prose h2{font-size:1.55rem;font-weight:800}
 .wc-prose h3{font-size:1.25rem;font-weight:700}
 .wc-prose h4{font-size:1.05rem;font-weight:700}
 .wc-prose ul,.wc-prose ol{padding-left:1.4rem}
-.wc-prose blockquote{
-  margin:1rem 0; padding:.9rem 1.1rem;
-  border-left:3px solid var(--wc-accent);
-  background:#fff7f7; color:#7c2d2d; border-radius:8px;
-}
+.wc-prose blockquote{margin:1rem 0;padding:.9rem 1.1rem;border-left:3px solid var(--wc-accent);background:#fff7f7;color:#7c2d2d;border-radius:8px}
 
-/* ===== 首頁卡片 ===== */
+/* 首頁卡片 */
 body.is-home .wc-prose{ width:min(var(--homew), calc(100vw - 32px)); }
 .card-grid{ display:grid; gap:16px; grid-template-columns:repeat(3,minmax(0,1fr)); }
 @media (max-width:1024px){ .card-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:640px){ .card-grid{ grid-template-columns:1fr; } }
 .home .section{margin:8px 0 28px}
 .h2{font-size:1.1rem;letter-spacing:.12em;color:var(--wc-muted);text-transform:uppercase;margin:0 0 12px}
-.card{
-  display:flex;flex-direction:column;
-  border:1px solid var(--wc-border); border-radius:14px; box-shadow:var(--wc-shadow);
-  overflow:hidden; background:#fff;
-}
+.card{display:flex;flex-direction:column;border:1px solid var(--wc-border);border-radius:14px;box-shadow:var(--wc-shadow);overflow:hidden;background:#fff}
 .card-thumb{display:block;position:relative}
 .card-thumb img{display:block;width:100%;height:auto;border-radius:0}
 .thumb-fallback{display:flex;align-items:center;justify-content:center;height:160px;color:var(--wc-muted);background:#fafafa}
@@ -136,7 +115,7 @@ body.is-home .wc-prose{ width:min(var(--homew), calc(100vw - 32px)); }
 .btn{display:inline-block;padding:8px 14px;border:1px solid var(--wc-border);border-radius:10px;color:var(--wc-text);text-decoration:none}
 .btn:hover{border-color:var(--wc-accent);color:var(--wc-accent)}
 
-/* ===== 傳統 .post-content 兼容（保留但不與新欄寬衝突） ===== */
+/* post-content 兼容 */
 .post-header,.post-content{
   box-sizing:border-box;
   max-width:var(--postw);
@@ -147,39 +126,23 @@ body.is-home .wc-prose{ width:min(var(--homew), calc(100vw - 32px)); }
 .post-content figure,.post-content p > img{display:block; margin:14px auto}
 .post-content figure img,.post-content p > img{display:block; width:100% !important; height:auto !important}
 
-/* ===== YouTube 影片等寬 ===== */
+/* YouTube 16:9 */
 .wc-prose iframe[src*="youtube"],
 .post-content iframe[src*="youtube"],
 .wc-prose iframe[allowfullscreen]{
-  display:block;
-  width:100% !important;
-  aspect-ratio:16/9;
-  height:auto;
-  border:0;
-  border-radius:12px;
-  margin:12px auto;
+  display:block;width:100% !important;aspect-ratio:16/9;height:auto;border:0;border-radius:12px;margin:12px auto;
 }
 
-/* ===== 縮小 40%（表格/圖片/figure/p 都可套用） ===== */
-.shrink-40{
-  width:40% !important;
-  margin-left:auto !important;
-  margin-right:auto !important;
-  display:block;
-}
-.shrink-40 img{width:100% !important; height:auto !important}
+/* 縮小 40% */
+.shrink-40{width:40% !important;margin-left:auto !important;margin-right:auto !important;display:block}
+.shrink-40 img{width:100% !important;height:auto !important}
 
-/* ===== 隱藏文章內 Header 下方的「回首頁」連結（保險） ===== */
-.wc-prose > a[href="/"],
-.wc-prose > a[href="/blog/"],
-.wc-prose > a[rel="home"],
-.wc-prose > a[class*="home"],
-.post-header > a[href="/"],
-.post-header > a[href="/blog/"],
-.post-header > a[rel="home"],
-.post-header > a[class*="home"]{ display:none !important; }
+/* 隱藏回首頁連結（保險） */
+.wc-prose > a[href="/"], .wc-prose > a[href="/blog/"], .wc-prose > a[rel="home"],
+.wc-prose > a[class*="home"], .post-header > a[href="/"], .post-header > a[href="/blog/"],
+.post-header > a[rel="home"], .post-header > a[class*="home"]{ display:none !important; }
 
-/* ===== Code / Table / Footer ===== */
+/* Code / Table / Footer */
 table{border-collapse:collapse;width:100%;margin:1rem auto;max-width:var(--postw)}
 th,td{border:1px solid var(--wc-border);padding:.55rem .7rem}
 th{background:#fafafa;text-align:left}
@@ -190,37 +153,29 @@ footer{margin-top:48px;border-top:1px solid var(--wc-border);padding:22px 0;colo
 /* 小螢幕微調 */
 @media (max-width:640px){ .wc-site-title{font-size:1.28rem} }
 
-/* ===== 新文章欄寬（以「整體資料分析」下首張圖為準） ===== */
-/* 文章內層容器：統一寬度並置中 */
-.wc-article-inner{
-  max-width:var(--article-col);
+/* 新文章欄寬（以「整體資料分析」首張圖為準） */
+.wc-article-inner{max-width:var(--article-col);margin:0 auto}
+.wc-article-inner > *:not(img.wc-minerals){margin-left:auto;margin-right:auto}
+.wc-article-inner img{display:block;max-width:100%;height:auto;margin:14px auto}
+/* 礦時的礦物量：40% 並靠左 */
+.wc-article-inner img.wc-minerals{max-width:40%;margin-left:0 !important;margin-right:auto !important}
+.wc-article-inner table,.wc-article-inner pre,.wc-article-inner figure:not(.wc-hero-figure){max-width:100%}
+
+/* 三行截斷 */
+.clamp-3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* 首頁外框置中加寬 */
+.home-container,.index-container,.site-content{
+  max-width:1280px;
   margin:0 auto;
+  padding:0 16px;
 }
 
-/* 內層的區塊預設置中，但「礦時的礦物量」圖片例外不置中 */
-.wc-article-inner > *:not(img.wc-minerals){
-  margin-left:auto;
-  margin-right:auto;
-}
+/* 卡片區 RWD */
+.post-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+@media (max-width:1024px){ .post-grid{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:640px){ .post-grid{grid-template-columns:1fr} }
 
-/* 一般圖片：跟欄寬等寬（不影響 Hero 圖與 YouTube） */
-.wc-article-inner img{
-  display:block;
-  max-width:100%;
-  height:auto;
-  margin:14px auto;
-}
-
-/* 「礦時的礦物量」：保持 40% 並靠左 */
-.wc-article-inner img.wc-minerals{
-  max-width:40%;
-  margin-left:0 !important;
-  margin-right:auto !important;
-}
-
-/* 其他元素也跟欄寬（保險） */
-.wc-article-inner table,
-.wc-article-inner pre,
-.wc-article-inner figure:not(.wc-hero-figure){
-  max-width:100%;
-}
+/* 卡片基本對齊 */
+.post-card{display:flex;flex-direction:column}
+.post-thumb{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px}

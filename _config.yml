@@ -19,6 +19,9 @@ plugins:
 
 # 文章連結樣式（保留你現在的年/月/日/標題）
 permalink: /:year/:month/:day/:title/
+slugify_mode: raw
+encoding: utf-8
+
 
 # 讓 markdown 和 highlighter 正常
 markdown: kramdown
