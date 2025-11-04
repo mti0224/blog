@@ -4,99 +4,72 @@ title: 蚯蚓貓的資工人生
 ---
 
 {%- assign baseurl = site.baseurl | default: "" -%}
+{%- assign posts_all = site.posts | sort: "date" | reverse -%}
 
 <div class="home">
-  {%- assign posts_all = site.posts | sort: "date" | reverse -%}
 
   <section class="section">
     <h2 class="h2">最新精選</h2>
     <div class="card-grid">
       {%- for post in posts_all limit:3 -%}
-        {%- comment -%} 標題解析：先正規化全形冒號，再多關鍵字嘗試 {%- endcomment -%}
-        {%- assign title_txt = post.title -%}
-        {%- assign s_norm = post.content | replace: "：", ":" -%}
+        {%- capture body %}{{ post.content }}{%- endcapture %}
 
-        {%- if title_txt == nil or title_txt == "" -%}
-          {%- assign t = s_norm | split: "post title:" -%}
-          {%- if t.size > 1 -%}
-            {%- assign title_txt = t[1] | split: "date:" | first | replace: '"'," " | replace: "'"," " | strip -%}
+        {%- comment -%} 1) 解析真正的標題 {%- endcomment -%}
+        {%- assign title_txt = "" -%}
+        {%- if body contains 'post title:' -%}
+          {%- assign title_txt = body | split:'post title:' | last | split:'date:' | first | replace:'"','' | strip -%}
+        {%- elsif body contains 'posttitle:' -%}
+          {%- assign title_txt = body | split:'posttitle:' | last | split:'date:' | first | replace:'"','' | strip -%}
+        {%- elsif body contains 'title:' -%}
+          {%- assign title_txt = body | split:'title:' | last | split:'date:' | first | replace:'"','' | strip -%}
+        {%- endif -%}
+        {%- if title_txt == "" -%}
+          {%- assign title_txt = post.title | default: post.name -%}
+        {%- endif -%}
+
+        {%- comment -%} 2) 解析縮圖：先看 image:，再退回第一張 <img> {%- endcomment -%}
+        {%- assign img_src = "" -%}
+        {%- if body contains 'image:' -%}
+          {%- assign img_src = body | split:'image:' | last | split:'\n' | first | replace:'---','' | replace:'"','' | strip -%}
+        {%- endif -%}
+        {%- if img_src == "" and body contains 'src="' -%}
+          {%- assign img_src = body | split:'src="' | last | split:'"' | first | strip -%}
+        {%- endif -%}
+        {%- assign thumb = img_src -%}
+        {%- if thumb != "" -%}
+          {%- assign trimmed = thumb | strip -%}
+          {%- if trimmed contains '/assets/' -%}
+            {%- assign thumb = baseurl | append: trimmed -%}
+          {%- elsif trimmed contains 'assets/' -%}
+            {%- assign thumb = baseurl | append:'/' | append: trimmed -%}
           {%- endif -%}
-        {%- endif -%}
-        {%- if title_txt == nil or title_txt == "" -%}
-          {%- assign t = s_norm | split: "post_title:" -%}
-          {%- if t.size > 1 -%}
-            {%- assign title_txt = t[1] | split: "date:" | first | replace: '"'," " | replace: "'"," " | strip -%}
-          {%- endif -%}
-        {%- endif -%}
-        {%- if title_txt == nil or title_txt == "" -%}
-          {%- assign t = s_norm | split: "title:" -%}
-          {%- if t.size > 1 -%}
-            {%- assign title_txt = t[1] | split: "date:" | first | replace: '"'," " | replace: "'"," " | strip -%}
-          {%- endif -%}
-        {%- endif -%}
-        {%- if title_txt == nil or title_txt == "" -%}
-          {%- assign title_txt = post.name -%}
-        {%- endif -%}
-
-        {%- comment -%} 精選縮圖：先找 image: （全/半形皆可），再退回第一張 <img> {%- endcomment -%}
-        {%- assign thumb = "" -%}
-        {%- assign im = s_norm | split: "image:" -%}
-        {%- if im.size > 1 -%}
-          {%- assign line = im[1] | split: "\n" | first | strip -%}
-          {%- assign thumb = line | replace: '"',"" | replace: "'","" | replace: "---","" | strip -%}
-        {%- endif -%}
-
-        {%- if thumb == "" -%}
-          {%- assign spl = post.content | split: "<img " -%}
-          {%- if spl.size > 1 -%}
-            {%- assign after = spl[1] -%}
-            {%- assign dq = after | split: 'src="' -%}
-            {%- if dq.size > 1 -%}
-              {%- assign thumb = dq[1] | split: '"' | first | strip -%}
-            {%- else -%}
-              {%- assign sq = after | split: "src='" -%}
-              {%- if sq.size > 1 -%}
-                {%- assign thumb = sq[1] | split: "'" | first | strip -%}
-              {%- endif -%}
-            {%- endif -%}
-          {%- endif -%}
-        {%- endif -%}
-
-        {%- comment -%} 路徑正規化：WP → 本站、去除重複 baseurl，確保只加一次 {%- endcomment -%}
-        {%- assign thumb0 = thumb -%}
-        {%- if thumb0 contains "/wp-content/uploads/" -%}
-          {%- assign thumb0 = thumb0 | replace: "/wp-content/uploads", "/assets/uploads" -%}
-        {%- endif -%}
-
-        {%- if thumb0 contains "://" -%}
-          {%- assign thumb_final = thumb0 -%}
-        {%- else -%}
-          {%- assign thumb1 = thumb0 | replace: baseurl, "" -%}
-          {%- if thumb1 != "" and thumb1 | slice:0,1 != "/" -%}
-            {%- assign thumb1 = "/" | append: thumb1 -%}
-          {%- endif -%}
-          {%- assign thumb_final = baseurl | append: thumb1 -%}
-        {%- endif -%}
-
-        {%- assign has_img = false -%}
-        {%- if thumb_final contains ".png" or thumb_final contains ".jpg" or thumb_final contains ".jpeg" or thumb_final contains ".webp" or thumb_final contains ".gif" -%}
-          {%- assign has_img = true -%}
         {%- endif -%}
 
         <article class="card">
-          <a class="card-thumb" href="{{ post.url | relative_url }}">
-            {%- if has_img -%}
-              <img src="{{ thumb_final }}" alt="{{ title_txt | escape }}">
+          <a class="thumb" href="{{ post.url | relative_url }}">
+            {%- if thumb != "" -%}
+              <img src="{{ thumb }}" loading="lazy" alt="{{ title_txt }}">
             {%- else -%}
-              <div class="thumb-fallback">No Image</div>
+              <div class="thumb ph">No Image</div>
             {%- endif -%}
           </a>
           <div class="card-body">
-            <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
+            <time class="card-date">{{ post.date | date: "%Y-%m-%d" }}</time>
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
-            {%- assign parts = post.content | split: "---" -%}
-            {%- assign body_html = parts.size >= 3 ? parts[2] : post.content -%}
-            <p class="card-excerpt">{{ body_html | strip_html | strip_newlines | replace: '---',' ' | truncate: 110 }}</p>
+
+            {%- comment -%} 3) 摘要：把前置的三槓與 key 清乾淨 {%- endcomment -%}
+            {%- assign parts = body | split:'---' -%}
+            {%- if parts.size >= 2 -%}
+              {%- assign body_html = parts | last -%}
+            {%- else -%}
+              {%- assign body_html = body -%}
+            {%- endif -%}
+            <p class="card-excerpt">{{ body_html
+              | replace:'layout:','' | replace:'post title:','' | replace:'posttitle:','' | replace:'title:',''
+              | replace:'date:','' | replace:'type:','' | replace:'parent_id:','' | replace:'published:',''
+              | replace:'password:','' | replace:'status:','' | replace:'categories:','' | replace:'tags:',''
+              | replace:'meta:','' | replace:'image:',''
+              | strip_html | strip_newlines | truncate: 110 }}</p>
           </div>
         </article>
       {%- endfor -%}
@@ -106,90 +79,83 @@ title: 蚯蚓貓的資工人生
   <section class="section">
     <h2 class="h2">所有文章</h2>
     <div class="card-grid">
-      {%- for post in posts_all offset:3 limit:30 -%}
-        {%- assign title_txt = post.title -%}
-        {%- assign s_norm = post.content | replace: "：", ":" -%}
+      {%- for post in posts_all offset:3 -%}
+        {%- capture body %}{{ post.content }}{%- endcapture %}
 
-        {%- if title_txt == nil or title_txt == "" -%}
-          {%- assign t = s_norm | split: "post title:" -%}
-          {%- if t.size > 1 -%}
-            {%- assign title_txt = t[1] | split: "date:" | first | replace: '"'," " | replace: "'"," " | strip -%}
-          {%- endif -%}
+        {%- assign title_txt = "" -%}
+        {%- if body contains 'post title:' -%}
+          {%- assign title_txt = body | split:'post title:' | last | split:'date:' | first | replace:'"','' | strip -%}
+        {%- elsif body contains 'posttitle:' -%}
+          {%- assign title_txt = body | split:'posttitle:' | last | split:'date:' | first | replace:'"','' | strip -%}
+        {%- elsif body contains 'title:' -%}
+          {%- assign title_txt = body | split:'title:' | last | split:'date:' | first | replace:'"','' | strip -%}
         {%- endif -%}
-        {%- if title_txt == nil or title_txt == "" -%}
-          {%- assign t = s_norm | split: "post_title:" -%}
-          {%- if t.size > 1 -%}
-            {%- assign title_txt = t[1] | split: "date:" | first | replace: '"'," " | replace: "'"," " | strip -%}
-          {%- endif -%}
-        {%- endif -%}
-        {%- if title_txt == nil or title_txt == "" -%}
-          {%- assign t = s_norm | split: "title:" -%}
-          {%- if t.size > 1 -%}
-            {%- assign title_txt = t[1] | split: "date:" | first | replace: '"'," " | replace: "'"," " | strip -%}
-          {%- endif -%}
-        {%- endif -%}
-        {%- if title_txt == nil or title_txt == "" -%}
-          {%- assign title_txt = post.name -%}
+        {%- if title_txt == "" -%}
+          {%- assign title_txt = post.title | default: post.name -%}
         {%- endif -%}
 
-        {%- assign thumb = "" -%}
-        {%- assign im = s_norm | split: "image:" -%}
-        {%- if im.size > 1 -%}
-          {%- assign line = im[1] | split: "\n" | first | strip -%}
-          {%- assign thumb = line | replace: '"',"" | replace: "'","" | replace: "---","" | strip -%}
+        {%- assign img_src = "" -%}
+        {%- if body contains 'image:' -%}
+          {%- assign img_src = body | split:'image:' | last | split:'\n' | first | replace:'---','' | replace:'"','' | strip -%}
         {%- endif -%}
-        {%- if thumb == "" -%}
-          {%- assign spl = post.content | split: "<img " -%}
-          {%- if spl.size > 1 -%}
-            {%- assign after = spl[1] -%}
-            {%- assign dq = after | split: 'src="' -%}
-            {%- if dq.size > 1 -%}
-              {%- assign thumb = dq[1] | split: '"' | first | strip -%}
-            {%- else -%}
-              {%- assign sq = after | split: "src='" -%}
-              {%- if sq.size > 1 -%}
-                {%- assign thumb = sq[1] | split: "'" | first | strip -%}
-              {%- endif -%}
-            {%- endif -%}
+        {%- if img_src == "" and body contains 'src="' -%}
+          {%- assign img_src = body | split:'src="' | last | split:'"' | first | strip -%}
+        {%- endif -%}
+        {%- assign thumb = img_src -%}
+        {%- if thumb != "" -%}
+          {%- assign trimmed = thumb | strip -%}
+          {%- if trimmed contains '/assets/' -%}
+            {%- assign thumb = baseurl | append: trimmed -%}
+          {%- elsif trimmed contains 'assets/' -%}
+            {%- assign thumb = baseurl | append:'/' | append: trimmed -%}
           {%- endif -%}
-        {%- endif -%}
-
-        {%- assign thumb0 = thumb -%}
-        {%- if thumb0 contains "/wp-content/uploads/" -%}
-          {%- assign thumb0 = thumb0 | replace: "/wp-content/uploads", "/assets/uploads" -%}
-        {%- endif -%}
-        {%- if thumb0 contains "://" -%}
-          {%- assign thumb_final = thumb0 -%}
-        {%- else -%}
-          {%- assign thumb1 = thumb0 | replace: baseurl, "" -%}
-          {%- if thumb1 != "" and thumb1 | slice:0,1 != "/" -%}
-            {%- assign thumb1 = "/" | append: thumb1 -%}
-          {%- endif -%}
-          {%- assign thumb_final = baseurl | append: thumb1 -%}
-        {%- endif -%}
-
-        {%- assign has_img = false -%}
-        {%- if thumb_final contains ".png" or thumb_final contains ".jpg" or thumb_final contains ".jpeg" or thumb_final contains ".webp" or thumb_final contains ".gif" -%}
-          {%- assign has_img = true -%}
         {%- endif -%}
 
         <article class="card">
-          <a class="card-thumb" href="{{ post.url | relative_url }}">
-            {%- if has_img -%}
-              <img src="{{ thumb_final }}" alt="{{ title_txt | escape }}">
+          <a class="thumb" href="{{ post.url | relative_url }}">
+            {%- if thumb != "" -%}
+              <img src="{{ thumb }}" loading="lazy" alt="{{ title_txt }}">
             {%- else -%}
-              <div class="thumb-fallback">No Image</div>
+              <div class="thumb ph">No Image</div>
             {%- endif -%}
           </a>
           <div class="card-body">
-            <div class="card-meta">{{ post.date | date: "%Y-%m-%d" }}</div>
+            <time class="card-date">{{ post.date | date: "%Y-%m-%d" }}</time>
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
-            {%- assign parts = post.content | split: "---" -%}
-            {%- assign body_html = parts.size >= 3 ? parts[2] : post.content -%}
-            <p class="card-excerpt">{{ body_html | strip_html | strip_newlines | replace: '---',' ' | truncate: 110 }}</p>
+
+            {%- assign parts = body | split:'---' -%}
+            {%- if parts.size >= 2 -%}
+              {%- assign body_html = parts | last -%}
+            {%- else -%}
+              {%- assign body_html = body -%}
+            {%- endif -%}
+            <p class="card-excerpt">{{ body_html
+              | replace:'layout:','' | replace:'post title:','' | replace:'posttitle:','' | replace:'title:',''
+              | replace:'date:','' | replace:'type:','' | replace:'parent_id:','' | replace:'published:',''
+              | replace:'password:','' | replace:'status:','' | replace:'categories:','' | replace:'tags:',''
+              | replace:'meta:','' | replace:'image:',''
+              | strip_html | strip_newlines | truncate: 110 }}</p>
           </div>
         </article>
       {%- endfor -%}
     </div>
   </section>
+
 </div>
+
+<style>
+  .section{max-width:1200px;margin:32px auto;padding:0 16px}
+  .h2{font-weight:800;font-size:22px;margin:0 0 14px}
+  .card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+  @media (max-width:1024px){.card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:640px){.card-grid{grid-template-columns:1fr}}
+  .card{border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);background:#fff;overflow:hidden;border:1px solid rgba(0,0,0,.05)}
+  .thumb{display:block;aspect-ratio:16/9;background:#f3f5f7}
+  .thumb img{display:block;width:100%;height:100%;object-fit:cover}
+  .thumb.ph{display:flex;align-items:center;justify-content:center;color:#98a1a8}
+  .card-body{padding:12px 14px}
+  .card-date{display:block;color:#6b7280;font-size:12px;margin-bottom:6px}
+  .card-title{margin:0 0 6px;font-size:16px;line-height:1.35}
+  .card-title a{color:#111827;text-decoration:none}
+  .card-excerpt{margin:0;color:#374151;font-size:14px;line-height:1.6}
+</style>
