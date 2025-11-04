@@ -1,15 +1,18 @@
-/* === Warmycat 風格（更新） ===========================================
-   - Header 加寬 + 社群 icon 改用圖片
-   - 首頁 1~3 欄自適應；文章頁維持 700px
+/* === Warmycat 風格（整合後） ===========================================
+   - Header 加寬 + 社群 icon 圖片
+   - 首頁 1~3 欄自適應；文章頁維持欄寬並置中
    - YouTube 影片等寬（16:9）
    - 指定元素縮小 40%：.shrink-40（表格/圖片皆可）
-   - 隱藏文章內 Header 下方的「回首頁」字樣（由 JS 輔助）
-===================================================================== */
+   - 隱藏文章內 Header 下方的「回首頁」字樣
+   - 文章欄寬以「整體資料分析」下第一張圖為參考（由 JS 設定 --article-col）
+======================================================================= */
 
 :root{
-  --postw: 700px;     /* 文章頁主欄寬度 */
-  --homew: 1080px;    /* 首頁內容最大寬度 */
-  --headw: 1120px;    /* Header 寬度 */
+  --postw: 700px;      /* 文章頁主欄寬度（傳統頁面用）            */
+  --homew: 1080px;     /* 首頁內容最大寬度                         */
+  --headw: 1120px;     /* Header 寬度                              */
+  --article-media-max: clamp(520px, 72vw, 820px);  /* 傳統圖片上限 */
+  --article-col: clamp(520px, 72vw, 820px);        /* JS 會覆寫     */
 
   --wc-bg: #ffffff;
   --wc-text: #1f2937;
@@ -23,7 +26,7 @@
   --wc-font-heading: var(--wc-font-body);
 }
 
-/* 基礎排版 */
+/* ===== 基礎排版 ===== */
 html{scroll-behavior:smooth}
 *{box-sizing:border-box}
 body{
@@ -38,6 +41,21 @@ a:active{color:var(--wc-accent-ink)}
 img{max-width:100%;height:auto;border-radius:12px}
 figure{margin:1.2rem 0}
 figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
+
+/* 限縮文章內一般圖片寬度；不影響 Hero 圖與 YouTube 影片 */
+.wc-main :where(p, div, figure, section):not(.wc-video):not(.wc-hero-figure):not(.card) > img {
+  display:block;
+  width:100%;
+  max-width:var(--article-media-max);
+  height:auto;
+  margin:14px auto; /* 置中 */
+}
+
+/* 若文章有 <figure><img><figcaption>，置中排版 */
+.wc-main figure:not(.wc-hero-figure){ text-align:center; }
+.wc-main figure:not(.wc-hero-figure) > figcaption{
+  color:#6b7280;font-size:.9rem;margin-top:6px;
+}
 
 /* ===== Header（加寬 + icon 圖片） ===== */
 .wc-header{
@@ -67,12 +85,12 @@ figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
 }
 .wc-nav a:hover{color:var(--wc-accent);text-decoration:none;background:rgba(239,102,102,.08)}
 .wc-ico-img{width:18px;height:18px;display:block;}
-
-/* 避免桌面版站名被拆行；手機照常換行 */
 @media (min-width:768px){ .wc-site-title{white-space:nowrap} }
 
 /* ===== 主要內容容器 ===== */
 .wc-main{padding:28px 0 60px}
+
+/* 傳統文章容器（部分舊頁面仍用到） */
 .wc-prose{ width:min(var(--postw), calc(100vw - 32px)); margin:0 auto; }
 .wc-prose p{margin:1.1rem 0}
 .wc-prose h1,.wc-prose h2,.wc-prose h3,.wc-prose h4{
@@ -89,12 +107,11 @@ figcaption{color:var(--wc-muted);font-size:.9rem;margin-top:.25rem}
   background:#fff7f7; color:#7c2d2d; border-radius:8px;
 }
 
-/* ===== 首頁放寬到 --homew + 1~3 欄 ===== */
+/* ===== 首頁卡片 ===== */
 body.is-home .wc-prose{ width:min(var(--homew), calc(100vw - 32px)); }
 .card-grid{ display:grid; gap:16px; grid-template-columns:repeat(3,minmax(0,1fr)); }
 @media (max-width:1024px){ .card-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:640px){ .card-grid{ grid-template-columns:1fr; } }
-
 .home .section{margin:8px 0 28px}
 .h2{font-size:1.1rem;letter-spacing:.12em;color:var(--wc-muted);text-transform:uppercase;margin:0 0 12px}
 .card{
@@ -111,8 +128,6 @@ body.is-home .wc-prose{ width:min(var(--homew), calc(100vw - 32px)); }
 .card-title a:hover{text-decoration:underline;text-underline-offset:3px}
 .card-meta{color:var(--wc-muted);font-size:.95rem;margin-bottom:.35rem}
 .card-excerpt{color:#374151;margin:.4rem 0 0}
-
-/* 分頁器 */
 .pager{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-top:18px}
 .pager-left,.pager-right{display:flex}
 .pager-left{justify-content:flex-start}
@@ -121,19 +136,13 @@ body.is-home .wc-prose{ width:min(var(--homew), calc(100vw - 32px)); }
 .btn{display:inline-block;padding:8px 14px;border:1px solid var(--wc-border);border-radius:10px;color:var(--wc-text);text-decoration:none}
 .btn:hover{border-color:var(--wc-accent);color:var(--wc-accent)}
 
-/* ===== 文章頁寬度與置中 ===== */
+/* ===== 傳統 .post-content 兼容（保留但不與新欄寬衝突） ===== */
 .post-header,.post-content{
   box-sizing:border-box;
   max-width:var(--postw);
   width:min(var(--postw), calc(100vw - 32px));
   margin-left:auto; margin-right:auto;
   text-align:left;
-}
-.post-content > *{
-  max-width:var(--postw) !important;
-  width:100% !important;
-  margin-left:auto !important;
-  margin-right:auto !important;
 }
 .post-content figure,.post-content p > img{display:block; margin:14px auto}
 .post-content figure img,.post-content p > img{display:block; width:100% !important; height:auto !important}
@@ -160,7 +169,7 @@ body.is-home .wc-prose{ width:min(var(--homew), calc(100vw - 32px)); }
 }
 .shrink-40 img{width:100% !important; height:auto !important}
 
-/* ===== 隱藏文章內 Header 下方的「回首頁」小連結（CSS 端做保險） ===== */
+/* ===== 隱藏文章內 Header 下方的「回首頁」連結（保險） ===== */
 .wc-prose > a[href="/"],
 .wc-prose > a[href="/blog/"],
 .wc-prose > a[rel="home"],
@@ -168,11 +177,9 @@ body.is-home .wc-prose{ width:min(var(--homew), calc(100vw - 32px)); }
 .post-header > a[href="/"],
 .post-header > a[href="/blog/"],
 .post-header > a[rel="home"],
-.post-header > a[class*="home"]{
-  display:none !important;
-}
+.post-header > a[class*="home"]{ display:none !important; }
 
-/* Code / Table / Footer */
+/* ===== Code / Table / Footer ===== */
 table{border-collapse:collapse;width:100%;margin:1rem auto;max-width:var(--postw)}
 th,td{border:1px solid var(--wc-border);padding:.55rem .7rem}
 th{background:#fafafa;text-align:left}
@@ -181,6 +188,39 @@ pre{background:#0b10211a;padding:14px 16px;border-radius:12px;overflow:auto;bord
 footer{margin-top:48px;border-top:1px solid var(--wc-border);padding:22px 0;color:var(--wc-muted);font-size:.95rem}
 
 /* 小螢幕微調 */
-@media (max-width:640px){
-  .wc-site-title{font-size:1.28rem}
+@media (max-width:640px){ .wc-site-title{font-size:1.28rem} }
+
+/* ===== 新文章欄寬（以「整體資料分析」下首張圖為準） ===== */
+/* 文章內層容器：統一寬度並置中 */
+.wc-article-inner{
+  max-width:var(--article-col);
+  margin:0 auto;
+}
+
+/* 內層的區塊預設置中，但「礦時的礦物量」圖片例外不置中 */
+.wc-article-inner > *:not(img.wc-minerals){
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* 一般圖片：跟欄寬等寬（不影響 Hero 圖與 YouTube） */
+.wc-article-inner img{
+  display:block;
+  max-width:100%;
+  height:auto;
+  margin:14px auto;
+}
+
+/* 「礦時的礦物量」：保持 40% 並靠左 */
+.wc-article-inner img.wc-minerals{
+  max-width:40%;
+  margin-left:0 !important;
+  margin-right:auto !important;
+}
+
+/* 其他元素也跟欄寬（保險） */
+.wc-article-inner table,
+.wc-article-inner pre,
+.wc-article-inner figure:not(.wc-hero-figure){
+  max-width:100%;
 }
