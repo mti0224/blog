@@ -1,172 +1,186 @@
-<!DOCTYPE html>
+---
+layout: nil
+---
+
+<!doctype html>
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% if page.title %}{{ page.title }} | {% endif %}{{ site.title }}</title>
+  <title>{{ page.title | default: site.title }}</title>
 
   <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
   <link rel="stylesheet" href="{{ "/assets/custom.css" | relative_url }}">
 
   <style>
-    .wc-main{max-width:980px;margin:0 auto;padding:0 16px}
-    body.wc-home .wc-main{max-width:1200px}
-    .wc-article-hero{margin:0 0 20px}
+    /* Header */
+    .wc-header{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid rgba(0,0,0,.06)}
+    .wc-header-inner{max-width:1200px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+    .wc-brand{font-weight:800;font-size:20px;color:#111827;text-decoration:none;white-space:nowrap}
+    .wc-spacer{flex:1}
+    .wc-social a{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-left:10px;opacity:.85}
+    .wc-social img{display:block;width:100%;height:100%;object-fit:contain}
+
+    /* Page container */
+    .wc-main{max-width:980px;margin:24px auto;padding:0 16px}
+
+    /* Article hero */
     .wc-article-title{font-size:clamp(28px,4vw,42px);line-height:1.2;margin:0 0 12px;font-weight:800}
-    .wc-hero-figure{margin:0}
+    .wc-hero-figure{margin:0 0 16px}
     .wc-hero-figure img{display:block;width:100%;height:auto;border-radius:12px}
-    .wc-ico-img{width:20px;height:20px;display:inline-block;vertical-align:middle}
-    .wc-header{padding:10px 16px}
-    .wc-header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
-    .wc-site-title{margin:0;font-size:22px}
-    .wc-site-title a{text-decoration:none}
-    .wc-site-subtitle{margin:4px 0 0 0;font-size:12px;opacity:.7}
-    .wc-brand{display:flex;flex-direction:column}
-    .wc-nav a{margin-left:12px}
+
+    /* Responsive YouTube */
     .wc-video{position:relative;width:100%;padding-top:56.25%;margin:14px 0;border-radius:12px;overflow:hidden;background:#000}
     .wc-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
   </style>
 </head>
-<body data-collection="{{ page.collection | default: '' }}">
+<body>
+
+  <!-- Header 回來了 -->
   <header class="wc-header">
     <div class="wc-header-inner">
-      <div class="wc-brand">
-        <h1 class="wc-site-title"><a href="{{ "/" | relative_url }}">蚯蚓貓的資工人生</a></h1>
-        <p class="wc-site-subtitle">Line Rangers 角色介紹與遊戲筆記</p>
-      </div>
-      <nav class="wc-nav" aria-label="Social">
-        <a href="https://www.youtube.com/@WarmyCat" target="_blank" rel="noopener">
-          <img class="wc-ico-img" src="{{ '/assets/icon/youtube.png' | relative_url }}" alt="YouTube">
+      <a class="wc-brand" href="{{ "/" | relative_url }}">蚯蚓貓的資工人生</a>
+      <div class="wc-spacer"></div>
+      <nav class="wc-social" aria-label="social links">
+        <a href="https://www.youtube.com/@WarmyCat" target="_blank" rel="noopener" aria-label="YouTube">
+          <img src="{{ '/assets/icon/youtube.png' | relative_url }}" alt="">
         </a>
-        <a href="https://www.instagram.com/ytmit/" target="_blank" rel="noopener">
-          <img class="wc-ico-img" src="{{ '/assets/icon/instagram.png' | relative_url }}" alt="Instagram">
+        <a href="https://www.instagram.com/ytmit/" target="_blank" rel="noopener" aria-label="Instagram">
+          <img src="{{ '/assets/icon/instagram.png' | relative_url }}" alt="">
         </a>
-        <a href="https://discord.gg/XJ8KPJcdbt" target="_blank" rel="noopener">
-          <img class="wc-ico-img" src="{{ '/assets/icon/discord.png' | relative_url }}" alt="Discord">
+        <a href="https://discord.gg/XJ8KPJcdbt" target="_blank" rel="noopener" aria-label="Discord">
+          <img src="{{ '/assets/icon/discord.png' | relative_url }}" alt="">
         </a>
       </nav>
     </div>
   </header>
 
-  <main class="wc-main">
-    <article id="post-content" class="wc-prose">
-      {{ content }}
-    </article>
+  <main class="wc-main" id="wc-main">
+    {{ content }}
   </main>
 
   <script>
   (function(){
-    // baseurl 推算
-    var BASE=(function(){
-      var b="{{ site.baseurl | default: '' }}";
-      try{
-        if(!b){
-          var link=document.querySelector('link[href*="/assets/main.css"]');
-          if(link){
-            var m=link.getAttribute('href').match(/^(.*)\/assets\/main\.css/);
-            if(m) return m[1]||"";
-          }
-          var p=location.pathname, i=p.indexOf('/blog/');
-          if(i>=0) return p.slice(0,i+5);
-        }
-      }catch(e){}
-      return b||"";
-    })();
-    function addBase(u){ if(!u) return ""; if(/^https?:\/\//i.test(u)) return u; if(u.charAt(0)!="/") u="/"+u; return BASE+u; }
-    function isHome(){ try{var p=location.pathname.replace(/index\.html$/,""); return (p==="/"||/\/blog\/?$/.test(p));}catch(e){return false;} }
+    var main = document.getElementById('wc-main');
+    if(!main) return;
 
-    if(isHome()) document.body.classList.add('wc-home');
+    /* 原始 HTML（含前置亂碼），拿來抓標題與 _thumbnail_id */
+    var originalHTML = main.innerHTML;
+    var rawText = (function(tmp){
+      var div = document.createElement('div'); div.innerHTML = tmp;
+      return (div.textContent || "");
+    })(originalHTML);
 
-    var isPost=(document.body.getAttribute('data-collection')==='posts');
-    var wrap=document.getElementById('post-content'); if(!wrap) return;
+    function pick(re, src){var m=String(src||"").match(re);return (m&&m[1])?m[1].trim():"";}
+    var title = pick(/post title:\s*["']?([^"\n\r]+)["']?/i, rawText) ||
+                pick(/posttitle:\s*["']?([^"\n\r]+)["']?/i, rawText) ||
+                pick(/title:\s*["']?([^"\n\r]+)["']?/i, rawText) || "";
+    var thumbId   = pick(/_thumbnail_id:\s*["']?(\d+)["']?/i, rawText);
+    var imagePath = pick(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i, rawText);
 
-    // 先從原始內文解析標題/縮圖資訊
-    var rawFull=wrap.innerHTML;
-    function pick(re, src){var m=re.exec(src);return (m&&m[1])?(m[1]+'').trim():"";}
-    var metaTitle= pick(/post title:\s*["']?([^"\n\r']+)["']?/i,rawFull)
-                || pick(/post_title:\s*["']?([^"\n\r']+)["']?/i,rawFull)
-                || pick(/posttitle:\s*["']?([^"\n\r']+)["']?/i,rawFull)
-                || pick(/title:\s*["']?([^"\n\r']+)["']?/i,rawFull) || '';
-    var pageTitle="{{ page.title | escape }}";
-    var finalTitle=metaTitle||pageTitle;
-    var thumbId = pick(/_thumbnail_id:\s*["']?(\d+)["']?/i,rawFull);
-    var featuredLine = pick(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i,rawFull);
-
-    // 清理殘留 front-matter/雜訊
-    wrap.innerHTML = wrap.innerHTML
-      .replace(/(^|\n|\r)\s*---\s*layout:[\s\S]*?---/i,'$1')
-      .replace(/(^|\s)---(\s|$)/g,' ');
-    (function(){
-      var noise=/^(?:layout:|type:|status:|password:|categories:|tags:|meta:|_thumbnail_id:|_oembed_|firehose_sent:|timeline_notification:|_publicize_job_id:|_publicize_shares|_elasticsearch_data_sharing_indexed_on|permalink:|display_name:|image:\s|post title:|post_title:|posttitle:)/i;
-      Array.prototype.slice.call(wrap.childNodes).forEach(function(n){
-        if(n.nodeType===3){var t=(n.nodeValue||'').trim(); if(noise.test(t)) n.parentNode.removeChild(n);}
-        else if(n.nodeType===1){var tx=(n.innerText||'').trim(); if(noise.test(tx)) n.style.display='none';}
-      });
+    /* 1) 先把 --- layout ... --- 這段前置雜訊從畫面上移除（只清掉第一段） */
+    (function stripFrontMatter(){
+      var html = originalHTML.replace(/^\s*---[\s\S]{0,3000}?---\s*/,'');
+      // 移除出現在內容裡的 _oembed_* 和 publicize 等技術行
+      html = html.replace(/_oembed_[^\n<]+/gi, '')
+                 .replace(/(firehose_sent|timeline_notification|_publicize_job_id|_elasticsearch_data_sharing_indexed_on|display_name:|author:)[^\n<]*/gi,'');
+      main.innerHTML = html;
     })();
 
-    // 文章頁 Hero
-    function toLocalUpload(u){
-      if(!u) return '';
-      var m=u.match(/\/wp-content\/uploads(\/.+)$/);
-      if(m) return addBase('/assets/uploads'+m[1]);
-      return addBase(u);
-    }
-    function fetchMap(cb){
-      fetch(addBase('/assets/featured-map.json'))
-        .then(function(r){return r.json()}).then(cb).catch(function(){cb(null)});
-    }
-
-    if(isPost && (finalTitle || thumbId || featuredLine)){
-      var hero=document.createElement('section'); hero.className='wc-article-hero';
-      if(finalTitle){ var h=document.createElement('h1'); h.className='wc-article-title'; h.textContent=finalTitle; hero.appendChild(h); }
-      var fig=document.createElement('figure'); fig.className='wc-hero-figure'; hero.appendChild(fig);
-      wrap.insertBefore(hero, wrap.firstChild);
-
-      function put(src){ if(!src || fig.querySelector('img')) return; var img=new Image(); img.src=src; img.alt=finalTitle||''; fig.appendChild(img); }
-      if(thumbId){
-        fetchMap(function(map){ if(map && map[thumbId]) put(addBase(map[thumbId])); else if(featuredLine) put(toLocalUpload(featuredLine)); });
-      }else if(featuredLine){ put(toLocalUpload(featuredLine)); }
-    }
-
-    // YouTube 純文字 / 連結 → 16:9 iframe
-    (function toYouTube(){
-      function getId(u){
-        try{
-          var url=new URL(u,location.origin);
-          if(url.hostname.indexOf('youtu.be')>=0) return url.pathname.replace(/^\//,'');
-          if(url.hostname.indexOf('youtube.com')>=0) return url.searchParams.get('v');
-        }catch(e){}
-        var m=(u||'').match(/youtu\.be\/([A-Za-z0-9_-]{6,})/); if(m) return m[1];
-        m=(u||'').match(/[?&]v=([A-Za-z0-9_-]{6,})/); if(m) return m[1];
-        return null;
+    /* 2) 在文章最上面插入「標題 + 精選大圖」：_thumbnail_id 優先，退回 image: */
+    function addHero(src){
+      if(!src) return;
+      var fig=document.createElement('figure'); fig.className='wc-hero-figure';
+      var img=new Image(); img.src=src; img.alt=title||''; fig.appendChild(img);
+      var anchor = main.firstElementChild || null;
+      if(title){
+        var h=document.createElement('h1'); h.className='wc-article-title'; h.textContent=title;
+        main.insertBefore(h, anchor);
+        main.insertBefore(fig, h.nextSibling);
+      }else{
+        main.insertBefore(fig, anchor);
       }
-      // 連結
-      Array.prototype.forEach.call(wrap.querySelectorAll('a[href*="youtube.com/watch"],a[href*="youtu.be/"]'), function(a){
-        var id=getId(a.getAttribute('href')); if(!id) return;
-        var box=document.createElement('div'); box.className='wc-video';
-        var ifr=document.createElement('iframe');
-        ifr.src='https://www.youtube.com/embed/'+id;
-        ifr.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-        ifr.allowFullscreen=true;
-        box.appendChild(ifr);
-        a.parentNode.replaceChild(box,a);
+    }
+    var base = "{{ site.baseurl | default: '' }}";
+    if(thumbId){
+      fetch("{{ '/assets/featured-map.json' | relative_url }}")
+        .then(function(r){return r.json()})
+        .then(function(map){
+          if(map && map[thumbId]){
+            var val = map[thumbId];
+            addHero(/^https?:\/\//i.test(val) ? val : (base + val));
+          }else if(imagePath){
+            addHero(imagePath.indexOf('/assets/')===0 ? base + imagePath : imagePath);
+          }
+        })
+        .catch(function(){
+          if(imagePath) addHero(imagePath.indexOf('/assets/')===0 ? base + imagePath : imagePath);
+        });
+    }else if(imagePath){
+      addHero(imagePath.indexOf('/assets/')===0 ? base + imagePath : imagePath);
+    }
+
+    /* 3) 把「相關影片」之前出現的所有 iframe 移除（避免 layout 殘留造成重複影片） */
+    (function dropIframesBeforeRelated(){
+      var marker = Array.from(main.querySelectorAll('*'))
+                        .find(function(el){ return /相關影片/.test((el.textContent||'').trim()); });
+      var iframes = Array.from(main.querySelectorAll('iframe'));
+      iframes.forEach(function(f){
+        if(!marker) return; // 若找不到標記就不動
+        var rel = f.compareDocumentPosition(marker);
+        // f 在 marker 前面 → 刪掉
+        if(rel & Node.DOCUMENT_POSITION_FOLLOWING){ return; } // f 在 marker 後方，保留
+        f.remove();
       });
-      // 純文字 URL（獨立一段）
-      Array.prototype.forEach.call(wrap.querySelectorAll('p'), function(p){
-        if(p.querySelector('a,iframe')) return;
-        var txt=(p.textContent||'').trim();
-        var m=txt.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?[^ \n\r]+|youtu\.be\/[A-Za-z0-9_-]+)/);
-        if(!m) return;
-        var id=getId(m[0]); if(!id) return;
-        var box=document.createElement('div'); box.className='wc-video';
-        var ifr=document.createElement('iframe');
-        ifr.src='https://www.youtube.com/embed/'+id;
-        ifr.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-        ifr.allowFullscreen=true;
-        box.appendChild(ifr);
-        p.parentNode.replaceChild(box,p);
+      // 針對同一個 src 的連續 iframe，保留第一個
+      var seen = {};
+      Array.from(main.querySelectorAll('iframe')).forEach(function(f){
+        var s = f.src || '';
+        if(seen[s]) f.remove();
+        else seen[s] = true;
       });
     })();
+
+    /* 4) 文字版 YouTube 連結 → 16:9 iframe （不影響已存在的 iframe） */
+    function toIframe(url){
+      try{
+        var u=new URL(url, location.origin), id='';
+        if(u.hostname.indexOf('youtu.be')>=0) id=u.pathname.replace(/^\//,'');
+        else id=u.searchParams.get('v')||'';
+        if(!id) return null;
+        var box=document.createElement('div'); box.className='wc-video';
+        var ifr=document.createElement('iframe');
+        ifr.src='https://www.youtube.com/embed/'+id;
+        ifr.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        ifr.allowFullscreen=true;
+        box.appendChild(ifr);
+        return box;
+      }catch(e){return null;}
+    }
+
+    // 情境 A：<a href="..."> 形式
+    main.querySelectorAll('a[href*="youtube.com/watch"],a[href*="youtu.be/"]').forEach(function(a){
+      if(a.closest('.wc-video,iframe')) return;
+      var txt = (a.textContent||'').trim();
+      // 若這段 <a> 在「相關影片」附近，或純連結段落，直接替換
+      var para = a.closest('p');
+      var box = toIframe(a.href);
+      if(box && para && para.childNodes.length===1){
+        para.replaceWith(box);
+      }else if(box){
+        a.replaceWith(box);
+      }
+    });
+
+    // 情境 B：純文字 URL（最常見：相關影片下一行）
+    Array.from(main.querySelectorAll('p,li')).forEach(function(el){
+      if(el.querySelector('a,iframe')) return;
+      var t=(el.textContent||'').trim();
+      var m=t.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?[^ \n\r<]+|youtu\.be\/[A-Za-z0-9_-]+)/);
+      if(!m) return;
+      var box = toIframe(m[0]);
+      if(box) el.replaceWith(box);
+    });
   })();
   </script>
 </body>
