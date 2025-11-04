@@ -14,7 +14,7 @@ title: 蚯蚓貓的資工人生
       {%- for post in posts_all limit:3 -%}
         {%- capture body %}{{ post.content }}{%- endcapture %}
 
-        {%- comment -%} 標題：post title:/posttitle:/title: 依序嘗試 {%- endcomment -%}
+        {%- comment -%} 取標題（依序嘗試 post title:/posttitle:/title:） {%- endcomment -%}
         {%- assign title_txt = "" -%}
         {%- if body contains 'post title:' -%}
           {%- assign title_txt = body | split:'post title:' | last | split:'date:' | first | replace:'"','' | strip -%}
@@ -27,13 +27,14 @@ title: 蚯蚓貓的資工人生
           {%- assign title_txt = post.title | default: post.name -%}
         {%- endif -%}
 
-        {%- comment -%} 取 _thumbnail_id 讓前端用 featured-map.json 覆寫縮圖 {%- endcomment -%}
+        {%- comment -%} 取 _thumbnail_id，之後用 JS 以 featured-map.json 覆寫縮圖 {%- endcomment -%}
         {%- assign thumbid = "" -%}
         {%- if body contains '_thumbnail_id:' -%}
-          {%- assign thumbid = body | split:'_thumbnail_id:' | last | split:'\n' | first | replace:'"','' | replace:"'","" | strip -%}
+          {%- assign thumbid_line = body | split:'_thumbnail_id:' | last -%}
+          {%- assign thumbid = thumbid_line | split:' ' | first | replace:'"','' | replace:"'","" | strip -%}
         {%- endif -%}
 
-        {%- comment -%} 縮圖初始值：先 image:，再退回第一張 <img>（嚴格取第一張，避免吃到後面 HTML） {%- endcomment -%}
+        {%- comment -%} 先抓 image:，抓不到再退回第一張 <img> {%- endcomment -%}
         {%- assign img_src = "" -%}
         {%- if body contains 'image:' -%}
           {%- assign img_src = body | split:'image:' | last | split:'\n' | first | replace:'---','' | replace:'"','' | strip -%}
@@ -61,11 +62,11 @@ title: 蚯蚓貓的資工人生
 
         <article class="card" data-thumbid="{{ thumbid | escape }}">
           <a class="thumb" href="{{ post.url | relative_url }}">
-            {% if thumb != "" %}
+            {%- if thumb != "" -%}
               <img src="{{ thumb | relative_url }}" loading="lazy" alt="{{ title_txt | escape }}">
-            {% else %}
-              <img src="{{ img_src | relative_url }}" loading="lazy" alt="{{ title_txt | escape }}">
-            {% endif %}
+            {%- else -%}
+              <div class="thumb ph">No Image</div>
+            {%- endif -%}
           </a>
           <div class="card-body">
             <time class="card-date">{{ post.date | date: "%Y-%m-%d" }}</time>
@@ -109,7 +110,8 @@ title: 蚯蚓貓的資工人生
 
         {%- assign thumbid = "" -%}
         {%- if body contains '_thumbnail_id:' -%}
-          {%- assign thumbid = body | split:'_thumbnail_id:' | last | split:'\n' | first | replace:'"','' | replace:"'","" | strip -%}
+          {%- assign thumbid_line = body | split:'_thumbnail_id:' | last -%}
+          {%- assign thumbid = thumbid_line | split:' ' | first | replace:'"','' | replace:"'","" | strip -%}
         {%- endif -%}
 
         {%- assign img_src = "" -%}
@@ -140,7 +142,7 @@ title: 蚯蚓貓的資工人生
         <article class="card" data-thumbid="{{ thumbid | escape }}">
           <a class="thumb" href="{{ post.url | relative_url }}">
             {%- if thumb != "" -%}
-              <img src="{{ thumb }}" loading="lazy" alt="{{ title_txt | escape }}">
+              <img src="{{ thumb | relative_url }}" loading="lazy" alt="{{ title_txt | escape }}">
             {%- else -%}
               <div class="thumb ph">No Image</div>
             {%- endif -%}
@@ -188,12 +190,8 @@ title: 蚯蚓貓的資工人生
 
 <script>
 (function () {
-  // 讓它自動帶上 /blog
   var base = "{{ site.baseurl | default: '' }}";
-  // 對照表放在 assets 下（不是 _data）
   var mapUrl = base + "/assets/featured-map.json";
-
-  // 找出所有有 data-thumbid 的卡片 → 用對照表覆寫 img.src
   fetch(mapUrl).then(function (r) {
     if (!r.ok) throw new Error("map not found");
     return r.json();
@@ -205,11 +203,8 @@ title: 蚯蚓貓的資工人生
       var img = card.querySelector("img");
       if (!img) return;
       var val = map[id];
-      // 對照表的路徑請不要含 /blog；這裡會自動補 baseurl
-      img.src = /^https?:\/\//i.test(val) ? val : (base + val);
+      img.src = /^https?:\/\//i.test(val) ? val : (base + val); // 自動補 baseurl
     });
-  }).catch(function () {
-    // 靜默失敗即可；頁面仍會顯示退回的備用圖
-  });
+  }).catch(function () {});
 })();
 </script>
