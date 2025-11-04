@@ -14,7 +14,7 @@ title: 蚯蚓貓的資工人生
       {%- for post in posts_all limit:3 -%}
         {%- capture body %}{{ post.content }}{%- endcapture %}
 
-        {%- comment -%} 1) 解析真正的標題 {%- endcomment -%}
+        {%- comment -%} 標題：post title:/posttitle:/title: 依序嘗試 {%- endcomment -%}
         {%- assign title_txt = "" -%}
         {%- if body contains 'post title:' -%}
           {%- assign title_txt = body | split:'post title:' | last | split:'date:' | first | replace:'"','' | strip -%}
@@ -27,14 +27,28 @@ title: 蚯蚓貓的資工人生
           {%- assign title_txt = post.title | default: post.name -%}
         {%- endif -%}
 
-        {%- comment -%} 2) 解析縮圖：先看 image:，再退回第一張 <img> {%- endcomment -%}
+        {%- comment -%} 取 _thumbnail_id 讓前端用 featured-map.json 覆寫縮圖 {%- endcomment -%}
+        {%- assign thumbid = "" -%}
+        {%- if body contains '_thumbnail_id:' -%}
+          {%- assign thumbid = body | split:'_thumbnail_id:' | last | split:'\n' | first | replace:'"','' | replace:"'","" | strip -%}
+        {%- endif -%}
+
+        {%- comment -%} 縮圖初始值：先 image:，再退回第一張 <img>（嚴格取第一張，避免吃到後面 HTML） {%- endcomment -%}
         {%- assign img_src = "" -%}
         {%- if body contains 'image:' -%}
           {%- assign img_src = body | split:'image:' | last | split:'\n' | first | replace:'---','' | replace:'"','' | strip -%}
         {%- endif -%}
-        {%- if img_src == "" and body contains 'src="' -%}
-          {%- assign img_src = body | split:'src="' | last | split:'"' | first | strip -%}
+        {%- if img_src == "" and body contains '<img ' -%}
+          {%- assign after_img = body | split:'<img ' | last -%}
+          {%- if after_img contains 'src="' -%}
+            {%- assign after_src = after_img | split:'src="' | last -%}
+            {%- assign img_src = after_src | split:'"' | first | strip -%}
+          {%- elsif after_img contains "src='" -%}
+            {%- assign after_src = after_img | split:"src='" | last -%}
+            {%- assign img_src = after_src | split:"'" | first | strip -%}
+          {%- endif -%}
         {%- endif -%}
+
         {%- assign thumb = img_src -%}
         {%- if thumb != "" -%}
           {%- assign trimmed = thumb | strip -%}
@@ -45,10 +59,10 @@ title: 蚯蚓貓的資工人生
           {%- endif -%}
         {%- endif -%}
 
-        <article class="card">
+        <article class="card" data-thumbid="{{ thumbid | escape }}">
           <a class="thumb" href="{{ post.url | relative_url }}">
             {%- if thumb != "" -%}
-              <img src="{{ thumb }}" loading="lazy" alt="{{ title_txt }}">
+              <img src="{{ thumb }}" loading="lazy" alt="{{ title_txt | escape }}">
             {%- else -%}
               <div class="thumb ph">No Image</div>
             {%- endif -%}
@@ -57,13 +71,8 @@ title: 蚯蚓貓的資工人生
             <time class="card-date">{{ post.date | date: "%Y-%m-%d" }}</time>
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
 
-            {%- comment -%} 3) 摘要：把前置的三槓與 key 清乾淨 {%- endcomment -%}
             {%- assign parts = body | split:'---' -%}
-            {%- if parts.size >= 2 -%}
-              {%- assign body_html = parts | last -%}
-            {%- else -%}
-              {%- assign body_html = body -%}
-            {%- endif -%}
+            {%- assign body_html = parts.size >= 2 ? parts | last : body -%}
             <p class="card-excerpt">{{ body_html
               | replace:'layout:','' | replace:'post title:','' | replace:'posttitle:','' | replace:'title:',''
               | replace:'date:','' | replace:'type:','' | replace:'parent_id:','' | replace:'published:',''
@@ -94,13 +103,26 @@ title: 蚯蚓貓的資工人生
           {%- assign title_txt = post.title | default: post.name -%}
         {%- endif -%}
 
+        {%- assign thumbid = "" -%}
+        {%- if body contains '_thumbnail_id:' -%}
+          {%- assign thumbid = body | split:'_thumbnail_id:' | last | split:'\n' | first | replace:'"','' | replace:"'","" | strip -%}
+        {%- endif -%}
+
         {%- assign img_src = "" -%}
         {%- if body contains 'image:' -%}
           {%- assign img_src = body | split:'image:' | last | split:'\n' | first | replace:'---','' | replace:'"','' | strip -%}
         {%- endif -%}
-        {%- if img_src == "" and body contains 'src="' -%}
-          {%- assign img_src = body | split:'src="' | last | split:'"' | first | strip -%}
+        {%- if img_src == "" and body contains '<img ' -%}
+          {%- assign after_img = body | split:'<img ' | last -%}
+          {%- if after_img contains 'src="' -%}
+            {%- assign after_src = after_img | split:'src="' | last -%}
+            {%- assign img_src = after_src | split:'"' | first | strip -%}
+          {%- elsif after_img contains "src='" -%}
+            {%- assign after_src = after_img | split:"src='" | last -%}
+            {%- assign img_src = after_src | split:"'" | first | strip -%}
+          {%- endif -%}
         {%- endif -%}
+
         {%- assign thumb = img_src -%}
         {%- if thumb != "" -%}
           {%- assign trimmed = thumb | strip -%}
@@ -111,10 +133,10 @@ title: 蚯蚓貓的資工人生
           {%- endif -%}
         {%- endif -%}
 
-        <article class="card">
+        <article class="card" data-thumbid="{{ thumbid | escape }}">
           <a class="thumb" href="{{ post.url | relative_url }}">
             {%- if thumb != "" -%}
-              <img src="{{ thumb }}" loading="lazy" alt="{{ title_txt }}">
+              <img src="{{ thumb }}" loading="lazy" alt="{{ title_txt | escape }}">
             {%- else -%}
               <div class="thumb ph">No Image</div>
             {%- endif -%}
@@ -124,11 +146,7 @@ title: 蚯蚓貓的資工人生
             <h3 class="card-title"><a href="{{ post.url | relative_url }}">{{ title_txt }}</a></h3>
 
             {%- assign parts = body | split:'---' -%}
-            {%- if parts.size >= 2 -%}
-              {%- assign body_html = parts | last -%}
-            {%- else -%}
-              {%- assign body_html = body -%}
-            {%- endif -%}
+            {%- assign body_html = parts.size >= 2 ? parts | last : body -%}
             <p class="card-excerpt">{{ body_html
               | replace:'layout:','' | replace:'post title:','' | replace:'posttitle:','' | replace:'title:',''
               | replace:'date:','' | replace:'type:','' | replace:'parent_id:','' | replace:'published:',''
@@ -159,3 +177,21 @@ title: 蚯蚓貓的資工人生
   .card-title a{color:#111827;text-decoration:none}
   .card-excerpt{margin:0;color:#374151;font-size:14px;line-height:1.6}
 </style>
+
+<script>
+/* 以 featured-map.json 覆寫每張卡片的縮圖（用 data-thumbid 對應） */
+(function(){
+  var mapUrl = "{{ '/assets/featured-map.json' | relative_url }}";
+  var base = "{{ site.baseurl | default: '' }}";
+  fetch(mapUrl).then(function(r){return r.json()}).then(function(map){
+    document.querySelectorAll('.card[data-thumbid]').forEach(function(card){
+      var id = (card.getAttribute('data-thumbid')||'').trim();
+      if(!id || !map || !map[id]) return;
+      var img = card.querySelector('img');
+      if(!img) return;
+      var val = map[id];
+      img.src = (/^https?:\/\//i.test(val)) ? val : (base + val);
+    });
+  }).catch(function(){});
+})();
+</script>
