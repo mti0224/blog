@@ -224,3 +224,11 @@ footer{margin-top:48px;border-top:1px solid var(--wc-border);padding:22px 0;colo
 .wc-article-inner figure:not(.wc-hero-figure){
   max-width:100%;
 }
+
+/* 三行截斷（通用） */
+.clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
