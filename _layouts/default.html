@@ -13,7 +13,6 @@ layout: nil
   <link rel="stylesheet" href="{{ "/assets/custom.css" | relative_url }}">
 
   <style>
-    /* Header */
     .wc-header{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid rgba(0,0,0,.06)}
     .wc-header-inner{max-width:1200px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
     .wc-brand{font-weight:800;font-size:20px;color:#111827;text-decoration:none;white-space:nowrap}
@@ -21,22 +20,18 @@ layout: nil
     .wc-social a{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-left:10px;opacity:.85}
     .wc-social img{display:block;width:100%;height:100%;object-fit:contain}
 
-    /* Page container */
     .wc-main{max-width:980px;margin:24px auto;padding:0 16px}
 
-    /* Article hero */
     .wc-article-title{font-size:clamp(28px,4vw,42px);line-height:1.2;margin:0 0 12px;font-weight:800}
     .wc-hero-figure{margin:0 0 16px}
     .wc-hero-figure img{display:block;width:100%;height:auto;border-radius:12px}
 
-    /* Responsive YouTube */
     .wc-video{position:relative;width:100%;padding-top:56.25%;margin:14px 0;border-radius:12px;overflow:hidden;background:#000}
     .wc-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
   </style>
 </head>
 <body>
 
-  <!-- Header 回來了 -->
   <header class="wc-header">
     <div class="wc-header-inner">
       <a class="wc-brand" href="{{ "/" | relative_url }}">蚯蚓貓的資工人生</a>
@@ -64,7 +59,6 @@ layout: nil
     var main = document.getElementById('wc-main');
     if(!main) return;
 
-    /* 原始 HTML（含前置亂碼），拿來抓標題與 _thumbnail_id */
     var originalHTML = main.innerHTML;
     var rawText = (function(tmp){
       var div = document.createElement('div'); div.innerHTML = tmp;
@@ -78,16 +72,15 @@ layout: nil
     var thumbId   = pick(/_thumbnail_id:\s*["']?(\d+)["']?/i, rawText);
     var imagePath = pick(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i, rawText);
 
-    /* 1) 先把 --- layout ... --- 這段前置雜訊從畫面上移除（只清掉第一段） */
+    /* 清掉畫面上的前置雜訊（只清最前一段 --- ... ---） */
     (function stripFrontMatter(){
       var html = originalHTML.replace(/^\s*---[\s\S]{0,3000}?---\s*/,'');
-      // 移除出現在內容裡的 _oembed_* 和 publicize 等技術行
       html = html.replace(/_oembed_[^\n<]+/gi, '')
                  .replace(/(firehose_sent|timeline_notification|_publicize_job_id|_elasticsearch_data_sharing_indexed_on|display_name:|author:)[^\n<]*/gi,'');
       main.innerHTML = html;
     })();
 
-    /* 2) 在文章最上面插入「標題 + 精選大圖」：_thumbnail_id 優先，退回 image: */
+    /* 標題 + 精選大圖 */
     function addHero(src){
       if(!src) return;
       var fig=document.createElement('figure'); fig.className='wc-hero-figure';
@@ -120,33 +113,32 @@ layout: nil
       addHero(imagePath.indexOf('/assets/')===0 ? base + imagePath : imagePath);
     }
 
-    /* 3) 把「相關影片」之前出現的所有 iframe 移除（避免 layout 殘留造成重複影片） */
+    /* 移除「相關影片」之前的多餘 iframe（避免 layout 殘留） */
     (function dropIframesBeforeRelated(){
       var marker = Array.from(main.querySelectorAll('*'))
                         .find(function(el){ return /相關影片/.test((el.textContent||'').trim()); });
-      var iframes = Array.from(main.querySelectorAll('iframe'));
-      iframes.forEach(function(f){
-        if(!marker) return; // 若找不到標記就不動
-        var rel = f.compareDocumentPosition(marker);
-        // f 在 marker 前面 → 刪掉
-        if(rel & Node.DOCUMENT_POSITION_FOLLOWING){ return; } // f 在 marker 後方，保留
-        f.remove();
+      if(!marker) return;
+      Array.from(main.querySelectorAll('iframe')).forEach(function(f){
+        if(marker.compareDocumentPosition(f) & Node.DOCUMENT_POSITION_PRECEDING){
+          f.remove();
+        }
       });
-      // 針對同一個 src 的連續 iframe，保留第一個
+      // 同源重複 src 保留第一個
       var seen = {};
       Array.from(main.querySelectorAll('iframe')).forEach(function(f){
         var s = f.src || '';
-        if(seen[s]) f.remove();
-        else seen[s] = true;
+        if(seen[s]) f.remove(); else seen[s] = true;
       });
     })();
 
-    /* 4) 文字版 YouTube 連結 → 16:9 iframe （不影響已存在的 iframe） */
+    /* 文字/連結 YouTube → 16:9 iframe */
     function toIframe(url){
       try{
+        // 全形：：／ → 半形
+        url = url.replace(/\uFF1A/g,':').replace(/\uFF0F/g,'/');
         var u=new URL(url, location.origin), id='';
-        if(u.hostname.indexOf('youtu.be')>=0) id=u.pathname.replace(/^\//,'');
-        else id=u.searchParams.get('v')||'';
+        if(u.hostname.indexOf('youtu.be')>=0){ id=u.pathname.replace(/^\//,''); }
+        else { id=u.searchParams.get('v')||''; }
         if(!id) return null;
         var box=document.createElement('div'); box.className='wc-video';
         var ifr=document.createElement('iframe');
@@ -158,29 +150,47 @@ layout: nil
       }catch(e){return null;}
     }
 
-    // 情境 A：<a href="..."> 形式
+    // A. <a href="..."> 直接換
     main.querySelectorAll('a[href*="youtube.com/watch"],a[href*="youtu.be/"]').forEach(function(a){
       if(a.closest('.wc-video,iframe')) return;
-      var txt = (a.textContent||'').trim();
-      // 若這段 <a> 在「相關影片」附近，或純連結段落，直接替換
       var para = a.closest('p');
       var box = toIframe(a.href);
-      if(box && para && para.childNodes.length===1){
-        para.replaceWith(box);
-      }else if(box){
-        a.replaceWith(box);
-      }
+      if(!box) return;
+      if(para && para.childNodes.length===1){ para.replaceWith(box); }
+      else { a.replaceWith(box); }
     });
 
-    // 情境 B：純文字 URL（最常見：相關影片下一行）
+    // B. <p> 或 <li> 的純文字 URL
     Array.from(main.querySelectorAll('p,li')).forEach(function(el){
       if(el.querySelector('a,iframe')) return;
-      var t=(el.textContent||'').trim();
-      var m=t.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?[^ \n\r<]+|youtu\.be\/[A-Za-z0-9_-]+)/);
+      var t=(el.textContent||'').trim().replace(/\uFF1A/g,':').replace(/\uFF0F/g,'/');
+      var m=t.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?[^ \n\r<]+|youtu\.be\/[A-Za-z0-9_-]+)/i);
       if(!m) return;
       var box = toIframe(m[0]);
       if(box) el.replaceWith(box);
     });
+
+    // C. **Fallback**：任何地方的「單獨一行純文字 URL」文字節點
+    (function convertLooseTextUrls(){
+      var it=document.createTreeWalker(main, NodeFilter.SHOW_TEXT, null);
+      var nodes=[];
+      while(it.nextNode()){
+        var n=it.currentNode;
+        if(!n.nodeValue) continue;
+        var s=n.nodeValue.trim();
+        if(!s) continue;
+        // 避免 code/pre/a/iframe/已轉換容器
+        if(n.parentElement && n.parentElement.closest('.wc-video,iframe,a,code,pre')) continue;
+        s=s.replace(/\uFF1A/g,':').replace(/\uFF0F/g,'/');
+        var m=s.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?[^ \t<]+|youtu\.be\/[A-Za-z0-9_-]+)/i);
+        if(m && s===m[0]) nodes.push(n);
+      }
+      nodes.forEach(function(n){
+        var url=n.nodeValue.trim().replace(/\uFF1A/g,':').replace(/\uFF0F/g,'/');
+        var box=toIframe(url);
+        if(box){ n.parentNode.replaceChild(box, n); }
+      });
+    })();
   })();
   </script>
 </body>
