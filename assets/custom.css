@@ -21,6 +21,26 @@
 
   --wc-font-body: "Noto Sans TC","Inter",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"PingFang TC","Microsoft JhengHei",sans-serif;
   --wc-font-heading: var(--wc-font-body);
+--article-media-max: clamp(520px, 72vw, 820px);
+}
+
+/* 限縮文章內一般圖片寬度；不影響首頁卡片縮圖、Hero 圖與 YouTube 影片 */
+.wc-main :where(p, div, figure, section):not(.wc-video):not(.wc-hero-figure):not(.card) > img {
+  display: block;
+  width: 100%;
+  max-width: var(--article-media-max);
+  height: auto;
+  margin: 14px auto; /* 置中 */
+}
+
+/* 若文章有 <figure><img><figcaption>，也置中排版 */
+.wc-main figure:not(.wc-hero-figure){
+  text-align: center;
+}
+.wc-main figure:not(.wc-hero-figure) > figcaption{
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-top: 6px;
 }
 
 /* 基礎排版 */
