@@ -204,3 +204,43 @@ footer{margin-top:48px;border-top:1px solid var(--wc-border);padding:22px 0;colo
 @media (max-width:640px){
   .wc-site-title{font-size:1.28rem}
 }
+
+/* === 統一文章欄寬：以「整體資料分析」下方首張圖當基準 === */
+:root{
+  /* JS 會依參考圖片實際寬度覆寫，這裡先給安全預設 */
+  --article-col: clamp(520px, 72vw, 820px);
+}
+
+/* 文章內層容器：統一寬度並置中 */
+.wc-article-inner{
+  max-width: var(--article-col);
+  margin: 0 auto;
+}
+
+/* 讓內層裡的各區塊（段落、圖片、表格…）都跟著欄寬置中 */
+.wc-article-inner > *{
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 一般圖片：跟欄寬等寬（不影響 Hero 圖與 YouTube） */
+.wc-article-inner img{
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 14px auto;
+}
+
+/* 「礦時的礦物量」專屬寬度與靠左排列 */
+.wc-article-inner img.wc-minerals{
+  max-width: 40%;
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* 其他元素也跟欄寬（保險） */
+.wc-article-inner table,
+.wc-article-inner pre,
+.wc-article-inner figure:not(.wc-hero-figure){
+  max-width: 100%;
+}
