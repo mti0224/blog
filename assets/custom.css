@@ -232,3 +232,37 @@ footer{margin-top:48px;border-top:1px solid var(--wc-border);padding:22px 0;colo
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* 首頁外框容器：加寬並置中（不影響文章頁） */
+.home-container,
+.index-container,
+.site-content {
+  max-width: 1280px;   /* 你也可以改 1320px / 1400px */
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* 首頁卡片區：三欄排版（維持你既有的 RWD 行為，可視需要微調） */
+.post-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .post-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .post-grid { grid-template-columns: 1fr; }
+}
+
+/* 卡片內文區塊與縮圖的基本對齊（不覆蓋你已生效的精選縮圖邏輯） */
+.post-card {
+  display: flex;
+  flex-direction: column;
+}
+.post-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+}
