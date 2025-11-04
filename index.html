@@ -27,42 +27,42 @@ title: 蚯蚓貓的資工人生
           {%- assign title_txt = post.title | default: post.name -%}
         {%- endif -%}
 
-        {%- comment -%} 取 _thumbnail_id 讓前端用 featured-map.json 覆寫縮圖 {%- endcomment -%}
+        {%- comment -%} 抓 _thumbnail_id {%- endcomment -%}
         {%- assign thumbid = "" -%}
         {%- if body contains '_thumbnail_id:' -%}
           {%- assign thumbid = body | split:'_thumbnail_id:' | last | split:'\n' | first | replace:'"','' | replace:"'","" | strip -%}
         {%- endif -%}
 
-        {%- comment -%} 縮圖初始值：先 image:，再退回第一張 <img>（嚴格取第一張，避免吃到後面 HTML） {%- endcomment -%}
+        {%- comment -%} 退回方案：抓正文第一張 <img> 或 Markdown 圖片 {%- endcomment -%}
         {%- assign img_src = "" -%}
-        {%- if body contains 'image:' -%}
-          {%- assign img_src = body | split:'image:' | last | split:'\n' | first | replace:'---','' | replace:'"','' | strip -%}
-        {%- endif -%}
-        {%- if img_src == "" and body contains '<img ' -%}
+        {%- if body contains '<img ' -%}
           {%- assign after_img = body | split:'<img ' | last -%}
           {%- if after_img contains 'src="' -%}
-            {%- assign after_src = after_img | split:'src="' | last -%}
-            {%- assign img_src = after_src | split:'"' | first | strip -%}
+            {%- assign img_src = after_img | split:'src="' | last | split:'"' | first | strip -%}
           {%- elsif after_img contains "src='" -%}
-            {%- assign after_src = after_img | split:"src='" | last -%}
-            {%- assign img_src = after_src | split:"'" | first | strip -%}
+            {%- assign img_src = after_img | split:"src='" | last | split:"'" | first | strip -%}
           {%- endif -%}
         {%- endif -%}
+        {%- if img_src == "" and body contains '](' -%}
+          {%- assign md_after = body | split:'](' | last -%}
+          {%- assign img_src = md_after | split:')' | first | strip -%}
+        {%- endif -%}
 
-        {%- assign thumb = img_src -%}
-        {%- if thumb != "" -%}
-          {%- assign trimmed = thumb | strip -%}
-          {%- if trimmed contains '/assets/' -%}
-            {%- assign thumb = baseurl | append: trimmed -%}
-          {%- elsif trimmed contains 'assets/' -%}
-            {%- assign thumb = baseurl | append:'/' | append: trimmed -%}
-          {%- endif -%}
+        {%- comment -%} 先以對照表決定精選縮圖；查不到才用退回方案 {%- endcomment -%}
+        {%- assign fmap = site.data.featured_map | default: site.data['featured-map'] -%}
+        {%- assign thumb = "" -%}
+        {%- if fmap and thumbid != "" -%}
+          {%- assign tid_key = thumbid | strip | replace:"'","" -%}
+          {%- assign thumb = fmap[tid_key] | default: "" -%}
+        {%- endif -%}
+        {%- if thumb == "" -%}
+          {%- assign thumb = img_src -%}
         {%- endif -%}
 
         <article class="card" data-thumbid="{{ thumbid | escape }}">
           <a class="thumb" href="{{ post.url | relative_url }}">
             {%- if thumb != "" -%}
-              <img src="{{ thumb }}" loading="lazy" alt="{{ title_txt | escape }}">
+              <img src="{{ thumb | relative_url }}" loading="lazy" alt="{{ title_txt | escape }}">
             {%- else -%}
               <div class="thumb ph">No Image</div>
             {%- endif -%}
@@ -113,34 +113,33 @@ title: 蚯蚓貓的資工人生
         {%- endif -%}
 
         {%- assign img_src = "" -%}
-        {%- if body contains 'image:' -%}
-          {%- assign img_src = body | split:'image:' | last | split:'\n' | first | replace:'---','' | replace:'"','' | strip -%}
-        {%- endif -%}
-        {%- if img_src == "" and body contains '<img ' -%}
+        {%- if body contains '<img ' -%}
           {%- assign after_img = body | split:'<img ' | last -%}
           {%- if after_img contains 'src="' -%}
-            {%- assign after_src = after_img | split:'src="' | last -%}
-            {%- assign img_src = after_src | split:'"' | first | strip -%}
+            {%- assign img_src = after_img | split:'src="' | last | split:'"' | first | strip -%}
           {%- elsif after_img contains "src='" -%}
-            {%- assign after_src = after_img | split:"src='" | last -%}
-            {%- assign img_src = after_src | split:"'" | first | strip -%}
+            {%- assign img_src = after_img | split:"src='" | last | split:"'" | first | strip -%}
           {%- endif -%}
         {%- endif -%}
+        {%- if img_src == "" and body contains '](' -%}
+          {%- assign md_after = body | split:'](' | last -%}
+          {%- assign img_src = md_after | split:')' | first | strip -%}
+        {%- endif -%}
 
-        {%- assign thumb = img_src -%}
-        {%- if thumb != "" -%}
-          {%- assign trimmed = thumb | strip -%}
-          {%- if trimmed contains '/assets/' -%}
-            {%- assign thumb = baseurl | append: trimmed -%}
-          {%- elsif trimmed contains 'assets/' -%}
-            {%- assign thumb = baseurl | append:'/' | append: trimmed -%}
-          {%- endif -%}
+        {%- assign fmap = site.data.featured_map | default: site.data['featured-map'] -%}
+        {%- assign thumb = "" -%}
+        {%- if fmap and thumbid != "" -%}
+          {%- assign tid_key = thumbid | strip | replace:"'","" -%}
+          {%- assign thumb = fmap[tid_key] | default: "" -%}
+        {%- endif -%}
+        {%- if thumb == "" -%}
+          {%- assign thumb = img_src -%}
         {%- endif -%}
 
         <article class="card" data-thumbid="{{ thumbid | escape }}">
           <a class="thumb" href="{{ post.url | relative_url }}">
             {%- if thumb != "" -%}
-              <img src="{{ thumb }}" loading="lazy" alt="{{ title_txt | escape }}">
+              <img src="{{ thumb | relative_url }}" loading="lazy" alt="{{ title_txt | escape }}">
             {%- else -%}
               <div class="thumb ph">No Image</div>
             {%- endif -%}
@@ -187,14 +186,15 @@ title: 蚯蚓貓的資工人生
 </style>
 
 <script>
-/* 以 featured-map.json 覆寫每張卡片的縮圖（用 data-thumbid 對應） */
+/* 若無 _data/featured_map.json，這段仍可用 assets/featured-map.json 做最後保險 */
 (function(){
   var mapUrl = "{{ '/assets/featured-map.json' | relative_url }}";
   var base = "{{ site.baseurl | default: '' }}";
   fetch(mapUrl).then(function(r){return r.json()}).then(function(map){
+    if(!map) return;
     document.querySelectorAll('.card[data-thumbid]').forEach(function(card){
       var id = (card.getAttribute('data-thumbid')||'').trim();
-      if(!id || !map || !map[id]) return;
+      if(!id || !map[id]) return;
       var img = card.querySelector('img');
       if(!img) return;
       var val = map[id];
