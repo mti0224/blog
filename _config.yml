@@ -22,7 +22,6 @@ permalink: /:year/:month/:day/:title/
 slugify_mode: raw
 encoding: utf-8
 
-
 # 讓 markdown 和 highlighter 正常
 markdown: kramdown
 highlighter: rouge
