@@ -72,7 +72,7 @@ layout: nil
     var thumbId   = pick(/_thumbnail_id:\s*["']?(\d+)["']?/i, rawText);
     var imagePath = pick(/image:\s*["']?([^\s"'<>]+?\.(?:png|jpe?g|webp|gif))["']?/i, rawText);
 
-    /* 清掉畫面上的前置雜訊（只清最前一段 --- ... ---） */
+    /* 移除最前面一次性的 --- 前置塊與雜訊行 */
     (function stripFrontMatter(){
       var html = originalHTML.replace(/^\s*---[\s\S]{0,3000}?---\s*/,'');
       html = html.replace(/_oembed_[^\n<]+/gi, '')
@@ -80,7 +80,7 @@ layout: nil
       main.innerHTML = html;
     })();
 
-    /* 標題 + 精選大圖 */
+    /* 標題 + 精選大圖（Hero） */
     function addHero(src){
       if(!src) return;
       var fig=document.createElement('figure'); fig.className='wc-hero-figure';
@@ -113,28 +113,45 @@ layout: nil
       addHero(imagePath.indexOf('/assets/')===0 ? base + imagePath : imagePath);
     }
 
+    /* 把文章內容包到 .wc-article-inner，統一欄寬置中 */
+    (function wrapInner(){
+      var inner=document.createElement('div');
+      inner.className='wc-article-inner';
+      var toMove=[];
+      Array.from(main.children).forEach(function(node){
+        if(node.classList &&
+           (node.classList.contains('wc-article-title') || node.classList.contains('wc-hero-figure'))){
+          return;
+        }
+        toMove.push(node);
+      });
+      toMove.forEach(function(n){ inner.appendChild(n); });
+      main.appendChild(inner);
+    })();
+
+    var inner = main.querySelector('.wc-article-inner');
+    if(!inner) return;
+
     /* 移除「相關影片」之前的多餘 iframe（避免 layout 殘留） */
     (function dropIframesBeforeRelated(){
-      var marker = Array.from(main.querySelectorAll('*'))
+      var marker = Array.from(inner.querySelectorAll('*'))
                         .find(function(el){ return /相關影片/.test((el.textContent||'').trim()); });
       if(!marker) return;
-      Array.from(main.querySelectorAll('iframe')).forEach(function(f){
+      Array.from(inner.querySelectorAll('iframe')).forEach(function(f){
         if(marker.compareDocumentPosition(f) & Node.DOCUMENT_POSITION_PRECEDING){
           f.remove();
         }
       });
-      // 同源重複 src 保留第一個
       var seen = {};
-      Array.from(main.querySelectorAll('iframe')).forEach(function(f){
+      Array.from(inner.querySelectorAll('iframe')).forEach(function(f){
         var s = f.src || '';
         if(seen[s]) f.remove(); else seen[s] = true;
       });
     })();
 
-    /* 文字/連結 YouTube → 16:9 iframe */
+    /* 文字/連結 YouTube → 16:9 iframe（含全形符號處理） */
     function toIframe(url){
       try{
-        // 全形：：／ → 半形
         url = url.replace(/\uFF1A/g,':').replace(/\uFF0F/g,'/');
         var u=new URL(url, location.origin), id='';
         if(u.hostname.indexOf('youtu.be')>=0){ id=u.pathname.replace(/^\//,''); }
@@ -149,9 +166,7 @@ layout: nil
         return box;
       }catch(e){return null;}
     }
-
-    // A. <a href="..."> 直接換
-    main.querySelectorAll('a[href*="youtube.com/watch"],a[href*="youtu.be/"]').forEach(function(a){
+    inner.querySelectorAll('a[href*="youtube.com/watch"],a[href*="youtu.be/"]').forEach(function(a){
       if(a.closest('.wc-video,iframe')) return;
       var para = a.closest('p');
       var box = toIframe(a.href);
@@ -159,9 +174,7 @@ layout: nil
       if(para && para.childNodes.length===1){ para.replaceWith(box); }
       else { a.replaceWith(box); }
     });
-
-    // B. <p> 或 <li> 的純文字 URL
-    Array.from(main.querySelectorAll('p,li')).forEach(function(el){
+    Array.from(inner.querySelectorAll('p,li')).forEach(function(el){
       if(el.querySelector('a,iframe')) return;
       var t=(el.textContent||'').trim().replace(/\uFF1A/g,':').replace(/\uFF0F/g,'/');
       var m=t.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?[^ \n\r<]+|youtu\.be\/[A-Za-z0-9_-]+)/i);
@@ -169,17 +182,14 @@ layout: nil
       var box = toIframe(m[0]);
       if(box) el.replaceWith(box);
     });
-
-    // C. **Fallback**：任何地方的「單獨一行純文字 URL」文字節點
     (function convertLooseTextUrls(){
-      var it=document.createTreeWalker(main, NodeFilter.SHOW_TEXT, null);
+      var it=document.createTreeWalker(inner, NodeFilter.SHOW_TEXT, null);
       var nodes=[];
       while(it.nextNode()){
         var n=it.currentNode;
         if(!n.nodeValue) continue;
         var s=n.nodeValue.trim();
         if(!s) continue;
-        // 避免 code/pre/a/iframe/已轉換容器
         if(n.parentElement && n.parentElement.closest('.wc-video,iframe,a,code,pre')) continue;
         s=s.replace(/\uFF1A/g,':').replace(/\uFF0F/g,'/');
         var m=s.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?[^ \t<]+|youtu\.be\/[A-Za-z0-9_-]+)/i);
@@ -190,6 +200,49 @@ layout: nil
         var box=toIframe(url);
         if(box){ n.parentNode.replaceChild(box, n); }
       });
+    })();
+
+    /* 以「整體資料分析：」下方首張圖寬度，統一欄寬 */
+    function findFirstImgAfter(anchor){
+      if(!anchor) return null;
+      var cur=anchor;
+      while(cur && cur!==inner){
+        var sib=cur.nextElementSibling;
+        while(sib){
+          if(sib.tagName==='IMG') return sib;
+          var q = sib.querySelector && sib.querySelector('img');
+          if(q) return q;
+          sib=sib.nextElementSibling;
+        }
+        cur=cur.parentElement;
+      }
+      return null;
+    }
+    var analysisAnchor = Array.from(inner.querySelectorAll('*')).find(function(el){
+      var txt=(el.textContent||'').replace(/\s+/g,'');
+      return /整體資料分析[:：]?/.test(txt);
+    });
+    var refImg = findFirstImgAfter(analysisAnchor);
+
+    function applyColumnWidth(){
+      var w = refImg && refImg.getBoundingClientRect ? refImg.getBoundingClientRect().width : 0;
+      if(w>0){ document.documentElement.style.setProperty('--article-col', w + 'px'); }
+    }
+    if(refImg){
+      if(!refImg.complete){ refImg.addEventListener('load', applyColumnWidth, {once:true}); }
+      applyColumnWidth();
+      var tid=null;
+      window.addEventListener('resize', function(){ clearTimeout(tid); tid=setTimeout(applyColumnWidth,120); });
+    }
+
+    /* 指定「礦時的礦物量」圖片為 40% 並靠左 */
+    (function markMineralsImage(){
+      var anchor = Array.from(inner.querySelectorAll('*')).find(function(el){
+        var t=(el.textContent||'').replace(/\s+/g,'');
+        return /下表是為各種減礦時的礦物量/.test(t);
+      });
+      var img = findFirstImgAfter(anchor);
+      if(img){ img.classList.add('wc-minerals'); }
     })();
   })();
   </script>
