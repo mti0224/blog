@@ -123,7 +123,7 @@
 /* 如果你的圖示是放在 .site-nav 裡的連結，讓它們水平排列 */
 .site-header .site-nav .trigger {
   display: flex;
-  align-items: center;
+  align-items: right;
   gap: 10px;
 }
 
