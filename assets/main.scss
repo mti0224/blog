@@ -78,7 +78,7 @@
 /* right icons */
 .header-social {
   display: flex;
-  align-items: center;
+  align-items: right;
   gap: 0.75rem;
 }
 
@@ -124,9 +124,11 @@
 /* 如果你的圖示是包在自訂容器（例如 .header-icons / .social-icons），也一併保險處理 */
 .site-header .header-icons,
 .site-header .social-icons {
+  padding-left: 16px;   /* 左邊留一點空隙（可自行改 12~24px） */
+  padding-right: 16px;
   margin-left: auto;
   display: flex;
-  align-items: center;
+  align-items: right;
   justify-content: flex-end;
   gap: 10px;
 }
