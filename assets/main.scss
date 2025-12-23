@@ -105,32 +105,29 @@
   fill: currentColor;
 }
 
-/* Header：左邊留空、右邊圖示靠右 */
+/* ===== Header 微調：左側留白 + 右側圖示靠右 ===== */
 .site-header .wrapper {
+  padding-left: 16px;   /* 左邊留一點空隙（可自行改 12~24px） */
+  padding-right: 16px;  /* 右邊也留一點空隙 */
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding-left: 16px;
-  padding-right: 16px;
 }
 
-/* 右側（minima 的導覽區）推到最右 */
 .site-header .site-nav {
-  margin-left: auto;
-  float: none;          /* 避免 minima 預設 float 影響 */
-}
-
-/* 如果你的圖示是放在 .site-nav 裡的連結，讓它們水平排列 */
-.site-header .site-nav .trigger {
+  margin-left: auto;    /* 把右側整塊推到最右邊 */
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: flex-end;
+  gap: 10px;            /* 圖示之間的距離（可調） */
 }
 
-.header-icons {
+/* 如果你的圖示是包在自訂容器（例如 .header-icons / .social-icons），也一併保險處理 */
+.site-header .header-icons,
+.site-header .social-icons {
   margin-left: auto;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
 }
 
