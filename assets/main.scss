@@ -104,3 +104,30 @@
   height: 20px;
   fill: currentColor;
 }
+
+/* ===== Header 微調：左側留白 + 右側圖示靠右 ===== */
+.site-header .wrapper {
+  padding-left: 16px;   /* 左邊留一點空隙（可自行改 12~24px） */
+  padding-right: 16px;  /* 右邊也留一點空隙 */
+  display: flex;
+  align-items: center;
+}
+
+.site-header .site-nav {
+  margin-left: auto;    /* 把右側整塊推到最右邊 */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;            /* 圖示之間的距離（可調） */
+}
+
+/* 如果你的圖示是包在自訂容器（例如 .header-icons / .social-icons），也一併保險處理 */
+.site-header .header-icons,
+.site-header .social-icons {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
