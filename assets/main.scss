@@ -108,7 +108,7 @@
 /* Header：左邊留空、右邊圖示靠右 */
 .site-header .wrapper {
   display: flex;
-  align-items: right;
+  align-items: center;
   gap: 16px;
   padding-left: 16px;
   padding-right: 16px;
@@ -130,7 +130,7 @@
 .header-icons {
   margin-left: auto;
   display: flex;
-  align-items: right;
+  align-items: center;
   gap: 10px;
 }
 
