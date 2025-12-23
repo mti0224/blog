@@ -25,16 +25,5 @@ title: warmycat.com
           <img class="thumb" src="{{ post.coverImage | relative_url }}" alt="{{ post.title }}">
         {% endif %}
       </a>
-
-      <div>
-        <p class="meta">{{ post.date | date: "%Y-%m-%d" }}</p>
-        <h2 class="title">
-          <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
-        </h2>
-        <p class="excerpt">
-          {{ post.excerpt | strip_html | strip_newlines | truncate: 120 }}
-        </p>
-      </div>
-    </li>
   {% endfor %}
 </ul>
