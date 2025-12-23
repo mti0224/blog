@@ -1,0 +1,46 @@
+---
+layout: default
+---
+
+<div class="home">
+  {{ content }}
+
+  <div class="post-list-cards">
+    {% for post in site.posts %}
+      <article class="post-card">
+        <div class="post-card-meta">
+          <span class="post-date">{{ post.date | date: "%Y 年 %-m 月 %-d 日" }}</span>
+          {% if post.categories and post.categories.size > 0 %}
+            <span class="post-sep">|</span>
+            <span class="post-cats">
+              {% for cat in post.categories %}
+                <a class="post-cat" href="{{ '/categories/#' | append: cat | relative_url }}">{{ cat }}</a>{% unless forloop.last %}, {% endunless %}
+              {% endfor %}
+            </span>
+          {% endif %}
+        </div>
+
+        <h2 class="post-card-title">
+          <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+        </h2>
+
+        {% if post.coverImage %}
+          <a class="post-card-coverlink" href="{{ post.url | relative_url }}">
+            <img
+              class="post-card-cover"
+              src="{{ post.coverImage | relative_url }}"
+              alt="{{ post.title | escape }}"
+              loading="lazy"
+            >
+          </a>
+        {% endif %}
+
+        <p class="post-card-excerpt">
+          {{ post.excerpt | strip_html | replace: "\n", " " | truncate: 90 }}
+        </p>
+
+        <a class="post-card-readmore" href="{{ post.url | relative_url }}">READ MORE</a>
+      </article>
+    {% endfor %}
+  </div>
+</div>
