@@ -28,3 +28,13 @@ exclude:
   - Gemfile.lock
   - README.md
   - .DS_Store
+  
+defaults:
+  - scope:
+      path: "posts"
+    values:
+      layout: post
+  - scope:
+      path: ""
+    values:
+      layout: page
