@@ -10,14 +10,6 @@ layout: default
       <article class="post-card">
         <div class="post-card-meta">
           <span class="post-date">{{ post.date | date: "%Y 年 %-m 月 %-d 日" }}</span>
-          {% if post.categories and post.categories.size > 0 %}
-            <span class="post-sep">|</span>
-            <span class="post-cats">
-              {% for cat in post.categories %}
-                <a class="post-cat" href="{{ '/categories/#' | append: cat | relative_url }}">{{ cat }}</a>{% unless forloop.last %}, {% endunless %}
-              {% endfor %}
-            </span>
-          {% endif %}
         </div>
 
         <h2 class="post-card-title">
