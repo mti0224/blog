@@ -19,7 +19,7 @@ kramdown:
   input: GFM
 
 # 先保留你原本想要的文章網址格式（之後如果改成真 _posts 再強化）
-permalink: /:categories/:year/:month/:day/:title/
+permalink: /:year/:month/:day/:title/
 
 exclude:
   - node_modules
