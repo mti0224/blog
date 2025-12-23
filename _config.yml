@@ -1,0 +1,3 @@
+title: warmycat.com
+markdown: kramdown
+permalink: /:categories/:year/:month/:day/:title/
