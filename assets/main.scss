@@ -113,20 +113,20 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  flex-wrap: wrap;             /* 允許手機版換行 */
+  flex-wrap: wrap;             /* 允許空間不足時換行 */
   max-width: 800px;
   margin: 0 auto;
   padding: 0.8rem 16px;
-  box-sizing: border-box;      /* 確保 padding 不撐開寬度 */
+  box-sizing: border-box;
 }
 
-/* 大頭貼連結 */
+/* (1) 頭像：順序 1，靠左 */
 .site-header__logo-link {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  transition: opacity 0.2s ease;
   order: 1;
+  transition: opacity 0.2s ease;
 }
 
 .site-header__logo-link:hover {
@@ -142,19 +142,38 @@
   display: block;
 }
 
-/* 隱藏原本文字標題 */
-.site-header__title {
-  display: none;
+/* (2) 搜尋：順序 2，緊跟在頭像旁 */
+.search-container {
+  position: relative;
+  order: 2;
+  flex: 0 1 300px;             /* 最大 300px，視窗縮小時可變窄 */
+  margin-left: 20px;
+  box-sizing: border-box;
 }
 
-/* 社群圖示群組 */
+#search-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 15px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#search-input:focus {
+  border-color: #9cdba2;
+}
+
+/* (3) 社群圖示：順序 3，推至最右側 */
 .site-header__icons {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-left: auto;           /* 推至右側 */
+  margin-left: auto;           /* 關鍵：將此區塊推到右側邊緣 */
   flex-shrink: 0;
-  order: 2;
+  order: 3;
 }
 
 .icon-btn {
@@ -179,33 +198,7 @@
   display: block;
 }
 
-/* ==========================================================================
-   4. 搜尋功能 (修復溢出)
-   ========================================================================== */
-.search-container {
-  position: relative;
-  flex: 0 1 300px;
-  max-width: 300px;
-  margin-left: 20px;
-  box-sizing: border-box;      /* 關鍵：修正容器計算 */
-  order: 3;                    /* 電腦版順序 */
-}
-
-#search-input {
-  box-sizing: border-box;      /* 關鍵：內距不增加寬度 */
-  width: 100%;
-  padding: 8px 15px;
-  border: 1px solid #ddd;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-#search-input:focus {
-  border-color: #9cdba2;
-}
-
+/* 搜尋結果 */
 #results-container {
   box-sizing: border-box;
   position: absolute;
@@ -242,8 +235,13 @@
   float: right;
 }
 
+/* 隱藏舊標題 */
+.site-header__title {
+  display: none;
+}
+
 /* ==========================================================================
-   5. 媒體物件 (影片與表格圖)
+   4. 媒體與其他物件
    ========================================================================== */
 .video-container {
   position: relative;
@@ -270,7 +268,7 @@
 }
 
 /* ==========================================================================
-   6. 分頁導覽
+   5. 分頁與頁尾
    ========================================================================== */
 .pagination {
   display: flex;
@@ -307,14 +305,6 @@
   background-color: #fafafa;
 }
 
-.pagination .page_number {
-  font-weight: 600;
-  color: #666;
-}
-
-/* ==========================================================================
-   7. 頁尾樣式
-   ========================================================================== */
 .site-footer {
   background-color: #f8f9fa;
   border-top: 1px solid #e8e8e8;
@@ -337,12 +327,6 @@
   padding-left: 12px;
 }
 
-.footer-recent-posts {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 .footer-post-item {
   display: flex;
   align-items: center;
@@ -352,9 +336,7 @@
   border-radius: 8px;
 }
 
-.footer-post-item:hover {
-  background-color: #f0fdf4;
-}
+.footer-post-item:hover { background-color: #f0fdf4; }
 
 .footer-post-thumb {
   width: 60px; height: 60px;
@@ -364,10 +346,7 @@
   border-radius: 8px;
 }
 
-.footer-post-thumb img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-}
+.footer-post-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
 .footer-bottom {
   margin-top: 3rem;
@@ -379,12 +358,12 @@
 }
 
 /* ==========================================================================
-   8. 響應式適配 (手機版綜合修正)
+   6. 響應式修正 (核心修復區)
    ========================================================================== */
-@media screen and (max-width: 650px) {
-  /* Header 結構調整 */
+/* 提高斷點至 768px，處理電腦版縮小視窗的情況 */
+@media screen and (max-width: 768px) {
   .site-header__inner {
-    padding: 1rem 12px;
+    padding: 0.8rem 12px;
   }
 
   .header-avatar {
@@ -392,26 +371,20 @@
     height: 40px;
   }
 
-  /* 搜尋欄強制換行並防止溢出 */
+  /* 強制將搜尋欄順序排在最後並換行，解決擠壓問題 */
   .search-container {
-    order: 3;
-    flex: 0 0 100%;
+    order: 4;             /* 確保排在社群圖示之後 */
+    flex: 0 0 100%;       /* 佔滿 100% 寬度 */
     max-width: 100%;
     margin-left: 0;
     margin-top: 12px;
   }
 
-  /* 其他元素調整 */
-  .post-content h3, .post-content h4 {
-    text-align: left;
+  .site-header__icons {
+    order: 2;             /* 圖示緊跟在頭像旁邊（右側） */
   }
 
-  .mineral-table-img {
-    width: 80%;
-  }
-
-  .footer-post-thumb {
-    width: 50px;
-    height: 50px;
-  }
+  .post-content h3, .post-content h4 { text-align: left; }
+  .mineral-table-img { width: 80%; }
+  .footer-post-thumb { width: 50px; height: 50px; }
 }
