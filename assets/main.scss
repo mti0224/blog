@@ -57,57 +57,52 @@
 
 /* --- 文章標題美化 (優化比例版) --- */
 
-.post-content {
-  font-size: 1.15rem; /*  */
-  line-height: 1.7;   /*  */
-  word-wrap: break-word;
-  box-sizing: border-box;
+/* --- 文章標題美化 (經典紅字粗體版) --- */
 
+.post-content {
+  /* 基礎內文設定 */
+  font-size: 1.15rem;
+  line-height: 1.7;
+  word-wrap: break-word;
+
+  /* 統一將 h3 與 h4 設為紅字粗體，並移除背景、邊框與內距 */
+  h3, h4 {
+    color: #e74c3c;        /* 使用標準醒目紅 */
+    font-weight: bold;     /* 強制粗體 */
+    background: none;      /* 移除背景色 */
+    padding: 0;            /* 移除內距 */
+    border: none;          /* 移除邊框 */
+    box-shadow: none;      /* 移除陰影 */
+  }
+
+  /* 透過字體大小與間距區分層次 */
   h3 {
-    background-color: #9cdba2; /*  */
-    color: #ffffff;            /*  */
-    
-    /* 核心調整 1：縮減垂直內距 (10px -> 6px)，讓方塊變扁平 */
-    padding: 6px 16px;         
-    
-    border-radius: 6px;        /* 稍微縮減圓角，看起來更精鍊 */
-    display: inline-block;     /*  */
-    
-    margin-top: 2rem;          /* 調整上方間距 */
-    
-    /* 核心調整 2：縮短下方間距 (1.2rem -> 0.7rem)，讓標題「抓著」內文 */
-    margin-bottom: 0.7rem;     
-    
-    font-weight: 700;          /*  */
-    font-size: 1.25rem;        /* 讓標題字體與方塊比例更協調 */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+    font-size: 1.5rem;     /* 大標題較大 */
+    margin-top: 2.2rem;
+    margin-bottom: 1rem;
   }
 
   h4 {
-    color: #2d5a27;            /*  */
-    border-left: 5px solid #9cdba2; /*  */
-    padding-left: 12px;
+    font-size: 1.25rem;    /* 次標題稍小 */
     margin-top: 1.8rem;
-    margin-bottom: 0.6rem;      /* 同步縮短 h4 的下方間距 */
-    font-weight: 600;
+    margin-bottom: 0.8rem;
   }
 }
 
-/* 電腦版字體放大 */
+/* 電腦版字體放大 (維持之前的設定) */
 @media screen and (min-width: 800px) {
   .post-content {
-    font-size: 1.35rem; /*  */
+    font-size: 1.35rem;
+  }
+  .post-content h3 {
+    font-size: 1.7rem;
   }
 }
 
-/* 手機版適配 */
+/* 手機版適配：標題左對齊即可 */
 @media screen and (max-width: 600px) {
-  .post-content h3 {
-    display: block;      /*  */
-    text-align: center;  /*  */
-    font-size: 1.2rem;   
-    padding: 8px 12px;   
-    margin-bottom: 0.8rem;
+  .post-content h3, .post-content h4 {
+    text-align: left;      /* 移除之前的置中設定 */
   }
 }
 
