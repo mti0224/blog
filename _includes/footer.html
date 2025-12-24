@@ -1,0 +1,26 @@
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <div class="footer-section">
+      <h3 class="footer-title">最新文章</h3>
+      <div class="footer-recent-posts">
+        {% for post in site.posts limit: 3 %}
+          <a href="{{ post.url | relative_url }}" class="footer-post-item">
+            {% if post.coverImage %}
+              <div class="footer-post-thumb">
+                <img src="{{ post.coverImage | relative_url }}" alt="{{ post.title }}">
+              </div>
+            {% endif %}
+            <div class="footer-post-info">
+              <span class="footer-post-title">{{ post.title | truncate: 40 }}</span>
+              <span class="footer-post-date">{{ post.date | date: "%Y 年 %-m 月 %-d 日" }}</span>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; {{ "now" | date: "%Y" }} 蚯蚓貓的資工人生. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
