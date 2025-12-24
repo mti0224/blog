@@ -123,20 +123,21 @@
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-/* 這裡是核心：控制內容寬度與置中 */
+/* 修正 Header 容器：允許在空間不足時換行 */
 .site-header__inner {
   display: flex;
+  flex-wrap: wrap;         /* 允許內容換行 */
   align-items: center;
-  justify-content: space-between; /* 關鍵：標題靠左，圖示靠右 */
-  
-  max-width: 800px;      /* 設定與內容一致的寬度 */
-  margin: 0 auto;        /* 整體區塊水平置中 */
-  padding: 1rem 16px;    /* 上下 1rem，左右留白防止貼邊 */
+  justify-content: space-between; 
+  max-width: 800px;      
+  margin: 0 auto;        
+  padding: 1rem 16px;    
   box-sizing: border-box;
 }
 
 /* 標題樣式 */
 .site-header__title {
+  order: 1;
   font-size: 1.25rem;      /* 手機版維持原本的大小 */
   font-weight: 700;        /* 稍微加粗一點，增加辨識度 */
   letter-spacing: -0.5px;
@@ -153,11 +154,38 @@
   }
 }
 
-/* 圖示容器 */
 .site-header__icons {
+  order: 3;               /* 順序在右 */
   display: flex;
   align-items: center;
-  gap: 0.75rem; /* 圖示之間的間距 */
+  gap: 0.75rem; 
+}
+
+/* --- 手機版 (寬度 650px 以下) 響應式修正 --- */
+@media screen and (max-width: 650px) {
+  /* 讓標題與圖示撐開，分居左右 */
+  .site-header__title {
+    flex: 1;
+    font-size: 1.15rem;   /* 稍微縮小字體避免撐破 */
+  }
+
+  .site-header__icons {
+    flex: 0 0 auto;
+  }
+
+  /* 讓搜尋框強制換行到第二行並撐滿 */
+  .search-container {
+    order: 4;             /* 移到最下方 */
+    flex: 0 0 100%;       /* 寬度 100% */
+    max-width: none;      /* 取消寬度限制 */
+    margin: 1rem 0 0 0;   /* 增加與上方標題的間距 */
+  }
+
+  /* 修正搜尋結果在手機版的層級 */
+  #results-container {
+    width: 100%;
+    top: 100%;
+  }
 }
 
 /* 圓形圖示按鈕 */
@@ -264,12 +292,13 @@
   color: #666;
 }
 
-/* --- 搜尋欄位樣式 --- */
+/* 搜尋容器基礎樣式 */
 .search-container {
   position: relative;
   flex: 1;
-  max-width: 300px; /* 限制搜尋框寬度 */
+  max-width: 300px; 
   margin: 0 1.5rem;
+  order: 2;               /* 電腦版順序在中間 */
 }
 
 #search-input {
