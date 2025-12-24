@@ -4,7 +4,7 @@ lang: zh-TW
 timezone: Asia/Taipei
 
 url: "https://warmycat.com"
-baseurl: "/blog"  # 重要：這裡必須是空的，不能有 /blog
+baseurl: ""  # 重要：這裡必須是空的，不能有 /blog
 
 theme: minima
 
