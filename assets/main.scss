@@ -131,4 +131,26 @@
   gap: 10px;
 }
 
+.site-header {
+  padding: 0 16px;          /* 左邊留空隙，不貼邊 */
+}
 
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.site-header__icons {
+  margin-left: auto;         /* 關鍵：把 icons 推到最右 */
+  display: flex;
+  align-items: center;
+  gap: 10px;                 /* 圖示間距 */
+}
+
+/* 可選：避免標題被擠壓換行時亂跑 */
+.site-header__title {
+  white-space: nowrap;
+}
+
+.site-header__inner { justify-content: space-between; }
