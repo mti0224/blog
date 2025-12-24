@@ -1,1029 +1,194 @@
----
-
----
-
-
-
 @import "minima";
 
-
-
-/* 卡片列表 */
-
-.post-list-cards {
-
-  margin-top: 1.5rem;
-
-  display: grid;
-
-  gap: 2rem;
-
+/* ==========================================================================
+   1. 基礎變數與設定
+   ========================================================================== */
+:root {
+  --primary-green: #9cdba2;
+  --dark-green: #2d5a27;
+  --accent-red: #e74c3c;
+  --border-color: rgba(0, 0, 0, 0.12);
+  --radius-lg: 16px;
+  --radius-sm: 8px;
 }
 
-
-
-/* 單張卡片 */
-
-.post-card {
-
-  padding-bottom: 1.25rem;
-
-  border-bottom: 1px solid rgba(0,0,0,0.12);
-
-}
-
-
-
-.post-card-meta {
-
-  font-size: 0.9rem;
-
-  opacity: 0.75;
-
-  margin-bottom: 0.4rem;
-
-}
-
-
-
-.post-card-title {
-
-  margin: 0.2rem 0 0.8rem 0;
-
-  font-size: 1.8rem;
-
-  line-height: 1.25;
-
-}
-
-
-
-.post-card-title a {
-
-  text-decoration: none;
-
-}
-
-
-
-.post-card-coverlink {
-
-  display: block;
-
-  margin: 0.4rem 0 0.8rem 0;
-
-}
-
-
-
-.post-card-cover {
-
-  width: 100%;
-
-  height: auto;
-
-  border-radius: 16px;
-
-  border: 3px solid rgba(0,0,0,0);
-
-  display: block;
-
-}
-
-
-
-.post-card-excerpt {
-
-  margin: 0.2rem 0 0.6rem 0;
-
-  opacity: 0.9;
-
-}
-
-
-
-.post-card-readmore {
-
-  font-weight: 600;
-
-  text-decoration: none;
-
-}
-
-
-
-/* --- 文章標題美化 (優化比例版) --- */
-
-
-
-/* --- 文章標題美化 (經典紅字粗體版) --- */
-
-
-
-.post-content {
-
-  /* 基礎內文設定 */
-
-  font-size: 1.15rem;
-
-  line-height: 1.7;
-
-  word-wrap: break-word;
-
-
-
-  /* 統一將 h3 與 h4 設為紅字粗體，並移除背景、邊框與內距 */
-
-  h3, h4 {
-
-    color: #e74c3c;        /* 使用標準醒目紅 */
-
-    font-weight: bold;     /* 強制粗體 */
-
-    background: none;      /* 移除背景色 */
-
-    padding: 0;            /* 移除內距 */
-
-    border: none;          /* 移除邊框 */
-
-    box-shadow: none;      /* 移除陰影 */
-
-  }
-
-
-
-  /* 透過字體大小與間距區分層次 */
-
-  h3 {
-
-    font-size: 1.5rem;     /* 大標題較大 */
-
-    margin-top: 2.2rem;
-
-    margin-bottom: 1rem;
-
-  }
-
-
-
-  h4 {
-
-    font-size: 1.25rem;    /* 次標題稍小 */
-
-    margin-top: 1.8rem;
-
-    margin-bottom: 0.8rem;
-
-  }
-
-}
-
-
-
-/* 電腦版字體放大 (維持之前的設定) */
-
-@media screen and (min-width: 800px) {
-
-  .post-content {
-
-    font-size: 1.35rem;
-
-  }
-
-  .post-content h3 {
-
-    font-size: 1.7rem;
-
-  }
-
-}
-
-
-
-/* 手機版適配：標題左對齊即可 */
-
-@media screen and (max-width: 600px) {
-
-  .post-content h3, .post-content h4 {
-
-    text-align: left;      /* 移除之前的置中設定 */
-
-  }
-
-}
-
-
-
-/* ===== Header 固定在最上方 ===== */
-
+/* ==========================================================================
+   2. Header 導覽列 (修復版)
+   ========================================================================== */
 .site-header {
-
-  border-bottom: 1px solid #e8e8e8; /*  */
-
-  min-height: 56px;                /*  */
-
-  
-
-  /* 核心修改：固定位置 */
-
-  position: sticky;      /* 設為黏性定位 */
-
-  top: 0;                /* 距離頂端 0 像素 */
-
-  z-index: 1000;         /* 確保 Header 永遠在最上層，不會被圖片遮住 */
-
-  
-
-  /* 務必加上背景色，否則捲動時文字會與後方內容重疊 */
-
-  background-color: #ffffff; 
-
-  
-
-  /* 可選：加入一點陰影讓固定效果更明顯 */
-
+  position: sticky !important; /* 強制置頂 */
+  top: 0;
+  z-index: 9999;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e8e8e8;
+  min-height: 56px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-
 }
-
-
-
-/* 修正 Header 容器：允許在空間不足時換行 */
 
 .site-header__inner {
-
   display: flex;
-
   align-items: center;
-
-  /* 移除之前的 justify-content: space-between */
-
-  justify-content: flex-start; 
-
   max-width: 800px;
-
   margin: 0 auto;
-
   padding: 0.8rem 16px;
-
   box-sizing: border-box;
-
+  flex-wrap: nowrap; /* 電腦版不換行 */
 }
-
-
-
-/* 標題樣式 */
-
-.site-header__title {
-
-  order: 1;
-
-  font-size: 1.25rem;      /* 手機版維持原本的大小 */
-
-  font-weight: 700;        /* 稍微加粗一點，增加辨識度 */
-
-  letter-spacing: -0.5px;
-
-  text-decoration: none;
-
-  color: #333;
-
-  white-space: nowrap;
-
-  transition: font-size 0.2s ease; /* 縮放時平滑過渡 */
-
-}
-
-
-
-/* 電腦版標題放大 (螢幕寬度 800px 以上) */
-
-@media screen and (min-width: 800px) {
-
-  .site-header__title {
-
-    font-size: 1.75rem;    /* 電腦版放大字體 */
-
-  }
-
-}
-
-
-
-.site-header__icons {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 0.75rem;
-
-  /* 關鍵：利用自動左邊距將整個群組推到最右邊 */
-
-  margin-left: auto; 
-
-  flex-shrink: 0;
-
-}
-
-
-
-/* --- 手機版 (寬度 650px 以下) 響應式修正 --- */
-
-@media screen and (max-width: 650px) {
-
-  /* 讓標題與圖示撐開，分居左右 */
-
-  .site-header__title {
-
-    flex: 1;
-
-    font-size: 1.15rem;   /* 稍微縮小字體避免撐破 */
-
-  }
-
-
-
-  .site-header__icons {
-
-    flex: 0 0 auto;
-
-  }
-
-
-
-  /* 讓搜尋框強制換行到第二行並撐滿 */
-
-  .search-container {
-
-    order: 4;             /* 移到最下方 */
-
-    flex: 0 0 100%;       /* 寬度 100% */
-
-    max-width: none;      /* 取消寬度限制 */
-
-    margin: 1rem 0 0 0;   /* 增加與上方標題的間距 */
-
-  }
-
-
-
-  /* 修正搜尋結果在手機版的層級 */
-
-  #results-container {
-
-    width: 100%;
-
-    top: 100%;
-
-  }
-
-}
-
-
-
-/* 圓形圖示按鈕 */
-
-.icon-btn {
-
-  display: inline-flex;
-
-  width: 38px;
-
-  height: 38px;
-
-  border-radius: 50%; /* 圓形 */
-
-  border: 1px solid rgba(0,0,0,0.12);
-
-  align-items: center;
-
-  justify-content: center;
-
-  transition: all 0.2s ease;
-
-}
-
-
-
-.icon-btn:hover {
-
-  transform: translateY(-2px);
-
-  background-color: rgba(0,0,0,0.04);
-
-}
-
-
-
-/* 修正圖片大小 */
-
-.icon-btn img {
-
-  width: 20px;
-
-  height: 20px;
-
-  display: block;
-
-}
-
-
-
-/* 響應式影片容器 */
-
-.video-container {
-
-  position: relative;
-
-  padding-bottom: 56.25%; /* 16:9 比例 */
-
-  height: 0;
-
-  overflow: hidden;
-
-  margin: 1.5rem 0;
-
-  border-radius: 12px;
-
-}
-
-
-
-.video-container iframe {
-
-  position: absolute;
-
-  top: 0;
-
-  left: 0;
-
-  width: 100%;
-
-  height: 100%;
-
-  border: 0;
-
-}
-
-
-
-/* 礦物量表格圖片樣式：縮小至 40% 並靠左 */
-
-.mineral-table-img {
-
-  width: 60%;          /* 縮小至 40% */
-
-  height: auto;
-
-  display: block;      /* 確保圖片佔據獨立行空間 */
-
-  margin-left: 0;      /* 強制靠左 */
-
-  margin-right: auto;
-
-  margin-top: 1rem;
-
-  margin-bottom: 1rem;
-
-  border-radius: 8px;  /* 可選：加入小圓角讓風格與首頁卡片一致 */
-
-}
-
-
-
-/* 手機版適配：在螢幕較小時，圖片自動恢復成較大尺寸，避免文字太小看不清楚 */
-
-@media screen and (max-width: 600px) {
-
-  .mineral-table-img {
-
-    width: 80%;        /* 手機版顯示 80% */
-
-  }
-
-}
-
-
-
-/* --- 分頁導覽樣式 --- */
-
-.pagination {
-
-  display: flex;
-
-  justify-content: center;
-
-  align-items: center;
-
-  padding: 3rem 0;
-
-  gap: 1rem;
-
-}
-
-
-
-.pagination a, .pagination .disabled {
-
-  padding: 10px 20px;
-
-  border-radius: 25px;
-
-  font-size: 0.9rem;
-
-  border: 1px solid #eee;
-
-  text-decoration: none;
-
-}
-
-
-
-.pagination a {
-
-  color: #333;
-
-  background-color: #fff;
-
-  transition: all 0.3s ease;
-
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-
-}
-
-
-
-.pagination a:hover {
-
-  background-color: #9cdba2; /* 使用與您標題呼應的綠色 */
-
-  color: white;
-
-  border-color: #9cdba2;
-
-  transform: translateY(-2px);
-
-}
-
-
-
-.pagination .disabled {
-
-  color: #ccc;
-
-  background-color: #fafafa;
-
-  cursor: not-allowed;
-
-}
-
-
-
-.pagination .page_number {
-
-  font-weight: 600;
-
-  color: #666;
-
-}
-
-
-
-/* 搜尋容器基礎樣式 */
-
-.search-container {
-
-  position: relative;
-
-  /* 核心調整：設定與頭像的間隙，並取消 flex: 1 */
-
-  margin-left: 20px; 
-
-  margin-right: 0;
-
-  flex: 0 1 300px; /* 寬度最大 300px，但在空間不足時可縮小 */
-
-  max-width: 300px;
-
-}
-
-
-
-#search-input {
-
-  width: 100%;
-
-  padding: 8px 15px;
-
-  border: 1px solid #ddd;
-
-  border-radius: 20px;
-
-  font-size: 0.9rem;
-
-  outline: none;
-
-  transition: border-color 0.2s;
-
-}
-
-
-
-#search-input:focus {
-
-  border-color: #9cdba2; /* 使用您標題的綠色 */
-
-}
-
-
-
-/* 搜尋結果下拉選單 */
-
-#results-container {
-
-  position: absolute;
-
-  top: 100%;
-
-  left: 0;
-
-  width: 100%;
-
-  background: white;
-
-  list-style: none;
-
-  margin: 5px 0 0 0;
-
-  padding: 0;
-
-  border-radius: 8px;
-
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-
-  z-index: 1001;
-
-  overflow: hidden;
-
-}
-
-
-
-#results-container li a {
-
-  display: block;
-
-  padding: 10px 15px;
-
-  text-decoration: none;
-
-  color: #333;
-
-  font-size: 0.85rem;
-
-  border-bottom: 1px solid #eee;
-
-}
-
-
-
-#results-container li a:hover {
-
-  background-color: #f9f9f9;
-
-  color: #2d5a27;
-
-}
-
-
-
-.search-date {
-
-  font-size: 0.75rem;
-
-  color: #999;
-
-  float: right;
-
-}
-
-
-
-/* 手機版適配：如果空間不夠就縮小搜尋框 */
-
-@media screen and (max-width: 600px) {
-
-  .search-container {
-
-    margin: 0 0.5rem;
-
-    max-width: 150px;
-
-  }
-
-  .site-header__title {
-
-    font-size: 1rem;
-
-  }
-
-}
-
-/* --- 頁尾樣式優化 --- */
-
-.site-footer {
-
-  background-color: #f8f9fa;
-
-  border-top: 1px solid #e8e8e8;
-
-  padding: 3rem 0 1.5rem 0;
-
-  margin-top: 4rem;
-
-}
-
-
-
-.site-footer__inner {
-
-  max-width: 800px;
-
-  margin: 0 auto;
-
-  padding: 0 16px;
-
-}
-
-
-
-.footer-title {
-
-  font-size: 1.25rem;
-
-  font-weight: 700;
-
-  color: #2d5a27; /* 延用您的綠色系 */
-
-  margin-bottom: 1.5rem;
-
-  border-left: 4px solid #9cdba2;
-
-  padding-left: 12px;
-
-}
-
-
-
-.footer-recent-posts {
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 1rem;
-
-}
-
-
-
-.footer-post-item {
-
-  display: flex;
-
-  align-items: center;
-
-  text-decoration: none;
-
-  color: #333;
-
-  padding: 10px;
-
-  border-radius: 8px;
-
-  transition: background 0.2s;
-
-}
-
-
-
-.footer-post-item:hover {
-
-  background-color: #f0fdf4; /* 輕微綠色背景 */
-
-}
-
-
-
-.footer-post-thumb {
-
-  width: 60px;
-
-  height: 60px;
-
-  flex-shrink: 0;
-
-  margin-right: 15px;
-
-  overflow: hidden;
-
-  border-radius: 8px;
-
-}
-
-
-
-.footer-post-thumb img {
-
-  width: 100%;
-
-  height: 100%;
-
-  object-fit: cover;
-
-}
-
-
-
-.footer-post-info {
-
-  display: flex;
-
-  flex-direction: column;
-
-}
-
-
-
-.footer-post-title {
-
-  font-weight: 600;
-
-  font-size: 0.95rem;
-
-  margin-bottom: 4px;
-
-}
-
-
-
-.footer-post-date {
-
-  font-size: 0.8rem;
-
-  color: #888;
-
-}
-
-
-
-.footer-bottom {
-
-  margin-top: 3rem;
-
-  padding-top: 1.5rem;
-
-  border-top: 1px solid #eee;
-
-  text-align: center;
-
-  font-size: 0.85rem;
-
-  color: #999;
-
-}
-
-
-
-/* 手機版適配 */
-
-@media screen and (max-width: 600px) {
-
-  .footer-post-thumb {
-
-    width: 50px;
-
-    height: 50px;
-
-  }
-
-}
-
-
-
-/* --- Header 大頭貼樣式優化 --- */
-
-/* 1. 頭像連結 */
 
 .site-header__logo-link {
-
   display: flex;
-
   align-items: center;
-
-  flex-shrink: 0; /* 防止頭像被擠壓 */
-
+  flex-shrink: 0;
+  margin-right: 15px;
 }
-
-
-
-.site-header__logo-link:hover {
-
-  opacity: 0.8;
-
-}
-
-
 
 .header-avatar {
-
-  width: 48px;        /* 設定圖片大小 */
-
+  width: 48px;
   height: 48px;
-
-  border-radius: 50%;  /* 圓形裁切 */
-
+  border-radius: 50%;
   object-fit: cover;
-
-  border: 2px solid #9cdba2; /* 淺綠色邊框 */
-
+  border: 2px solid var(--primary-green);
   display: block;
-
 }
 
-
-
-/* 移除原本標題文字的相關設定，保持程式碼整潔 */
-
+/* 依照您的原始需求隱藏文字標題 */
 .site-header__title {
-
-  display: none;
-
+  display: none !important;
 }
 
-
-
-/* 手機版適配：在螢幕較窄時稍微縮小頭像 */
-
-@media screen and (max-width: 650px) {
-
-  .header-avatar {
-
-    width: 40px;
-
-    height: 40px;
-
-  }
-
+/* 搜尋容器 - 確保在中間有彈性 */
+.search-container {
+  position: relative;
+  flex: 1; /* 自動撐開佔據中間剩餘空間 */
+  max-width: 300px;
+  margin: 0 15px;
 }
 
+#search-input {
+  width: 100%;
+  padding: 8px 15px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  outline: none;
+}
 
+/* 右側圖示按鈕群組 */
+.site-header__icons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  margin-left: auto; /* 推至最右邊 */
+}
 
-/* --- 手機版適配 (螢幕較窄時) --- */
+.icon-btn {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  background: white;
+}
 
+/* ==========================================================================
+   3. 文章內容與 YouTube 視窗 (修復版)
+   ========================================================================== */
+.post-content {
+  font-size: 1.15rem;
+  line-height: 1.7;
+}
+
+/* 標題紅字加粗 */
+.post-content h3, .post-content h4 {
+  color: var(--accent-red);
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+/* YouTube 響應式容器修復 */
+.video-container {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 比例 */
+  margin: 1.5rem 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000; /* 載入前墊黑底 */
+}
+
+.video-container iframe,
+.video-container object,
+.video-container embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* 圖片修復 */
+.mineral-table-img {
+  width: 60%;
+  height: auto;
+  display: block;
+  margin: 1rem 0;
+  border-radius: var(--radius-sm);
+}
+
+/* ==========================================================================
+   4. 頁尾與分頁 (維持原有樣式)
+   ========================================================================== */
+.site-footer {
+  background-color: #f8f9fa;
+  padding: 3rem 0 1.5rem;
+  margin-top: 4rem;
+  border-top: 1px solid #eee;
+}
+
+.footer-post-item {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #333;
+  padding: 10px;
+}
+
+/* ==========================================================================
+   5. 響應式修正 (手機版)
+   ========================================================================== */
 @media screen and (max-width: 650px) {
-
   .site-header__inner {
-
-    /* 手機版依然維持換行，確保搜尋欄有足夠空間 */
-
-    flex-wrap: wrap; 
-
+    flex-wrap: wrap; /* 手機版允許換行 */
   }
-
-
 
   .site-header__logo-link {
-
     order: 1;
-
   }
-
-
 
   .site-header__icons {
-
     order: 2;
-
-    margin-left: auto; /* 維持在右上角 */
-
+    margin-left: auto;
   }
-
-
 
   .search-container {
-
     order: 3;
-
-    flex: 0 0 100%;  /* 換行並撐滿寬度 */
-
-    margin-left: 0;  /* 換行後取消左邊距 */
-
-    margin-top: 12px;
-
+    flex: 0 0 100%; /* 搜尋框強迫換行撐滿 */
     max-width: none;
-
+    margin: 10px 0 5px 0;
   }
 
+  .header-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .mineral-table-img {
+    width: 80%;
+  }
 }
