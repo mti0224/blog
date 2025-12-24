@@ -126,12 +126,20 @@
 
 /* 標題樣式 */
 .site-header__title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.25rem;      /* 手機版維持原本的大小 */
+  font-weight: 700;        /* 稍微加粗一點，增加辨識度 */
   letter-spacing: -0.5px;
   text-decoration: none;
   color: #333;
   white-space: nowrap;
+  transition: font-size 0.2s ease; /* 縮放時平滑過渡 */
+}
+
+/* 電腦版標題放大 (螢幕寬度 800px 以上) */
+@media screen and (min-width: 800px) {
+  .site-header__title {
+    font-size: 1.75rem;    /* 電腦版放大字體 */
+  }
 }
 
 /* 圖示容器 */
