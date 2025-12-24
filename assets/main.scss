@@ -106,10 +106,21 @@
   }
 }
 
-/* ===== Header 修正版 ===== */
+/* ===== Header 固定在最上方 ===== */
 .site-header {
-  border-bottom: 1px solid #e8e8e8; /* 視需求保留或移除邊框 */
-  min-height: 56px;
+  border-bottom: 1px solid #e8e8e8; /*  */
+  min-height: 56px;                /*  */
+  
+  /* 核心修改：固定位置 */
+  position: sticky;      /* 設為黏性定位 */
+  top: 0;                /* 距離頂端 0 像素 */
+  z-index: 1000;         /* 確保 Header 永遠在最上層，不會被圖片遮住 */
+  
+  /* 務必加上背景色，否則捲動時文字會與後方內容重疊 */
+  background-color: #ffffff; 
+  
+  /* 可選：加入一點陰影讓固定效果更明顯 */
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 /* 這裡是核心：控制內容寬度與置中 */
