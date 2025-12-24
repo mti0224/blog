@@ -451,3 +451,37 @@
     height: 50px;
   }
 }
+
+/* --- Header 大頭貼樣式優化 --- */
+.site-header__logo-link {
+  display: flex;
+  align-items: center;
+  order: 1; /* 確保在最左側 */
+  transition: opacity 0.2s ease;
+}
+
+.site-header__logo-link:hover {
+  opacity: 0.8;
+}
+
+.header-avatar {
+  width: 48px;        /* 設定圖片大小 */
+  height: 48px;
+  border-radius: 50%;  /* 圓形裁切 */
+  object-fit: cover;
+  border: 2px solid #9cdba2; /* 淺綠色邊框 */
+  display: block;
+}
+
+/* 移除原本標題文字的相關設定，保持程式碼整潔 */
+.site-header__title {
+  display: none;
+}
+
+/* 手機版適配：在螢幕較窄時稍微縮小頭像 */
+@media screen and (max-width: 650px) {
+  .header-avatar {
+    width: 40px;
+    height: 40px;
+  }
+}
