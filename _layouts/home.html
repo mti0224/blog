@@ -6,7 +6,7 @@ layout: default
   {{ content }}
 
   <div class="post-list-cards">
-    {% for post in site.posts %}
+    {% for post in paginator.posts %}
       <article class="post-card">
         <div class="post-card-meta">
           <span class="post-date">{{ post.date | date: "%Y 年 %-m 月 %-d 日" }}</span>
@@ -18,12 +18,7 @@ layout: default
 
         {% if post.coverImage %}
           <a class="post-card-coverlink" href="{{ post.url | relative_url }}">
-            <img
-              class="post-card-cover"
-              src="{{ post.coverImage | relative_url }}"
-              alt="{{ post.title | escape }}"
-              loading="lazy"
-            >
+            <img class="post-card-cover" src="{{ post.coverImage | relative_url }}" alt="{{ post.title | escape }}" loading="lazy">
           </a>
         {% endif %}
 
@@ -35,4 +30,20 @@ layout: default
       </article>
     {% endfor %}
   </div>
+
+  {% if paginator.total_pages > 1 %}
+  <div class="pagination" style="text-align: center; margin-top: 2rem;">
+    {% if paginator.previous_page %}
+      <a href="{{ paginator.previous_page_path | relative_url }}" class="previous">← 上一頁</a>
+    {% endif %}
+
+    <span class="page_number" style="margin: 0 15px;">
+      第 {{ paginator.page }} 頁 / 共 {{ paginator.total_pages }} 頁
+    </span>
+
+    {% if paginator.next_page %}
+      <a href="{{ paginator.next_page_path | relative_url }}" class="next">下一頁 →</a>
+    {% endif %}
+  </div>
+  {% endif %}
 </div>
