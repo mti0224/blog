@@ -6,7 +6,12 @@ layout: default
   {{ content }}
 
   <div class="post-list-cards">
-    {% for post in paginator.posts %}
+    {% comment %}
+      防呆機制：優先使用分頁文章，若分頁未生效則使用全部文章
+    {% endcomment %}
+    {% assign posts = paginator.posts | default: site.posts %}
+    
+    {% for post in posts %}
       <article class="post-card">
         <div class="post-card-meta">
           <span class="post-date">{{ post.date | date: "%Y 年 %-m 月 %-d 日" }}</span>
@@ -31,18 +36,23 @@ layout: default
     {% endfor %}
   </div>
 
+  {% comment %} 僅在分頁外掛生效且總頁數大於 1 時顯示 {% endcomment %}
   {% if paginator.total_pages > 1 %}
-  <div class="pagination" style="text-align: center; margin-top: 2rem;">
+  <div class="pagination">
     {% if paginator.previous_page %}
       <a href="{{ paginator.previous_page_path | relative_url }}" class="previous">← 上一頁</a>
+    {% else %}
+      <span class="disabled">← 上一頁</span>
     {% endif %}
 
-    <span class="page_number" style="margin: 0 15px;">
+    <span class="page_number">
       第 {{ paginator.page }} 頁 / 共 {{ paginator.total_pages }} 頁
     </span>
 
     {% if paginator.next_page %}
       <a href="{{ paginator.next_page_path | relative_url }}" class="next">下一頁 →</a>
+    {% else %}
+      <span class="disabled">下一頁 →</span>
     {% endif %}
   </div>
   {% endif %}
