@@ -55,52 +55,59 @@
   text-decoration: none;
 }
 
-/* --- 文章內文與標題美化完整版 --- */
+/* --- 文章標題美化 (優化比例版) --- */
+
 .post-content {
-  /* 1. 補回內文字體設定 (手機版預設) */
-  font-size: 1.15rem;
-  line-height: 1.7;
+  font-size: 1.15rem; /*  */
+  line-height: 1.7;   /*  */
   word-wrap: break-word;
   box-sizing: border-box;
 
-  /* 2. 主要標題 h3：淺綠底色圓角長方體 */
   h3 {
-    background-color: #9cdba2; /* 清新淺綠色 */
-    color: #ffffff;            /* 白色字體 */
-    padding: 10px 20px;        /* 內邊距 */
-    border-radius: 8px;        /* 圓角設定 */
-    display: inline-block;     /* 寬度隨文字長度縮放 */
-    margin-top: 2.5rem;
-    margin-bottom: 1.2rem;
-    font-weight: 700;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* 輕微陰影 */
+    background-color: #9cdba2; /*  */
+    color: #ffffff;            /*  */
+    
+    /* 核心調整 1：縮減垂直內距 (10px -> 6px)，讓方塊變扁平 */
+    padding: 6px 16px;         
+    
+    border-radius: 6px;        /* 稍微縮減圓角，看起來更精鍊 */
+    display: inline-block;     /*  */
+    
+    margin-top: 2rem;          /* 調整上方間距 */
+    
+    /* 核心調整 2：縮短下方間距 (1.2rem -> 0.7rem)，讓標題「抓著」內文 */
+    margin-bottom: 0.7rem;     
+    
+    font-weight: 700;          /*  */
+    font-size: 1.25rem;        /* 讓標題字體與方塊比例更協調 */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
   }
 
-  /* 3. 次要標題 h4：左側綠色醒目邊框 */
   h4 {
-    color: #2d5a27;            /* 深綠色字體 */
-    border-left: 6px solid #9cdba2; /* 左側綠邊 */
-    padding-left: 15px;        /* 讓文字與邊框保持距離 */
-    margin-top: 2rem;
-    margin-bottom: 1rem;
+    color: #2d5a27;            /*  */
+    border-left: 5px solid #9cdba2; /*  */
+    padding-left: 12px;
+    margin-top: 1.8rem;
+    margin-bottom: 0.6rem;      /* 同步縮短 h4 的下方間距 */
     font-weight: 600;
   }
 }
 
-/* 4. 補回電腦版字體放大設定 (螢幕寬度 800px 以上) */
+/* 電腦版字體放大 */
 @media screen and (min-width: 800px) {
   .post-content {
-    font-size: 1.35rem; /* 電腦版維持較大的字體增幅 */
+    font-size: 1.35rem; /*  */
   }
 }
 
-/* 5. 合併手機版標題適配 (螢幕寬度 600px 以下) */
+/* 手機版適配 */
 @media screen and (max-width: 600px) {
   .post-content h3 {
-    display: block;      /* 手機版變成長條狀填滿寬度 */
-    text-align: center;  /* 字體置中 */
-    font-size: 1.35rem;  /* 調整手機版標題大小 */
-    padding: 12px 15px;  /* 稍微增加點觸控空間感 */
+    display: block;      /*  */
+    text-align: center;  /*  */
+    font-size: 1.2rem;   
+    padding: 8px 12px;   
+    margin-bottom: 0.8rem;
   }
 }
 
