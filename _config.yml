@@ -3,21 +3,21 @@ description: WarmyCat 的 LINE Rangers 文章與工具整理
 lang: zh-TW
 timezone: Asia/Taipei
 
-# 網址設定 
 url: "https://mti0224.github.io"
 baseurl: "/blog"
 
 theme: minima
 
+# 這裡必須嚴格遵守：plugins 之後換行，下方每一項都要以「兩個空格 + 橫線 + 一個空格」開頭
 plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
-  - [cite_start]jekyll-paginate  # 啟用分頁外掛 
+  - jekyll-paginate
 
 # 分頁核心設定
 paginate: 10
-paginate_path: "/page:num/" # 加上斜線確保路徑正確
+paginate_path: "/page:num/"
 
 markdown: kramdown
 kramdown:
