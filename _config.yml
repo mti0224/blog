@@ -3,8 +3,8 @@ description: 部落格
 lang: zh-TW
 timezone: Asia/Taipei
 
-url: "https://mti0224.github.io"
-baseurl: "/blog"
+url: "https://warmycat.com"
+baseurl: ""  # 重要：這裡必須是空的，不能有 /blog
 
 theme: minima
 
