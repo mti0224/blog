@@ -13,6 +13,10 @@ plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
+  - jekyll-paginate  # 確保加入了這個分頁外掛
+
+paginate: 10          # 每頁顯示 10 篇文章
+paginate_path: "/page:num/"  # 分頁網址格式，例如 /page2/
 
 markdown: kramdown
 kramdown:
