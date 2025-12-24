@@ -126,12 +126,12 @@
 /* 修正 Header 容器：允許在空間不足時換行 */
 .site-header__inner {
   display: flex;
-  flex-wrap: wrap;         /* 允許內容換行 */
   align-items: center;
-  justify-content: space-between; 
-  max-width: 800px;      
-  margin: 0 auto;        
-  padding: 1rem 16px;    
+  /* 移除之前的 justify-content: space-between */
+  justify-content: flex-start; 
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0.8rem 16px;
   box-sizing: border-box;
 }
 
@@ -155,10 +155,12 @@
 }
 
 .site-header__icons {
-  order: 3;               /* 順序在右 */
   display: flex;
   align-items: center;
-  gap: 0.75rem; 
+  gap: 0.75rem;
+  /* 關鍵：利用自動左邊距將整個群組推到最右邊 */
+  margin-left: auto; 
+  flex-shrink: 0;
 }
 
 /* --- 手機版 (寬度 650px 以下) 響應式修正 --- */
@@ -295,10 +297,11 @@
 /* 搜尋容器基礎樣式 */
 .search-container {
   position: relative;
-  flex: 1;
-  max-width: 300px; 
-  margin: 0 1.5rem;
-  order: 2;               /* 電腦版順序在中間 */
+  /* 核心調整：設定與頭像的間隙，並取消 flex: 1 */
+  margin-left: 20px; 
+  margin-right: 0;
+  flex: 0 1 300px; /* 寬度最大 300px，但在空間不足時可縮小 */
+  max-width: 300px;
 }
 
 #search-input {
@@ -453,11 +456,11 @@
 }
 
 /* --- Header 大頭貼樣式優化 --- */
+/* 1. 頭像連結 */
 .site-header__logo-link {
   display: flex;
   align-items: center;
-  order: 1; /* 確保在最左側 */
-  transition: opacity 0.2s ease;
+  flex-shrink: 0; /* 防止頭像被擠壓 */
 }
 
 .site-header__logo-link:hover {
@@ -483,5 +486,30 @@
   .header-avatar {
     width: 40px;
     height: 40px;
+  }
+}
+
+/* --- 手機版適配 (螢幕較窄時) --- */
+@media screen and (max-width: 650px) {
+  .site-header__inner {
+    /* 手機版依然維持換行，確保搜尋欄有足夠空間 */
+    flex-wrap: wrap; 
+  }
+
+  .site-header__logo-link {
+    order: 1;
+  }
+
+  .site-header__icons {
+    order: 2;
+    margin-left: auto; /* 維持在右上角 */
+  }
+
+  .search-container {
+    order: 3;
+    flex: 0 0 100%;  /* 換行並撐滿寬度 */
+    margin-left: 0;  /* 換行後取消左邊距 */
+    margin-top: 12px;
+    max-width: none;
   }
 }
