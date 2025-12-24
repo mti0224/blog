@@ -55,124 +55,81 @@
   text-decoration: none;
 }
 
-/* ===== Custom Header ===== */
-.custom-header {
+/* ===== Header (merged & clean) ===== */
+
+/* Minima header: keep it aligned with content wrapper */
+.site-header {
   border-top: none;
 }
 
-.header-wrapper {
+/* Make header width match the main content width */
+.site-header .wrapper {
+  width: 100%;
+  max-width: 800px;          /* 跟 Minima 文章內容一致 */
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+
+  /* layout */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1.1rem 0;
+
+  /* spacing */
+  padding: 1.1rem 16px;      /* 左右留白，避免貼邊 */
 }
 
-.header-title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  text-decoration: none;
+/* Avoid minima float behavior */
+.site-header .site-title {
+  float: none;
+  margin: 0;
+  white-space: nowrap;
 }
 
-/* right icons */
-.header-social {
+.site-header .site-nav {
+  float: none;
+  margin: 0;
+}
+
+/* Right-side icons container */
+.header-social,
+.site-header .site-nav,
+.site-header .header-icons,
+.site-header .social-icons {
   display: flex;
-  align-items: right;
+  align-items: center;
+  justify-content: flex-end;
   gap: 0.75rem;
 }
 
+/* Circular icon button */
 .social-link {
   display: inline-flex;
-  align-items: right;
-  justify-content: center;
   width: 38px;
   height: 38px;
   border-radius: 999px;
-  text-decoration: none;
   border: 1px solid rgba(0,0,0,0.12);
-  transition: transform 120ms ease, background-color 120ms ease;
+  text-decoration: none;
+
+  /* true centering */
+  align-items: center;
+  justify-content: center;
+
+  /* fix "icon looks slightly up" baseline issue */
+  line-height: 0;
 }
 
 .social-link:hover {
   transform: translateY(-1px);
   background-color: rgba(0,0,0,0.04);
+  transition: transform 120ms ease, background-color 120ms ease;
 }
 
+/* SVG centering safety */
+.social-link svg,
 .social-icon {
+  display: block;
   width: 20px;
   height: 20px;
   fill: currentColor;
-}
-
-/* ===== Header 微調：左側留白 + 右側圖示靠右 ===== */
-.site-header .wrapper {
-  padding-left: 16px;   /* 左邊留一點空隙（可自行改 12~24px） */
-  padding-right: 16px;  /* 右邊也留一點空隙 */
-  display: flex;
-  align-items: center;
-}
-
-.site-header .site-nav {
-  margin-left: auto;    /* 把右側整塊推到最右邊 */
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;            /* 圖示之間的距離（可調） */
-}
-
-/* 如果你的圖示是包在自訂容器（例如 .header-icons / .social-icons），也一併保險處理 */
-.site-header .header-icons,
-.site-header .social-icons {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.site-header {
-  padding: 0 16px;          /* 左邊留空隙，不貼邊 */
-}
-
-.site-header__inner {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.site-header__icons {
-  margin-left: auto;         /* 關鍵：把 icons 推到最右 */
-  display: flex;
-  align-items: center;
-  gap: 10px;                 /* 圖示間距 */
-}
-
-/* 可選：避免標題被擠壓換行時亂跑 */
-.site-header__title {
-  white-space: nowrap;
-}
-
-.site-header__inner { justify-content: space-between; }
-
-/* ===== Header：讓整條 Header 變全寬，右側圖示真的靠到最右 ===== */
-.site-header .wrapper {
-  max-width: 100%;
-  width: 100%;
-  box-sizing: border-box;
-
-  /* 保險：minima 可能有 float */
-  display: flex;
-  align-items: center;
-}
-
-.site-header .site-title {
-  float: none;
-  margin-right: auto; /* 標題固定在左側 */
-}
-
-.site-header .site-nav {
-  float: none;
-  margin-left: auto;  /* 導覽/圖示區塊推到最右 */
-  white-space: nowrap;
 }
