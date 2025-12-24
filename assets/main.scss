@@ -55,30 +55,31 @@
   text-decoration: none;
 }
 
-/* --- 文章標題美化 (醒目氣泡樣式) --- */
-
+/* --- 文章內文與標題美化完整版 --- */
 .post-content {
+  /* 1. 補回內文字體設定 (手機版預設) */
   font-size: 1.15rem;
   line-height: 1.7;
   word-wrap: break-word;
-  box-sizing: border-box; /* 確保 padding 不會影響整體寬度計算 */
-  /* 主要標題 h3：淺綠底色長方體 */
+  box-sizing: border-box;
+
+  /* 2. 主要標題 h3：淺綠底色圓角長方體 */
   h3 {
     background-color: #9cdba2; /* 清新淺綠色 */
     color: #ffffff;            /* 白色字體 */
-    padding: 10px 20px;        /* 內邊距，控制長方體的大小 */
+    padding: 10px 20px;        /* 內邊距 */
     border-radius: 8px;        /* 圓角設定 */
     display: inline-block;     /* 寬度隨文字長度縮放 */
-    margin-top: 2.5rem;        /* 與上方段落的距離 */
-    margin-bottom: 1.2rem;     /* 與下方內容的距離 */
+    margin-top: 2.5rem;
+    margin-bottom: 1.2rem;
     font-weight: 700;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* 輕微陰影增加質感 */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* 輕微陰影 */
   }
 
-  /* 次要標題 h4：左側綠色邊框 */
+  /* 3. 次要標題 h4：左側綠色醒目邊框 */
   h4 {
-    color: #2d5a27;            /* 深綠色字體，確保閱讀清晰度 */
-    border-left: 6px solid #9cdba2; /* 左側醒目綠色邊框 */
+    color: #2d5a27;            /* 深綠色字體 */
+    border-left: 6px solid #9cdba2; /* 左側綠邊 */
     padding-left: 15px;        /* 讓文字與邊框保持距離 */
     margin-top: 2rem;
     margin-bottom: 1rem;
@@ -86,20 +87,20 @@
   }
 }
 
-/* 手機版適配：標題在小螢幕自動撐滿，更美觀 */
-@media screen and (max-width: 600px) {
-  .post-content h3 {
-    display: block;            /* 手機版變成長條狀，填滿寬度 */
-    text-align: center;        /* 字體置中，增加穩定感 */
-    font-size: 1.3rem;
+/* 4. 補回電腦版字體放大設定 (螢幕寬度 800px 以上) */
+@media screen and (min-width: 800px) {
+  .post-content {
+    font-size: 1.35rem; /* 電腦版維持較大的字體增幅 */
   }
 }
 
-/* 手機版適配：標題寬度調整 */
+/* 5. 合併手機版標題適配 (螢幕寬度 600px 以下) */
 @media screen and (max-width: 600px) {
   .post-content h3 {
-    display: block; /* 在手機上標題自動撐開至全寬，更易閱讀 */
-    font-size: 1.4rem;
+    display: block;      /* 手機版變成長條狀填滿寬度 */
+    text-align: center;  /* 字體置中 */
+    font-size: 1.35rem;  /* 調整手機版標題大小 */
+    padding: 12px 15px;  /* 稍微增加點觸控空間感 */
   }
 }
 
