@@ -3,6 +3,7 @@ description: WarmyCat 的 LINE Rangers 文章與工具整理
 lang: zh-TW
 timezone: Asia/Taipei
 
+# 網址設定 
 url: "https://mti0224.github.io"
 baseurl: "/blog"
 
@@ -12,11 +13,11 @@ plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
-  - jekyll-paginate
+  - [cite_start]jekyll-paginate  # 啟用分頁外掛 
 
-# 分頁設定
+# 分頁核心設定
 paginate: 10
-paginate_path: "page:num/" # 這裡使用相對路徑，避免與 /blog 衝突
+paginate_path: "/page:num/" # 加上斜線確保路徑正確
 
 markdown: kramdown
 kramdown:
