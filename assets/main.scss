@@ -154,3 +154,25 @@
 }
 
 .site-header__inner { justify-content: space-between; }
+
+/* ===== Header：讓整條 Header 變全寬，右側圖示真的靠到最右 ===== */
+.site-header .wrapper {
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+
+  /* 保險：minima 可能有 float */
+  display: flex;
+  align-items: center;
+}
+
+.site-header .site-title {
+  float: none;
+  margin-right: auto; /* 標題固定在左側 */
+}
+
+.site-header .site-nav {
+  float: none;
+  margin-left: auto;  /* 導覽/圖示區塊推到最右 */
+  white-space: nowrap;
+}
