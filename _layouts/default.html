@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="{{ page.lang | default: site.lang | default: 'zh-TW' }}">
 
-  {% include head.html %}
+  <head>
+    {% include head.html %}
+    <link rel="icon" type="image/png" href="{{ '/assets/icons/warmycat.png' | relative_url }}">
+  </head>
 
   <body>
     {% include header.html %}
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        {{ content }} </div>
+        {{ content }}
+      </div>
     </main>
 
     {% include footer.html %}
