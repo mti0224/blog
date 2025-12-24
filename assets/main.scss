@@ -154,3 +154,22 @@
   height: 100%;
   border: 0;
 }
+
+/* 礦物量表格圖片樣式：縮小至 40% 並靠左 */
+.mineral-table-img {
+  width: 40%;          /* 縮小至 40% */
+  height: auto;
+  display: block;      /* 確保圖片佔據獨立行空間 */
+  margin-left: 0;      /* 強制靠左 */
+  margin-right: auto;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;  /* 可選：加入小圓角讓風格與首頁卡片一致 */
+}
+
+/* 手機版適配：在螢幕較小時，圖片自動恢復成較大尺寸，避免文字太小看不清楚 */
+@media screen and (max-width: 600px) {
+  .mineral-table-img {
+    width: 80%;        /* 手機版顯示 80% */
+  }
+}
