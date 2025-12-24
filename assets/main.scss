@@ -55,6 +55,21 @@
   text-decoration: none;
 }
 
+/* 調整文章內文字體大小 (+50%) */
+.post-content {
+  font-size: 1.5rem; /* 將字體設定為基礎大小的 150% */
+  line-height: 1.7;   /* 同步增加行高，避免文字太擠，提升閱讀舒適度 */
+}
+
+/* 如果您希望文章內的標題（如 H3, H4）也同步放大，可以加入以下設定 */
+.post-content h3 {
+  font-size: 1.8rem; 
+}
+
+.post-content h4 {
+  font-size: 1.5rem;
+}
+
 /* ===== Header 修正版 ===== */
 
 .site-header {
