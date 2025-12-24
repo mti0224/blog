@@ -55,23 +55,29 @@
   text-decoration: none;
 }
 
-/* 調整文章內文字體大小 (+50%) */
+/* --- 文章內文字體響應式優化 --- */
 .post-content {
-  font-size: 1.5rem; /* 將字體設定為基礎大小的 150% */
-  line-height: 1.7;   /* 同步增加行高，避免文字太擠，提升閱讀舒適度 */
+  font-size: 1.15rem; 
+  line-height: 1.7;  
+  word-wrap: break-word;
 }
 
-/* 如果您希望文章內的標題（如 H3, H4）也同步放大，可以加入以下設定 */
+@media screen and (min-width: 800px) {
+  .post-content {
+    font-size: 1.35rem; 
+  }
+}
+
 .post-content h3 {
-  font-size: 1.8rem; 
+  font-size: 1.6rem;
+  margin-top: 1.5rem;
 }
 
 .post-content h4 {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
 }
 
 /* ===== Header 修正版 ===== */
-
 .site-header {
   border-bottom: 1px solid #e8e8e8; /* 視需求保留或移除邊框 */
   min-height: 56px;
