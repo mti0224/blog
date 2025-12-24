@@ -222,30 +222,44 @@
   }
 }
 
-/* 分頁按鈕樣式 */
+/* --- 分頁導覽樣式 --- */
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2rem 0;
+  padding: 3rem 0;
+  gap: 1rem;
+}
+
+.pagination a, .pagination .disabled {
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  border: 1px solid #eee;
+  text-decoration: none;
 }
 
 .pagination a {
-  padding: 8px 16px;
-  border: 1px solid #e8e8e8;
-  border-radius: 20px;
-  text-decoration: none;
   color: #333;
-  transition: all 0.2s;
+  background-color: #fff;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .pagination a:hover {
-  background-color: #9cdba2; /* 使用您喜歡的綠色 */
+  background-color: #9cdba2; /* 使用與您標題呼應的綠色 */
   color: white;
   border-color: #9cdba2;
+  transform: translateY(-2px);
 }
 
-.page_number {
-  font-size: 0.9rem;
+.pagination .disabled {
+  color: #ccc;
+  background-color: #fafafa;
+  cursor: not-allowed;
+}
+
+.pagination .page_number {
+  font-weight: 600;
   color: #666;
 }
