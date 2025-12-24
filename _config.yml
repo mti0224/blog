@@ -3,7 +3,6 @@ description: WarmyCat 的 LINE Rangers 文章與工具整理
 lang: zh-TW
 timezone: Asia/Taipei
 
-# 你現在的 GitHub Pages 位置：mti0224/blog ＝ project site
 url: "https://mti0224.github.io"
 baseurl: "/blog"
 
@@ -13,16 +12,16 @@ plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
-  - jekyll-paginate  # 確保加入了這個分頁外掛
+  - jekyll-paginate
 
-paginate: 10          # 每頁顯示 10 篇文章
-paginate_path: "/page:num/"  # 分頁網址格式，例如 /page2/
+# 分頁設定
+paginate: 10
+paginate_path: "page:num/" # 這裡使用相對路徑，避免與 /blog 衝突
 
 markdown: kramdown
 kramdown:
   input: GFM
 
-# 先保留你原本想要的文章網址格式（之後如果改成真 _posts 再強化）
 permalink: /:year/:month/:day/:title/
 
 exclude:
@@ -35,7 +34,7 @@ exclude:
   
 defaults:
   - scope:
-      path: "posts"
+      path: ""
     values:
       layout: post
   - scope:
