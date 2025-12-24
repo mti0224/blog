@@ -2,6 +2,11 @@
   <div class="site-header__inner">
     <a class="site-header__title" href="{{ '/' | relative_url }}">蚯蚓貓的資工人生</a>
 
+    <div class="search-container">
+      <input type="text" id="search-input" placeholder="搜尋文章..." autocomplete="off">
+      <ul id="results-container"></ul>
+    </div>
+
     <div class="site-header__icons">
       <a class="icon-btn" href="https://www.instagram.com/ytmit/" target="_blank" rel="noopener">
         <img src="{{ '/assets/icons/ig.svg' | relative_url }}" alt="Instagram">
@@ -15,3 +20,15 @@
     </div>
   </div>
 </header>
+
+<script src="https://unpkg.com/simple-jekyll-search@latest/dest/simple-jekyll-search.min.js"></script>
+<script>
+  window.simpleJekyllSearch = new SimpleJekyllSearch({
+    searchInput: document.getElementById('search-input'),
+    resultsContainer: document.getElementById('results-container'),
+    json: '{{ "/search.json" | relative_url }}',
+    searchResultTemplate: '<li><a href="{url}">{title} <span class="search-date">{date}</span></a></li>',
+    noResultsText: '<li>找不到相關內容</li>',
+    limit: 5
+  })
+</script>
