@@ -9,7 +9,18 @@
     {% endif %}
 
     <style>
-      /* 確保外層 wrapper 寬度足以容納側邊欄 */
+      /* --- 1. 統一全站最大寬度 --- */
+      
+      /* 調整 Header 內層寬度 */
+      .site-header__inner {
+        max-width: 1200px !important;
+        margin-right: auto;
+        margin-left: auto;
+        padding-right: 20px;
+        padding-left: 20px;
+      }
+
+      /* 調整內容區 wrapper 最大寬度 */
       .wrapper {
         max-width: 1200px !important;
         margin-right: auto;
@@ -18,6 +29,7 @@
         padding-left: 20px;
       }
 
+      /* --- 2. 雙欄佈局設定 --- */
       .page-layout {
         display: flex;
         flex-wrap: wrap;
@@ -25,7 +37,7 @@
         justify-content: center;
       }
 
-      /* 左側主內容：維持原本的 800px 閱讀寬度 */
+      /* 左側主內容：維持 800px 閱讀寬度 */
       .main-content {
         flex: 0 0 800px;
         max-width: 800px;
@@ -46,7 +58,7 @@
         top: 40px;
       }
 
-      /* --- 複刻您提供的「最新消息」標題風格 --- */
+      /* --- 3. 複刻「最新消息」標題風格 --- */
       .featured-title {
         font-size: 1.25rem;
         font-weight: 700;
@@ -63,34 +75,33 @@
         margin: 0;
       }
 
-      /* --- 列表項目與分隔線設定 --- */
+      /* 列表項目與分隔線 */
       .featured-list li {
-        margin-bottom: 0;      /* 移除原本的下邊距，改用 padding */
-        padding: 12px 16px;     /* 上下間距 12px，左邊縮排 16px */
-        border-bottom: 1px solid #eee; /* 加入淡灰色細線 */
+        margin-bottom: 0;
+        padding: 12px 16px;
+        border-bottom: 1px solid #eee;
       }
 
-      /* 最後一個項目不需要分隔線 */
       .featured-list li:last-child {
         border-bottom: none;
       }
 
       .featured-list a {
         text-decoration: none;
-        color: #000000;         /* 連結文字為黑色 */
+        color: #000000;
         font-size: 1.05rem;
         font-weight: 500;
         line-height: 1.4;
         transition: color 0.2s;
-        display: block;        /* 讓點擊區域加大 */
+        display: block;
       }
 
       .featured-list a:hover {
-        color: #2d5a27;         /* 滑過時變深綠色 */
-        text-decoration: none;  /* 因為有線條了，滑過時可以不用底線 */
+        color: #2d5a27;
+        text-decoration: none;
       }
 
-      /* 行動裝置適應 */
+      /* --- 4. 響應式適應 --- */
       @media (max-width: 1150px) {
         .main-content { flex: 1 1 auto; }
       }
