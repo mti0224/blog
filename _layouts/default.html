@@ -9,110 +9,94 @@
     {% endif %}
 
     <style>
-      /* 1. 擴大 wrapper 的最大寬度，讓右邊有空間放側邊欄 */
+      /* 擴大 wrapper 的最大寬度 */
       .wrapper {
-        max-width: 1200px !important; /* 從原本的 800px 擴大到 1200px */
+        max-width: 1200px !important;
         margin-right: auto;
         margin-left: auto;
         padding-right: 20px;
         padding-left: 20px;
       }
-
+    
       .page-layout {
         display: flex;
         flex-wrap: wrap;
-        gap: 40px; /* 主內容與側邊欄的間距 */
-        justify-content: center; /* 居中顯示 */
+        gap: 40px;
+        justify-content: center;
       }
-
-      /* 2. 固定主內容區的寬度，使其不被壓縮 */
+    
       .main-content {
-        flex: 0 0 800px; /* 固定在 800px，不縮小也不放大 */
+        flex: 0 0 800px;
         max-width: 800px;
         width: 100%;
       }
-
-      /* 3. 側邊欄佔用剩餘空間 */
+    
       .sidebar {
         flex: 1;
         min-width: 280px;
         max-width: 320px;
       }
-
+    
+      /* --- 仿照 Footer 風格的精選文章區塊 --- */
       .featured-box {
         position: -webkit-sticky;
         position: sticky;
         top: 30px;
-        background: #fff;
-        padding: 25px;
-        border: 1px solid #eee;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        /* 移除背景、邊框與陰影，改用與 Footer 相同的頂部細線 */
+        border-top: 1px solid #e8e8e8; 
+        padding-top: 20px;
+        margin-top: 10px;
+        background: transparent;
       }
-
+    
       .featured-box h3 {
         margin-top: 0;
-        font-size: 1.25em;
-        color: #d9534f;
-        border-bottom: 2px solid #f8d7da;
-        padding-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        font-size: 1.1em;
+        /* 使用與 Footer 相同的灰色系 (#828282) */
+        color: #828282; 
+        text-transform: uppercase; /* 仿照部分主題 Footer 的大寫風格 */
+        letter-spacing: 1px;
+        margin-bottom: 15px;
+        border: none; /* 移除原本底部的紅線 */
       }
-
+    
       .featured-list {
         list-style: none;
         padding: 0;
         margin: 0;
       }
-
+    
       .featured-list li {
-        padding: 15px 0;
-        border-bottom: 1px solid #f5f5f5;
+        padding: 8px 0;
+        border: none; /* 移除間隔線 */
       }
-
-      .featured-list li:last-child {
-        border-bottom: none;
-      }
-
+    
       .featured-list a {
         text-decoration: none;
-        color: #444;
-        font-weight: 500;
-        transition: all 0.2s;
+        /* 使用與 Footer 連結相同的顏色 */
+        color: #828282; 
+        font-size: 0.95em;
+        font-weight: normal; /* 恢復一般字重 */
+        transition: color 0.2s;
         display: block;
-        line-height: 1.5;
+        line-height: 1.6;
       }
-
+    
       .featured-list a:hover {
-        color: #d9534f;
-        transform: translateX(5px); /* 滑過時稍微向右位移 */
+        color: #333; /* 滑過時變深，而非變紅 */
+        text-decoration: underline; /* 仿照 Footer 的連結互動 */
       }
-
+    
       /* 行動裝置適應 */
       @media (max-width: 1150px) {
-        .main-content {
-          flex: 1 1 auto; /* 在中等螢幕下允許彈性縮放 */
-        }
+        .main-content { flex: 1 1 auto; }
       }
-
+    
       @media (max-width: 850px) {
-        .page-layout {
-          flex-direction: column;
-          align-items: center;
-        }
-        .main-content {
-          max-width: 100%;
-        }
-        .sidebar {
-          max-width: 100%;
-          width: 100%;
-          order: 2;
-        }
-        .featured-box {
-          position: static;
-        }
+        .page-layout { flex-direction: column; align-items: center; }
+        .main-content { max-width: 100%; }
+        .sidebar { max-width: 100%; width: 100%; order: 2; margin-top: 40px; }
+        .featured-box { position: static; border-top: 1px solid #e8e8e8; }
       }
     </style>
   </head>
