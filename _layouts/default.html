@@ -9,7 +9,7 @@
     {% endif %}
 
     <style>
-      /* 確保外層容器足夠寬，以利用右側空白處 */
+      /* 擴大 wrapper 以利用右側空白處 */
       .wrapper {
         max-width: 1200px !important;
         margin-right: auto;
@@ -21,7 +21,7 @@
       .page-layout {
         display: flex;
         flex-wrap: wrap;
-        gap: 60px; /* 增加間距，使其看起來更開闊 */
+        gap: 60px;
         justify-content: center;
       }
 
@@ -32,54 +32,29 @@
         width: 100%;
       }
 
-      /* 右側側邊欄：風格同步 Footer */
+      /* 右側側邊欄 */
       .sidebar {
         flex: 1;
         min-width: 250px;
         max-width: 300px;
+        margin-top: 20px; /* 稍微與頂部對齊 */
       }
 
-      .featured-section {
+      /* 側邊欄常駐效果 */
+      .sidebar-sticky {
         position: -webkit-sticky;
         position: sticky;
         top: 40px;
-        /* 完全移除方框與陰影，與 Footer 結構一致 */
-        background: transparent;
       }
 
-      /* 複刻 Footer Heading 風格 */
-      .featured-heading {
-        font-size: 18px; /* 同 site-footer .footer-heading */
-        color: #828282;  /* 同 $grey-color */
-        margin-bottom: 15px; /* 同 $spacing-unit / 2 */
-        font-weight: normal;
-        text-transform: none;
+      /* 修正側邊欄內的 post-link 字體大小，使其更接近頁尾比例 */
+      .sidebar .post-link {
+        font-size: 18px; /* 頁尾風格標題通常較小 */
+        margin-bottom: 5px;
+        font-weight: 400;
       }
 
-      .featured-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-
-      .featured-list li {
-        margin-bottom: 8px; /* 稍微緊湊，像頁尾的列表 */
-      }
-
-      .featured-list a {
-        text-decoration: none;
-        color: #828282; /* 使用頁尾文字顏色 */
-        font-size: 15px; /* 略小於主文字，增加層次感 */
-        line-height: 1.4;
-        transition: color 0.2s;
-      }
-
-      .featured-list a:hover {
-        color: #333; /* 滑過時變深色 */
-        text-decoration: underline;
-      }
-
-      /* 手機版適應：側邊欄會移動到下方並保持頁尾風格 */
+      /* 手機版適應 */
       @media (max-width: 1150px) {
         .main-content { flex: 1 1 auto; }
       }
@@ -92,10 +67,10 @@
           width: 100%; 
           order: 2; 
           margin-top: 50px;
-          border-top: 1px solid #e8e8e8; /* 手機版加上分隔線 */
-          padding-top: 20px;
+          border-top: 1px solid #e8e8e8;
+          padding-top: 30px;
         }
-        .featured-section { position: static; }
+        .sidebar-sticky { position: static; }
       }
     </style>
   </head>
@@ -113,18 +88,25 @@
           </div>
 
           <aside class="sidebar">
-            <nav class="featured-section">
-              <h2 class="featured-heading">精選文章</h2>
-              <ul class="featured-list">
+            <div class="sidebar-sticky">
+              
+              <h2 class="footer-heading">精選文章</h2>
+              
+              <ul class="post-list">
                 {% if site.data.featured %}
                   {% for item in site.data.featured %}
                     <li>
-                      <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
+                      <h3>
+                        <a class="post-link" href="{{ item.url | relative_url }}">
+                          {{ item.title | escape }}
+                        </a>
+                      </h3>
                     </li>
                   {% endfor %}
                 {% endif %}
               </ul>
-            </nav>
+
+            </div>
           </aside>
 
         </div>
