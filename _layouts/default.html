@@ -9,7 +9,7 @@
     {% endif %}
 
     <style>
-      /* 擴大 wrapper 以利用右側空白處 */
+      /* 擴大佈局以利用右側空間 */
       .wrapper {
         max-width: 1200px !important;
         margin-right: auto;
@@ -25,33 +25,71 @@
         justify-content: center;
       }
 
-      /* 左側主內容：維持原本的 800px 閱讀寬度 */
       .main-content {
         flex: 0 0 800px;
         max-width: 800px;
         width: 100%;
       }
 
-      /* 右側側邊欄 */
       .sidebar {
         flex: 1;
         min-width: 250px;
         max-width: 300px;
-        margin-top: 20px; /* 稍微與頂部對齊 */
+        margin-top: 20px;
       }
 
-      /* 側邊欄常駐效果 */
       .sidebar-sticky {
         position: -webkit-sticky;
         position: sticky;
         top: 40px;
       }
 
-      /* 修正側邊欄內的 post-link 字體大小，使其更接近頁尾比例 */
-      .sidebar .post-link {
-        font-size: 18px; /* 頁尾風格標題通常較小 */
-        margin-bottom: 5px;
-        font-weight: 400;
+      /* --- 複刻首頁「最新文章」風格 --- */
+      .featured-title {
+        font-size: 28px; /* 同 .post-list-heading */
+        color: #333;
+        margin-bottom: 20px;
+        position: relative;
+        padding-left: 15px; /* 為短直線留空間 */
+        display: flex;
+        align-items: center;
+      }
+
+      /* 標題旁邊的短直線（綠色） */
+      .featured-title::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;      /* 線條寬度 */
+        height: 24px;    /* 線條長度 */
+        background-color: #42b983; /* 典型的首頁綠色 */
+        border-radius: 2px;
+      }
+
+      .featured-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .featured-list li {
+        margin-bottom: 15px;
+      }
+
+      .featured-list a {
+        text-decoration: none;
+        color: #42b983; /* 連結改為綠色 */
+        font-size: 18px;
+        font-weight: 500;
+        line-height: 1.3;
+        transition: opacity 0.2s;
+      }
+
+      .featured-list a:hover {
+        opacity: 0.7;
+        text-decoration: underline;
       }
 
       /* 手機版適應 */
@@ -67,7 +105,7 @@
           width: 100%; 
           order: 2; 
           margin-top: 50px;
-          border-top: 1px solid #e8e8e8;
+          border-top: 1px solid #eee;
           padding-top: 30px;
         }
         .sidebar-sticky { position: static; }
@@ -90,17 +128,15 @@
           <aside class="sidebar">
             <div class="sidebar-sticky">
               
-              <h2 class="footer-heading">精選文章</h2>
+              <h2 class="featured-title">精選文章</h2>
               
-              <ul class="post-list">
+              <ul class="featured-list">
                 {% if site.data.featured %}
                   {% for item in site.data.featured %}
                     <li>
-                      <h3>
-                        <a class="post-link" href="{{ item.url | relative_url }}">
-                          {{ item.title | escape }}
-                        </a>
-                      </h3>
+                      <a href="{{ item.url | relative_url }}">
+                        {{ item.title | escape }}
+                      </a>
                     </li>
                   {% endfor %}
                 {% endif %}
