@@ -9,7 +9,7 @@
     {% endif %}
 
     <style>
-      /* 擴大 wrapper 的最大寬度 */
+      /* 確保外層容器足夠寬，以利用右側空白處 */
       .wrapper {
         max-width: 1200px !important;
         margin-right: auto;
@@ -17,86 +17,85 @@
         padding-right: 20px;
         padding-left: 20px;
       }
-    
+
       .page-layout {
         display: flex;
         flex-wrap: wrap;
-        gap: 40px;
+        gap: 60px; /* 增加間距，使其看起來更開闊 */
         justify-content: center;
       }
-    
+
+      /* 左側主內容：維持原本的 800px 閱讀寬度 */
       .main-content {
         flex: 0 0 800px;
         max-width: 800px;
         width: 100%;
       }
-    
+
+      /* 右側側邊欄：風格同步 Footer */
       .sidebar {
         flex: 1;
-        min-width: 280px;
-        max-width: 320px;
+        min-width: 250px;
+        max-width: 300px;
       }
-    
-      /* --- 仿照 Footer 風格的精選文章區塊 --- */
-      .featured-box {
+
+      .featured-section {
         position: -webkit-sticky;
         position: sticky;
-        top: 30px;
-        /* 移除背景、邊框與陰影，改用與 Footer 相同的頂部細線 */
-        border-top: 1px solid #e8e8e8; 
-        padding-top: 20px;
-        margin-top: 10px;
+        top: 40px;
+        /* 完全移除方框與陰影，與 Footer 結構一致 */
         background: transparent;
       }
-    
-      .featured-box h3 {
-        margin-top: 0;
-        font-size: 1.1em;
-        /* 使用與 Footer 相同的灰色系 (#828282) */
-        color: #828282; 
-        text-transform: uppercase; /* 仿照部分主題 Footer 的大寫風格 */
-        letter-spacing: 1px;
-        margin-bottom: 15px;
-        border: none; /* 移除原本底部的紅線 */
+
+      /* 複刻 Footer Heading 風格 */
+      .featured-heading {
+        font-size: 18px; /* 同 site-footer .footer-heading */
+        color: #828282;  /* 同 $grey-color */
+        margin-bottom: 15px; /* 同 $spacing-unit / 2 */
+        font-weight: normal;
+        text-transform: none;
       }
-    
+
       .featured-list {
         list-style: none;
         padding: 0;
         margin: 0;
       }
-    
+
       .featured-list li {
-        padding: 8px 0;
-        border: none; /* 移除間隔線 */
+        margin-bottom: 8px; /* 稍微緊湊，像頁尾的列表 */
       }
-    
+
       .featured-list a {
         text-decoration: none;
-        /* 使用與 Footer 連結相同的顏色 */
-        color: #828282; 
-        font-size: 0.95em;
-        font-weight: normal; /* 恢復一般字重 */
+        color: #828282; /* 使用頁尾文字顏色 */
+        font-size: 15px; /* 略小於主文字，增加層次感 */
+        line-height: 1.4;
         transition: color 0.2s;
-        display: block;
-        line-height: 1.6;
       }
-    
+
       .featured-list a:hover {
-        color: #333; /* 滑過時變深，而非變紅 */
-        text-decoration: underline; /* 仿照 Footer 的連結互動 */
+        color: #333; /* 滑過時變深色 */
+        text-decoration: underline;
       }
-    
-      /* 行動裝置適應 */
+
+      /* 手機版適應：側邊欄會移動到下方並保持頁尾風格 */
       @media (max-width: 1150px) {
         .main-content { flex: 1 1 auto; }
       }
-    
+
       @media (max-width: 850px) {
-        .page-layout { flex-direction: column; align-items: center; }
+        .page-layout { flex-direction: column; align-items: flex-start; }
         .main-content { max-width: 100%; }
-        .sidebar { max-width: 100%; width: 100%; order: 2; margin-top: 40px; }
-        .featured-box { position: static; border-top: 1px solid #e8e8e8; }
+        .sidebar { 
+          max-width: 100%; 
+          width: 100%; 
+          order: 2; 
+          margin-top: 50px;
+          border-top: 1px solid #e8e8e8; /* 手機版加上分隔線 */
+          padding-top: 20px;
+        }
+        .featured-section { position: static; }
       }
     </style>
   </head>
@@ -114,8 +113,8 @@
           </div>
 
           <aside class="sidebar">
-            <div class="featured-box">
-              <h3><span>🌟</span> 精選文章</h3>
+            <nav class="featured-section">
+              <h2 class="featured-heading">精選文章</h2>
               <ul class="featured-list">
                 {% if site.data.featured %}
                   {% for item in site.data.featured %}
@@ -123,11 +122,9 @@
                       <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
                     </li>
                   {% endfor %}
-                {% else %}
-                  <li style="color: #999; font-size: 0.9em;">請建立 _data/featured.json</li>
                 {% endif %}
               </ul>
-            </div>
+            </nav>
           </aside>
 
         </div>
