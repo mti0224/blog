@@ -46,14 +46,14 @@
         top: 40px;
       }
 
-      /* --- 完全復刻您提供的「最新消息」標題風格 --- */
+      /* --- 複刻您提供的「最新消息」標題風格 --- */
       .featured-title {
-        font-size: 1.25rem;            /* 依照您提供的設定 */
-        font-weight: 700;              /* 依照您提供的設定 */
-        color: #2d5a27;                /* 深綠色字體 */
-        margin-bottom: 1.5rem;         /* 依照您提供的設定 */
-        border-left: 4px solid #9cdba2; /* 淺綠色左側長條 */
-        padding-left: 12px;            /* 依照您提供的設定 */
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #2d5a27;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #9cdba2;
+        padding-left: 12px;
         line-height: 1.2;
       }
 
@@ -63,26 +63,34 @@
         margin: 0;
       }
 
+      /* --- 列表項目與分隔線設定 --- */
       .featured-list li {
-        margin-bottom: 12px;
-        padding-left: 16px; /* 讓列表與上方標題稍微對齊 */
+        margin-bottom: 0;      /* 移除原本的下邊距，改用 padding */
+        padding: 12px 16px;     /* 上下間距 12px，左邊縮排 16px */
+        border-bottom: 1px solid #eee; /* 加入淡灰色細線 */
+      }
+
+      /* 最後一個項目不需要分隔線 */
+      .featured-list li:last-child {
+        border-bottom: none;
       }
 
       .featured-list a {
         text-decoration: none;
-        color: #000000;                /* 文章連結文字改為黑色 */
+        color: #000000;         /* 連結文字為黑色 */
         font-size: 1.05rem;
         font-weight: 500;
         line-height: 1.4;
         transition: color 0.2s;
+        display: block;        /* 讓點擊區域加大 */
       }
 
       .featured-list a:hover {
-        color: #2d5a27;                /* 滑過時變為標題的深綠色 */
-        text-decoration: underline;
+        color: #2d5a27;         /* 滑過時變深綠色 */
+        text-decoration: none;  /* 因為有線條了，滑過時可以不用底線 */
       }
 
-      /* 手機版適應 */
+      /* 行動裝置適應 */
       @media (max-width: 1150px) {
         .main-content { flex: 1 1 auto; }
       }
