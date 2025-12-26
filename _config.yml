@@ -42,3 +42,5 @@ defaults:
       path: ""
     values:
       layout: page
+
+google_analytics: G-GS0PP8XXHL
