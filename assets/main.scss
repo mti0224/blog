@@ -388,3 +388,59 @@
   .mineral-table-img { width: 80%; }
   .footer-post-thumb { width: 50px; height: 50px; }
 }
+
+/* 容器：設定為彈性佈局 */
+.site-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: 1100px;
+  margin: 0 auto;
+  gap: 30px;
+  padding: 20px;
+}
+
+/* 左側主內容區 */
+.main-content {
+  flex: 3; /* 佔比較大 */
+  min-width: 300px;
+}
+
+/* 右側側邊欄 */
+.sidebar {
+  flex: 1; /* 佔比較小 */
+  min-width: 250px;
+}
+
+.featured-box {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  position: sticky; /* 讓側邊欄跟隨捲動 */
+  top: 20px;
+}
+
+.featured-box h3 {
+  color: #d9534f; /* 使用您的主題紅色 */
+  border-bottom: 2px solid #d9534f;
+  padding-bottom: 10px;
+}
+
+.featured-list {
+  list-style: none;
+  padding: 0;
+}
+
+.featured-list li {
+  margin: 15px 0;
+}
+
+.featured-list a {
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+}
+
+.featured-list a:hover {
+  color: #d9534f;
+}
