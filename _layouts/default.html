@@ -7,6 +7,92 @@
     {% if site.google_analytics %}
       {% include google-analytics.html %}
     {% endif %}
+
+    <style>
+      /* 設定整體頁面佈局為彈性盒子 */
+      .page-layout {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+        margin-top: 20px;
+      }
+
+      /* 左側主內容區 */
+      .main-content {
+        flex: 3;
+        min-width: 300px; /* 確保手機版不會過窄 */
+      }
+
+      /* 右側側邊欄 */
+      .sidebar {
+        flex: 1;
+        min-width: 250px;
+      }
+
+      /* 側邊欄內的精選方塊 */
+      .featured-box {
+        position: -webkit-sticky; /* 支援 Safari */
+        position: sticky;
+        top: 20px; /* 捲動時距離頂部的距離 */
+        background: #fff;
+        padding: 20px;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      }
+
+      .featured-box h3 {
+        margin-top: 0;
+        font-size: 1.2em;
+        color: #d9534f; /* 主題紅色 */
+        border-bottom: 2px solid #f8d7da;
+        padding-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .featured-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .featured-list li {
+        padding: 12px 0;
+        border-bottom: 1px dashed #eee;
+      }
+
+      .featured-list li:last-child {
+        border-bottom: none;
+      }
+
+      .featured-list a {
+        text-decoration: none;
+        color: #333;
+        font-weight: 500;
+        transition: color 0.2s;
+        display: block;
+        line-height: 1.4;
+      }
+
+      .featured-list a:hover {
+        color: #d9534f;
+      }
+
+      /* 行動裝置適應：當螢幕寬度小於 768px 時改為單欄 */
+      @media (max-width: 768px) {
+        .page-layout {
+          flex-direction: column;
+        }
+        .sidebar {
+          order: 2; /* 讓側邊欄在手機版顯示在文章下方 */
+        }
+        .featured-box {
+          position: static; /* 手機版取消常駐跟隨 */
+        }
+      }
+    </style>
   </head>
 
   <body>
@@ -14,8 +100,31 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        {{ content }}
-      </div>
+        
+        <div class="page-layout">
+          
+          <div class="main-content">
+            {{ content }}
+          </div>
+
+          <aside class="sidebar">
+            <div class="featured-box">
+              <h3><span>🌟</span> 精選文章</h3>
+              <ul class="featured-list">
+                {% if site.data.featured %}
+                  {% for item in site.data.featured %}
+                    <li>
+                      <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
+                    </li>
+                  {% endfor %}
+                {% else %}
+                  <li style="color: #999; font-size: 0.9em;">請建立 _data/featured.json 以顯示文章</li>
+                {% endif %}
+              </ul>
+            </div>
+          </aside>
+
+        </div> </div>
     </main>
 
     {% include footer.html %}
