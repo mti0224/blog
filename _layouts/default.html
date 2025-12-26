@@ -9,47 +9,56 @@
     {% endif %}
 
     <style>
-      /* 設定整體頁面佈局為彈性盒子 */
+      /* 1. 擴大 wrapper 的最大寬度，讓右邊有空間放側邊欄 */
+      .wrapper {
+        max-width: 1200px !important; /* 從原本的 800px 擴大到 1200px */
+        margin-right: auto;
+        margin-left: auto;
+        padding-right: 20px;
+        padding-left: 20px;
+      }
+
       .page-layout {
         display: flex;
         flex-wrap: wrap;
-        gap: 30px;
-        margin-top: 20px;
+        gap: 40px; /* 主內容與側邊欄的間距 */
+        justify-content: center; /* 居中顯示 */
       }
 
-      /* 左側主內容區 */
+      /* 2. 固定主內容區的寬度，使其不被壓縮 */
       .main-content {
-        flex: 3;
-        min-width: 300px; /* 確保手機版不會過窄 */
+        flex: 0 0 800px; /* 固定在 800px，不縮小也不放大 */
+        max-width: 800px;
+        width: 100%;
       }
 
-      /* 右側側邊欄 */
+      /* 3. 側邊欄佔用剩餘空間 */
       .sidebar {
         flex: 1;
-        min-width: 250px;
+        min-width: 280px;
+        max-width: 320px;
       }
 
-      /* 側邊欄內的精選方塊 */
       .featured-box {
-        position: -webkit-sticky; /* 支援 Safari */
+        position: -webkit-sticky;
         position: sticky;
-        top: 20px; /* 捲動時距離頂部的距離 */
+        top: 30px;
         background: #fff;
-        padding: 20px;
+        padding: 25px;
         border: 1px solid #eee;
         border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
       }
 
       .featured-box h3 {
         margin-top: 0;
-        font-size: 1.2em;
-        color: #d9534f; /* 主題紅色 */
+        font-size: 1.25em;
+        color: #d9534f;
         border-bottom: 2px solid #f8d7da;
-        padding-bottom: 10px;
+        padding-bottom: 12px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
       }
 
       .featured-list {
@@ -59,8 +68,8 @@
       }
 
       .featured-list li {
-        padding: 12px 0;
-        border-bottom: 1px dashed #eee;
+        padding: 15px 0;
+        border-bottom: 1px solid #f5f5f5;
       }
 
       .featured-list li:last-child {
@@ -69,27 +78,40 @@
 
       .featured-list a {
         text-decoration: none;
-        color: #333;
+        color: #444;
         font-weight: 500;
-        transition: color 0.2s;
+        transition: all 0.2s;
         display: block;
-        line-height: 1.4;
+        line-height: 1.5;
       }
 
       .featured-list a:hover {
         color: #d9534f;
+        transform: translateX(5px); /* 滑過時稍微向右位移 */
       }
 
-      /* 行動裝置適應：當螢幕寬度小於 768px 時改為單欄 */
-      @media (max-width: 768px) {
+      /* 行動裝置適應 */
+      @media (max-width: 1150px) {
+        .main-content {
+          flex: 1 1 auto; /* 在中等螢幕下允許彈性縮放 */
+        }
+      }
+
+      @media (max-width: 850px) {
         .page-layout {
           flex-direction: column;
+          align-items: center;
+        }
+        .main-content {
+          max-width: 100%;
         }
         .sidebar {
-          order: 2; /* 讓側邊欄在手機版顯示在文章下方 */
+          max-width: 100%;
+          width: 100%;
+          order: 2;
         }
         .featured-box {
-          position: static; /* 手機版取消常駐跟隨 */
+          position: static;
         }
       }
     </style>
@@ -118,13 +140,15 @@
                     </li>
                   {% endfor %}
                 {% else %}
-                  <li style="color: #999; font-size: 0.9em;">請建立 _data/featured.json 以顯示文章</li>
+                  <li style="color: #999; font-size: 0.9em;">請建立 _data/featured.json</li>
                 {% endif %}
               </ul>
             </div>
           </aside>
 
-        </div> </div>
+        </div>
+
+      </div>
     </main>
 
     {% include footer.html %}
