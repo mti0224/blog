@@ -9,115 +9,81 @@
     {% endif %}
 
     <style>
-      /* --- 1. 統一全站最大寬度 --- */
-      
-      /* 調整 Header 內層寬度 */
-      .site-header__inner {
+      /* --- 1. 全站寬度對齊 --- */
+      .site-header__inner, .wrapper {
         max-width: 1200px !important;
-        margin-right: auto;
-        margin-left: auto;
-        padding-right: 20px;
-        padding-left: 20px;
+        margin: 0 auto;
+        padding: 0 20px;
       }
 
-      /* 調整內容區 wrapper 最大寬度 */
-      .wrapper {
-        max-width: 1200px !important;
-        margin-right: auto;
-        margin-left: auto;
-        padding-right: 20px;
-        padding-left: 20px;
+      /* --- 2. 下拉式選單樣式 --- */
+      .header-dropdown {
+        position: relative;
+        display: inline-block;
       }
 
-      /* --- 2. 雙欄佈局設定 --- */
-      .page-layout {
+      .dropdown-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 10px;
+        color: #828282;
+        border-radius: 50%;
+        transition: background 0.2s;
         display: flex;
-        flex-wrap: wrap;
-        gap: 60px;
-        justify-content: center;
+        align-items: center;
       }
 
-      /* 左側主內容：維持 800px 閱讀寬度 */
-      .main-content {
-        flex: 0 0 800px;
-        max-width: 800px;
-        width: 100%;
+      .dropdown-toggle:hover {
+        background-color: rgba(0,0,0,0.05);
       }
 
-      /* 右側側邊欄 */
-      .sidebar {
-        flex: 1;
-        min-width: 250px;
-        max-width: 300px;
-        margin-top: 20px;
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        right: 0;
+        background-color: #ffffff;
+        min-width: 220px;
+        box-shadow: 0px 8px 16px rgba(0,0,0,0.1);
+        z-index: 1000;
+        border-radius: 12px;
+        border: 1px solid #eee;
+        overflow: hidden;
+        margin-top: 8px;
       }
 
-      .sidebar-sticky {
-        position: -webkit-sticky;
-        position: sticky;
-        top: 40px;
-      }
-
-      /* --- 3. 複刻「最新消息」標題風格 --- */
-      .featured-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #2d5a27;
-        margin-bottom: 1.5rem;
-        border-left: 4px solid #9cdba2;
-        padding-left: 12px;
-        line-height: 1.2;
-      }
-
-      .featured-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-
-      /* 列表項目與分隔線 */
-      .featured-list li {
-        margin-bottom: 0;
+      .dropdown-content a {
+        color: #333;
         padding: 12px 16px;
-        border-bottom: 1px solid #eee;
-      }
-
-      .featured-list li:last-child {
-        border-bottom: none;
-      }
-
-      .featured-list a {
         text-decoration: none;
-        color: #000000;
-        font-size: 1.05rem;
-        font-weight: 500;
-        line-height: 1.4;
-        transition: color 0.2s;
         display: block;
+        font-size: 15px;
+        transition: background 0.2s;
       }
 
-      .featured-list a:hover {
+      .dropdown-content a:hover {
+        background-color: #f8f9fa;
         color: #2d5a27;
-        text-decoration: none;
       }
 
-      /* --- 4. 響應式適應 --- */
-      @media (max-width: 1150px) {
-        .main-content { flex: 1 1 auto; }
-      }
+      .show { display: block !important; }
+
+      /* --- 3. 雙欄與精選文章樣式 (沿用您之前的設定) --- */
+      .page-layout { display: flex; flex-wrap: wrap; gap: 60px; justify-content: center; margin-top: 20px; }
+      .main-content { flex: 0 0 800px; max-width: 800px; width: 100%; }
+      .sidebar { flex: 1; min-width: 250px; max-width: 300px; margin-top: 20px; }
+      .sidebar-sticky { position: sticky; top: 40px; }
+      .featured-title { font-size: 1.25rem; font-weight: 700; color: #2d5a27; margin-bottom: 1.5rem; border-left: 4px solid #9cdba2; padding-left: 12px; line-height: 1.2; }
+      .featured-list { list-style: none; padding: 0; margin: 0; }
+      .featured-list li { padding: 12px 16px; border-bottom: 1px solid #eee; }
+      .featured-list li:last-child { border-bottom: none; }
+      .featured-list a { text-decoration: none; color: #000; font-size: 1.05rem; font-weight: 500; display: block; }
+      .featured-list a:hover { color: #2d5a27; }
 
       @media (max-width: 850px) {
-        .page-layout { flex-direction: column; align-items: flex-start; }
-        .main-content { max-width: 100%; }
-        .sidebar { 
-          max-width: 100%; 
-          width: 100%; 
-          order: 2; 
-          margin-top: 50px;
-          border-top: 1px solid #eee;
-          padding-top: 30px;
-        }
-        .sidebar-sticky { position: static; }
+        .page-layout { flex-direction: column; }
+        .main-content, .sidebar { max-width: 100%; width: 100%; }
+        .sidebar { order: 2; border-top: 1px solid #eee; padding-top: 30px; }
       }
     </style>
   </head>
@@ -127,39 +93,45 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        
         <div class="page-layout">
-          
           <div class="main-content">
             {{ content }}
           </div>
-
           <aside class="sidebar">
             <div class="sidebar-sticky">
-              
               <h2 class="featured-title">精選文章</h2>
-              
               <ul class="featured-list">
                 {% if site.data.featured %}
                   {% for item in site.data.featured %}
-                    <li>
-                      <a href="{{ item.url | relative_url }}">
-                        {{ item.title | escape }}
-                      </a>
-                    </li>
+                    <li><a href="{{ item.url | relative_url }}">{{ item.title | escape }}</a></li>
                   {% endfor %}
                 {% endif %}
               </ul>
-
             </div>
           </aside>
-
         </div>
-
       </div>
     </main>
 
     {% include footer.html %}
-  </body>
 
+    <script>
+      function toggleMenu() {
+        document.getElementById("headerDropdown").classList.toggle("show");
+      }
+
+      // 點擊選單外部時自動關閉
+      window.onclick = function(event) {
+        if (!event.target.matches('.dropdown-toggle') && !event.target.closest('.dropdown-toggle')) {
+          var dropdowns = document.getElementsByClassName("dropdown-content");
+          for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+              openDropdown.classList.remove('show');
+            }
+          }
+        }
+      }
+    </script>
+  </body>
 </html>
