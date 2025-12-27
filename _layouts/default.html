@@ -240,17 +240,37 @@
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         const toggleBtn = document.getElementById('dark-mode-toggle');
-        
+        const toolIcon = document.getElementById('tool-icon');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const toggleText = document.getElementById('toggle-text');
+    
+        // 定義更新 UI 的函式
+        function updateThemeUI(theme) {
+          if (theme === 'dark') {
+            if (toolIcon) toolIcon.src = "{{ '/assets/icons/tool_night.png' | relative_url }}";
+            if (toggleIcon) toggleIcon.src = "{{ '/assets/icons/day.png' | relative_url }}";
+            if (toggleText) toggleText.textContent = "切換淺色模式";
+          } else {
+            if (toolIcon) toolIcon.src = "{{ '/assets/icons/tool_day.png' | relative_url }}";
+            if (toggleIcon) toggleIcon.src = "{{ '/assets/icons/night.png' | relative_url }}";
+            if (toggleText) toggleText.textContent = "切換深色模式";
+          }
+        }
+    
+        // 初始化 UI (載入頁面時)
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        updateThemeUI(currentTheme);
+    
         if (toggleBtn) {
           toggleBtn.addEventListener('click', function() {
-            // 取得目前的模式
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            // 切換模式
-            const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            const nowTheme = document.documentElement.getAttribute('data-theme');
+            const targetTheme = nowTheme === 'dark' ? 'light' : 'dark';
             
-            // 執行切換並存入瀏覽器記憶
             document.documentElement.setAttribute('data-theme', targetTheme);
             localStorage.setItem('theme', targetTheme);
+            
+            // 切換時立即更新圖示與文字
+            updateThemeUI(targetTheme);
           });
         }
       });
