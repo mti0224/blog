@@ -557,3 +557,8 @@ body {
 [data-theme="dark"] .menu-icon {
   filter: brightness(0.9);
 }
+
+.aboutme-container ul li a,
+.page-content ul li a {
+  color: var(--link-color) !important;
+}
