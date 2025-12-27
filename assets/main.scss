@@ -113,7 +113,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  flex-wrap: wrap;    
+  flex-wrap: wrap;             /* 允許空間不足時換行 */
+  max-width: 800px;
   margin: 0 auto;
   padding: 0.8rem 16px;
   box-sizing: border-box;
@@ -124,6 +125,7 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  order: 1;
   transition: opacity 0.2s ease;
 }
 
@@ -143,6 +145,7 @@
 /* (2) 搜尋：順序 2，緊跟在頭像旁 */
 .search-container {
   position: relative;
+  order: 2;
   flex: 0 1 300px;             /* 最大 300px，視窗縮小時可變窄 */
   margin-left: 20px;
   box-sizing: border-box;
@@ -167,8 +170,10 @@
 .site-header__icons {
   display: flex;
   align-items: center;
-  gap: 0.75rem;       /* 關鍵：將此區塊推到右側邊緣 */
+  gap: 0.75rem;
+  margin-left: auto;           /* 關鍵：將此區塊推到右側邊緣 */
   flex-shrink: 0;
+  order: 3;
 }
 
 .icon-btn {
