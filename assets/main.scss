@@ -125,6 +125,9 @@ body {
 }
 
 /* ==========================================================================
+   2. 文章內容標題 (紅字粗體版)
+   ========================================================================== */
+/* ==========================================================================
    2. 文章內容標題 (深色模式相容版)
    ========================================================================== */
 .post-content {
@@ -315,6 +318,12 @@ body {
   float: right;
 }
 
+.search-date {
+  font-size: 0.75rem;
+  color: #999;
+  float: right;
+}
+
 /* 隱藏舊標題 */
 .site-header__title {
   display: none;
@@ -411,8 +420,7 @@ body {
   display: flex;
   align-items: center;
   text-decoration: none;
-  /* 修改點：最新文章連結改為 var(--text-color) */
-  color: var(--text-color) !important;
+  color: var(--link-color) !important;
   padding: 10px;
   border-radius: 8px;
 }
@@ -444,6 +452,7 @@ body {
 /* ==========================================================================
    6. 響應式修正 (核心修復區)
    ========================================================================== */
+/* 提高斷點至 768px，處理電腦版縮小視窗的情況 */
 @media screen and (max-width: 768px) {
   .site-header__inner {
     padding: 0.8rem 12px;
@@ -454,16 +463,17 @@ body {
     height: 40px;
   }
 
+  /* 強制將搜尋欄順序排在最後並換行，解決擠壓問題 */
   .search-container {
-    order: 4;
-    flex: 0 0 100%;
+    order: 4;             /* 確保排在社群圖示之後 */
+    flex: 0 0 100%;       /* 佔滿 100% 寬度 */
     max-width: 100%;
     margin-left: 0;
     margin-top: 12px;
   }
 
   .site-header__icons {
-    order: 2;
+    order: 2;             /* 圖示緊跟在頭像旁邊（右側） */
   }
 
   .post-content h3, .post-content h4 { text-align: left; }
@@ -471,6 +481,7 @@ body {
   .footer-post-thumb { width: 50px; height: 50px; }
 }
 
+/* 容器：設定為彈性佈局 */
 .site-wrapper {
   display: flex;
   flex-wrap: wrap;
@@ -480,13 +491,15 @@ body {
   padding: 20px;
 }
 
+/* 左側主內容區 */
 .main-content {
-  flex: 3;
+  flex: 3; /* 佔比較大 */
   min-width: 300px;
 }
 
+/* 右側側邊欄 */
 .sidebar {
-  flex: 1;
+  flex: 1; /* 佔比較小 */
   min-width: 250px;
 }
 
@@ -495,12 +508,12 @@ body {
   padding: 20px;
   border-radius: 8px;
   border: 1px solid #eee;
-  position: sticky;
+  position: sticky; /* 讓側邊欄跟隨捲動 */
   top: 20px;
 }
 
 .featured-box h3 {
-  color: #d9534f;
+  color: #d9534f; /* 使用您的主題紅色 */
   border-bottom: 2px solid #d9534f;
   padding-bottom: 10px;
 }
@@ -516,8 +529,7 @@ body {
 
 .featured-list a {
   text-decoration: none;
-  /* 修改點：精選文章連結改為 var(--text-color) */
-  color: var(--text-color) !important;
+  color: #333;
   font-weight: bold;
 }
 
@@ -525,6 +537,7 @@ body {
   color: #d9534f;
 }
 
+/* 下拉選單項目佈局 */
 .dropdown-item {
   display: flex !important;
   align-items: center;
@@ -532,13 +545,15 @@ body {
   padding: 12px 20px;
 }
 
+/* 圖示大小控制 */
 .menu-icon {
-  width: 24px;
+  width: 24px;   /* 您可以根據需求調整大小 */
   height: 24px;
   object-fit: contain;
   flex-shrink: 0;
 }
 
+/* 深色模式下若圖片太亮可微調（選用） */
 [data-theme="dark"] .menu-icon {
   filter: brightness(0.9);
 }
