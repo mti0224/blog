@@ -2,7 +2,7 @@
 ---
 
 /* ==========================================================================
-   1. 變數定義與基礎佈局 (修正深色模式切換)
+   1. 色彩變數定義 (與 JS 對接)
    ========================================================================== */
 :root {
   --bg-color: #ffffff;
@@ -28,7 +28,7 @@
   --link-color: #42b983;
 }
 
-/* 強制全域背景與文字顏色變換 */
+/* 強制基礎背景與文字顏色 */
 body, .page-content, .main-content, .wrapper {
   background-color: var(--bg-color) !important;
   color: var(--text-color) !important;
@@ -37,7 +37,7 @@ body, .page-content, .main-content, .wrapper {
 @import "minima";
 
 /* ==========================================================================
-   2. 首頁文章卡片 (修正 CSS 消失問題)
+   2. 首頁文章列表 (最新文章 CSS 修復)
    ========================================================================== */
 .post-list-cards {
   margin-top: 1.5rem;
@@ -48,21 +48,32 @@ body, .page-content, .main-content, .wrapper {
 .post-card {
   padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--border-color);
+  background-color: transparent;
 }
 
+.post-card-title {
+  margin: 0.2rem 0 0.8rem 0;
+  font-size: 1.8rem;
+  line-height: 1.25;
+}
+
+/* 首頁文章標題連結顏色修正 */
 .post-card-title a {
   text-decoration: none;
-  color: var(--text-color) !important; /* 首頁連結：淺色黑/深色白 */
+  color: var(--text-color) !important;
 }
 
 .post-card-cover {
   width: 100%;
   height: auto;
   border-radius: 16px;
+  border: 3px solid rgba(0,0,0,0);
   display: block;
 }
 
 .post-card-excerpt {
+  margin: 0.2rem 0 0.6rem 0;
+  opacity: 0.9;
   color: var(--grey-text);
 }
 
@@ -79,48 +90,58 @@ body, .page-content, .main-content, .wrapper {
     color: var(--text-color) !important;
   }
 
-  /* 文章內連結：維持綠色系 */
   a {
     color: var(--link-color) !important;
     text-decoration: underline;
   }
 
   h3, h4 {
-    color: #e74c3c; /* 醒目紅 */
+    color: #e74c3c;
     font-weight: bold;
-    padding: 0; margin: 0;
+    background: none;
+    padding: 0;
   }
 
   h3 { font-size: 1.5rem; margin-top: 2.2rem; margin-bottom: 1rem; }
   h4 { font-size: 1.25rem; margin-top: 1.8rem; margin-bottom: 0.8rem; }
 }
 
-/* 電腦版字體放大恢復 */
 @media screen and (min-width: 800px) {
   .post-content { font-size: 1.35rem; }
   .post-content h3 { font-size: 1.7rem; }
 }
 
 /* ==========================================================================
-   4. Header 樣式 (修復大頭貼與搜尋框)
+   4. Header 導覽列與垂直對齊修正
    ========================================================================== */
 .site-header {
   border-bottom: 1px solid var(--border-color);
   background-color: var(--header-bg);
-  position: sticky;
-  top: 0; z-index: 1000;
+  position: sticky; top: 0; z-index: 1000;
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center; /* 關鍵：確保搜尋欄垂直對齊 */
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  padding: 0.8rem 16px;
 }
 
 .header-avatar {
-  width: 48px !important; /* 強制恢復原定尺寸 */
+  width: 48px !important;
   height: 48px !important;
   border-radius: 50%;
   border: 2px solid #9cdba2;
 }
 
+/* 搜尋容器對齊修復 */
 .search-container {
+  position: relative;
   flex: 0 1 300px;
   margin-left: 20px;
+  display: flex;
+  align-items: center; /* 確保內部 input 對齊 */
 }
 
 #search-input {
@@ -130,36 +151,41 @@ body, .page-content, .main-content, .wrapper {
   border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 8px 15px;
+  outline: none;
 }
 
-/* 漢堡包選單圖示尺寸修復 */
+/* 下拉選單間距與圖示修復 */
+.dropdown-item {
+  display: flex !important;
+  align-items: center;
+  gap: 12px !important; /* 恢復圖示與文字間距 */
+  padding: 12px 20px;
+  color: var(--text-color) !important;
+}
+
 .menu-icon {
   width: 24px !important;
   height: 24px !important;
-  object-fit: contain;
+  object-shrink: 0;
 }
 
 /* ==========================================================================
-   5. 媒體物件 (恢復 Youtube 影片 CSS)
+   5. 媒體與 Youtube 影片比例修復
    ========================================================================== */
 .video-container {
   position: relative;
-  padding-bottom: 56.25%; /* 16:9 比例恢復 */
-  height: 0;
-  overflow: hidden;
-  margin: 1.5rem 0;
-  border-radius: 12px;
+  padding-bottom: 56.25%; /* 恢復 16:9 比例 */
+  height: 0; overflow: hidden;
+  margin: 1.5rem 0; border-radius: 12px;
 }
 
 .video-container iframe {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  border: 0;
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%; border: 0;
 }
 
 /* ==========================================================================
-   6. 側邊欄與頁尾 (全數恢復並套用變數)
+   6. 側邊欄與頁尾樣式恢復
    ========================================================================== */
 .site-wrapper {
   display: flex; flex-wrap: wrap;
@@ -169,40 +195,52 @@ body, .page-content, .main-content, .wrapper {
 .sidebar { flex: 1; min-width: 250px; }
 
 .featured-box {
-  background: var(--card-bg); /* 修復背景色 */
+  background: var(--card-bg); /* 背景隨模式變換 */
   padding: 20px; border-radius: 8px;
   border: 1px solid var(--border-color);
   position: sticky; top: 20px;
 }
 
+.featured-box h3 {
+  color: #d9534f;
+  border-bottom: 2px solid #d9534f;
+  padding-bottom: 10px;
+}
+
 .featured-list a {
-  color: var(--text-color) !important; /* 側邊欄連結：淺色黑/深色白 */
+  color: var(--text-color) !important;
   text-decoration: none; font-weight: bold;
 }
 
 .site-footer {
   background-color: var(--footer-bg) !important;
   border-top: 1px solid var(--border-color);
-  padding: 3rem 0 1.5rem 0;
-  margin-top: 4rem;
+  padding: 3rem 0 1.5rem 0; margin-top: 4rem;
 }
 
 .footer-post-item {
-  color: var(--text-color) !important; /* 頁尾連結文字恢復 */
-  display: flex; align-items: center; padding: 10px;
+  display: flex; align-items: center;
+  color: var(--text-color) !important;
+  padding: 10px; border-radius: 8px;
 }
 
-.footer-post-item:hover {
-  background-color: var(--border-color) !important;
+.footer-post-thumb {
+  width: 60px; height: 60px;
+  flex-shrink: 0; margin-right: 15px;
+  overflow: hidden; border-radius: 8px;
 }
 
-.footer-bottom {
-  border-top: 1px solid var(--border-color);
-  color: var(--grey-text);
-  text-align: center; padding-top: 1.5rem;
+.footer-post-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ==========================================================================
+   7. 搜尋結果與分頁樣式恢復
+   ========================================================================== */
+#results-container {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
 }
 
-/* 分頁按鈕樣式修復 */
 .pagination a {
   color: var(--text-color) !important;
   background-color: var(--card-bg) !important;
@@ -210,9 +248,13 @@ body, .page-content, .main-content, .wrapper {
   padding: 10px 20px; border-radius: 25px;
 }
 
-/* 下拉選單文字顏色修正 */
-.dropdown-item {
-  display: flex !important;
-  align-items: center;
-  color: var(--text-color) !important;
+.pagination .disabled {
+  color: var(--grey-text);
+  background-color: var(--footer-bg);
+}
+
+/* 響應式修正 */
+@media screen and (max-width: 768px) {
+  .search-container { order: 4; flex: 0 0 100%; margin-top: 12px; }
+  .site-header__icons { order: 2; }
 }
