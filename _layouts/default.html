@@ -7,6 +7,13 @@
     {% if site.google_analytics %}
       {% include google-analytics.html %}
     {% endif %}
+    <script>
+      /* 立即檢查模式，防止頁面跳轉時閃爍白光 */
+      (function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      })();
+    </script>
 
     <style>
       /* --- 1. 全站寬度與 Header 對齊 --- */
@@ -87,14 +94,14 @@
       .featured-list li { 
         /* 設定左側內距為 16px，使其與上方標題文字完美對齊 */
         padding: 12px 0 12px 16px; 
-        border-bottom: 1px solid #eee; 
+        border-bottom: 1px solid var(--border-color); 
       }
     
       .featured-list li:last-child { border-bottom: none; }
     
       .featured-list a { 
         text-decoration: none; 
-        color: #000; 
+        color: var(--text-color); 
         font-size: 1.05rem; 
         font-weight: 500; 
         display: block; 
@@ -158,7 +165,25 @@
 
       </div>
     </main>
-
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('dark-mode-toggle');
+        
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', function() {
+            // 取得目前的模式
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            // 切換模式
+            const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            // 執行切換並存入瀏覽器記憶
+            document.documentElement.setAttribute('data-theme', targetTheme);
+            localStorage.setItem('theme', targetTheme);
+          });
+        }
+      });
+    </script>
+    
     {% include footer.html %}
   </body>
 
