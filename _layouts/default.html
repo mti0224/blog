@@ -8,116 +8,95 @@
       {% include google-analytics.html %}
     {% endif %}
 
-    <style>
-      /* --- 1. 統一全站最大寬度 --- */
-      
-      /* 調整 Header 內層寬度 */
+   <style>  
+      /* --- 1. 全站對齊 --- */
+      .site-header__inner, .wrapper {
+        max-width: 1200px !important;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
       .site-header__inner {
-        max-width: 1200px !important;
-        margin-right: auto;
-        margin-left: auto;
-        padding-right: 20px;
-        padding-left: 20px;
-      }
-
-      /* 調整內容區 wrapper 最大寬度 */
-      .wrapper {
-        max-width: 1200px !important;
-        margin-right: auto;
-        margin-left: auto;
-        padding-right: 20px;
-        padding-left: 20px;
-      }
-
-      /* --- 2. 雙欄佈局設定 --- */
-      .page-layout {
         display: flex;
-        flex-wrap: wrap;
-        gap: 60px;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 10px 20px;
+      }
+
+      /* --- 2. Header 佈局控制 --- */
+      .site-header__logo-link {
+        margin-right: 20px;
+        flex-shrink: 0;
+      }
+
+      .search-container {
+        position: relative;
+        flex: 0 1 300px;
+      }
+
+      /* 右側群組推向邊緣 */
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+      }
+
+      .icon-btn, .dropdown-trigger {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
         justify-content: center;
+        border-radius: 50%;
+        transition: 0.2s;
+        color: #828282;
       }
 
-      /* 左側主內容：維持 800px 閱讀寬度 */
-      .main-content {
-        flex: 0 0 800px;
-        max-width: 800px;
-        width: 100%;
+      .icon-btn:hover, .dropdown-trigger:hover {
+        background: rgba(0,0,0,0.05);
       }
 
-      /* 右側側邊欄 */
-      .sidebar {
-        flex: 1;
-        min-width: 250px;
-        max-width: 300px;
-        margin-top: 20px;
-      }
+      .icon-btn img { width: 24px; height: 24px; }
 
-      .sidebar-sticky {
-        position: -webkit-sticky;
-        position: sticky;
-        top: 40px;
+      /* 下拉選單邏輯 */
+      .header-dropdown { position: relative; }
+      .header-dropdown:hover .dropdown-content {
+        display: block; opacity: 1; visibility: visible; transform: translateY(0);
       }
+      .dropdown-content {
+        display: none; position: absolute; right: 0; top: 100%;
+        background: #fff; min-width: 200px; box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        border-radius: 12px; border: 1px solid #eee; z-index: 1001;
+        opacity: 0; visibility: hidden; transform: translateY(10px); transition: 0.3s;
+      }
+      .dropdown-content a {
+        color: #333; padding: 12px 20px; text-decoration: none; display: block;
+        border-bottom: 1px solid #f9f9f9;
+      }
+      .dropdown-content a:hover { background: #f0f7f0; color: #2d5a27; }
 
-      /* --- 3. 複刻「最新消息」標題風格 --- */
+      /* --- 3. 雙欄佈局與精選文章 (複刻最新消息風格) --- */
+      .page-layout { display: flex; flex-wrap: wrap; gap: 60px; justify-content: center; margin-top: 20px; }
+      .main-content { flex: 0 0 800px; max-width: 800px; width: 100%; }
+      .sidebar { flex: 1; min-width: 250px; max-width: 300px; margin-top: 20px; }
+      .sidebar-sticky { position: sticky; top: 40px; }
+
       .featured-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #2d5a27;
-        margin-bottom: 1.5rem;
-        border-left: 4px solid #9cdba2;
-        padding-left: 12px;
-        line-height: 1.2;
+        font-size: 1.25rem; font-weight: 700; color: #2d5a27;
+        margin-bottom: 1.5rem; border-left: 4px solid #9cdba2;
+        padding-left: 12px; line-height: 1.2;
       }
-
-      .featured-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-
-      /* 列表項目與分隔線 */
-      .featured-list li {
-        margin-bottom: 0;
-        padding: 12px 16px;
-        border-bottom: 1px solid #eee;
-      }
-
-      .featured-list li:last-child {
-        border-bottom: none;
-      }
-
-      .featured-list a {
-        text-decoration: none;
-        color: #000000;
-        font-size: 1.05rem;
-        font-weight: 500;
-        line-height: 1.4;
-        transition: color 0.2s;
-        display: block;
-      }
-
-      .featured-list a:hover {
-        color: #2d5a27;
-        text-decoration: none;
-      }
-
-      /* --- 4. 響應式適應 --- */
-      @media (max-width: 1150px) {
-        .main-content { flex: 1 1 auto; }
-      }
+      .featured-list { list-style: none; padding: 0; margin: 0; }
+      .featured-list li { padding: 12px 16px; border-bottom: 1px solid #eee; }
+      .featured-list li:last-child { border-bottom: none; }
+      .featured-list a { text-decoration: none; color: #000; font-size: 1.05rem; font-weight: 500; display: block; }
+      .featured-list a:hover { color: #2d5a27; }
 
       @media (max-width: 850px) {
-        .page-layout { flex-direction: column; align-items: flex-start; }
-        .main-content { max-width: 100%; }
-        .sidebar { 
-          max-width: 100%; 
-          width: 100%; 
-          order: 2; 
-          margin-top: 50px;
-          border-top: 1px solid #eee;
-          padding-top: 30px;
-        }
-        .sidebar-sticky { position: static; }
+        .page-layout { flex-direction: column; }
+        .main-content, .sidebar { max-width: 100%; width: 100%; }
+        .sidebar { order: 2; border-top: 1px solid #eee; padding-top: 30px; }
       }
     </style>
   </head>
