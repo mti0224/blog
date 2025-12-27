@@ -7,7 +7,6 @@ body,
 .wrapper {
   background-color: var(--bg-color) !important;
   color: var(--text-color) !important;
-  transition: background-color 0.3s, color 0.3s;
 }
 
 /* 針對文章內文進行細部修正 */
@@ -65,7 +64,6 @@ body,
 body {
   background-color: var(--bg-color);
   color: var(--text-color);
-  transition: background-color 0.3s, color 0.3s;
 }
 
 @import "minima";
@@ -139,7 +137,6 @@ body {
   
   /* 新增：讓內文文字跟隨深淺模式切換 */
   color: var(--text-color) !important;
-  transition: color 0.3s ease;
 
   /* 確保文章內所有段落、清單文字都套用變數顏色 */
   p, li, span, div, strong, em {
@@ -244,7 +241,6 @@ body {
   border-radius: 20px;
   font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.2s;
 }
 
 #search-input:focus {
