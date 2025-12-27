@@ -424,12 +424,15 @@ body {
   display: flex;
   align-items: center;
   text-decoration: none;
-  color: #333;
+  color: var(--link-color) !important;
   padding: 10px;
   border-radius: 8px;
 }
 
-.footer-post-item:hover { background-color: var(--border-color); }
+.footer-post-item:hover { 
+  background-color: var(--border-color) !important; 
+  text-decoration: underline;
+}
 
 .footer-post-thumb {
   width: 60px; height: 60px;
