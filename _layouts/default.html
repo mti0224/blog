@@ -8,59 +8,118 @@
       {% include google-analytics.html %}
     {% endif %}
 
-      <style>
-        /* 全站寬度對齊 */
-        .site-header__inner, .wrapper {
-          max-width: 1200px !important;
-          margin: 0 auto;
-          padding: 0 20px;
+    <style>
+      /* --- 1. 統一全站最大寬度 --- */
+      
+      /* 調整 Header 內層寬度 */
+      .site-header__inner {
+        max-width: 1200px !important;
+        margin-right: auto;
+        margin-left: auto;
+        padding-right: 20px;
+        padding-left: 20px;
+      }
+
+      /* 調整內容區 wrapper 最大寬度 */
+      .wrapper {
+        max-width: 1200px !important;
+        margin-right: auto;
+        margin-left: auto;
+        padding-right: 20px;
+        padding-left: 20px;
+      }
+
+      /* --- 2. 雙欄佈局設定 --- */
+      .page-layout {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 60px;
+        justify-content: center;
+      }
+
+      /* 左側主內容：維持 800px 閱讀寬度 */
+      .main-content {
+        flex: 0 0 800px;
+        max-width: 800px;
+        width: 100%;
+      }
+
+      /* 右側側邊欄 */
+      .sidebar {
+        flex: 1;
+        min-width: 250px;
+        max-width: 300px;
+        margin-top: 20px;
+      }
+
+      .sidebar-sticky {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 40px;
+      }
+
+      /* --- 3. 複刻「最新消息」標題風格 --- */
+      .featured-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #2d5a27;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #9cdba2;
+        padding-left: 12px;
+        line-height: 1.2;
+      }
+
+      .featured-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      /* 列表項目與分隔線 */
+      .featured-list li {
+        margin-bottom: 0;
+        padding: 12px 16px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .featured-list li:last-child {
+        border-bottom: none;
+      }
+
+      .featured-list a {
+        text-decoration: none;
+        color: #000000;
+        font-size: 1.05rem;
+        font-weight: 500;
+        line-height: 1.4;
+        transition: color 0.2s;
+        display: block;
+      }
+
+      .featured-list a:hover {
+        color: #2d5a27;
+        text-decoration: none;
+      }
+
+      /* --- 4. 響應式適應 --- */
+      @media (max-width: 1150px) {
+        .main-content { flex: 1 1 auto; }
+      }
+
+      @media (max-width: 850px) {
+        .page-layout { flex-direction: column; align-items: flex-start; }
+        .main-content { max-width: 100%; }
+        .sidebar { 
+          max-width: 100%; 
+          width: 100%; 
+          order: 2; 
+          margin-top: 50px;
+          border-top: 1px solid #eee;
+          padding-top: 30px;
         }
-      
-        /* Header 佈局 */
-        .site-header__inner {
-          display: flex;
-          align-items: center;
-          justify-content: flex-start; /* 讓 Logo 與搜尋框靠左 */
-          height: 64px;
-        }
-      
-        .site-header__logo-link { margin-right: 20px; flex-shrink: 0; }
-        .header-avatar { width: 48px; height: 48px; border-radius: 50%; border: 2px solid #9cdba2; }
-      
-        .search-container { position: relative; flex: 0 1 300px; }
-        #search-input { width: 100%; padding: 8px 15px; border: 1px solid #ddd; border-radius: 20px; }
-      
-        /* 右側群組推至邊緣 */
-        .header-actions {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-left: auto; /* 關鍵：推向最右側 */
-        }
-      
-        /* 圖示與選單樣式 */
-        .icon-btn, .dropdown-trigger { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; color: #828282; }
-        .icon-btn:hover, .dropdown-trigger:hover { background: rgba(0,0,0,0.05); }
-        .icon-btn img { width: 24px; height: 24px; }
-      
-        /* 下拉選單邏輯 */
-        .header-dropdown { position: relative; }
-        .header-dropdown:hover .dropdown-content { display: block; opacity: 1; visibility: visible; transform: translateY(0); }
-        .dropdown-content { display: none; position: absolute; right: 0; top: 100%; background: #fff; min-width: 200px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); border-radius: 12px; border: 1px solid #eee; z-index: 1001; opacity: 0; visibility: hidden; transform: translateY(10px); transition: 0.3s; }
-        .dropdown-content a { color: #333; padding: 12px 20px; text-decoration: none; display: block; border-bottom: 1px solid #f9f9f9; }
-        .dropdown-content a:hover { background: #f0f7f0; color: #2d5a27; }
-      
-        /* 雙欄版型 (維持原樣) */
-        .page-layout { display: flex; flex-wrap: wrap; gap: 60px; justify-content: center; margin-top: 20px; }
-        .main-content { flex: 0 0 800px; max-width: 800px; width: 100%; }
-        .sidebar { flex: 1; min-width: 250px; max-width: 300px; margin-top: 20px; }
-        .featured-title { font-size: 1.25rem; font-weight: 700; color: #2d5a27; border-left: 4px solid #9cdba2; padding-left: 12px; margin-bottom: 1.5rem; }
-        .featured-list { list-style: none; padding: 0; }
-        .featured-list li { border-bottom: 1px solid #eee; padding: 12px 16px; }
-        .featured-list a { color: #000; text-decoration: none; font-weight: 500; display: block; }
-        
-        @media (max-width: 850px) { .page-layout { flex-direction: column; } .main-content, .sidebar { max-width: 100%; width: 100%; } .sidebar { order: 2; border-top: 1px solid #eee; padding-top: 30px; } }
-      </style>
+        .sidebar-sticky { position: static; }
+      }
+    </style>
   </head>
 
   <body>
@@ -68,26 +127,39 @@
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
+        
         <div class="page-layout">
+          
           <div class="main-content">
             {{ content }}
           </div>
+
           <aside class="sidebar">
             <div class="sidebar-sticky">
+              
               <h2 class="featured-title">精選文章</h2>
+              
               <ul class="featured-list">
                 {% if site.data.featured %}
                   {% for item in site.data.featured %}
-                    <li><a href="{{ item.url | relative_url }}">{{ item.title | escape }}</a></li>
+                    <li>
+                      <a href="{{ item.url | relative_url }}">
+                        {{ item.title | escape }}
+                      </a>
+                    </li>
                   {% endfor %}
                 {% endif %}
               </ul>
+
             </div>
           </aside>
+
         </div>
+
       </div>
     </main>
 
     {% include footer.html %}
   </body>
+
 </html>
