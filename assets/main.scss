@@ -47,7 +47,8 @@ body {
 
 .post-card {
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(0,0,0,0.12);
+  border-bottom: 1px solid var(--border-color);
+  background-color: transparent; /* 讓它透出底下的背景色 */
 }
 
 .post-card-meta {
@@ -228,35 +229,45 @@ body {
   display: block;
 }
 
-/* 搜尋結果 */
+/* ==========================================================================
+   搜尋結果 (支援深色模式版本)
+   ========================================================================== */
 #results-container {
   box-sizing: border-box;
   position: absolute;
   top: 100%;
   left: 0;
   width: 100%;
-  background: white;
+  background-color: var(--card-bg); /* 改用變數，深色模式下會變深灰色 */
   list-style: none;
   margin: 5px 0 0 0;
   padding: 0;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  /* 在深色模式下，稍微加深陰影讓層次更明顯 */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25); 
   z-index: 1001;
   overflow: hidden;
+  border: 1px solid var(--border-color); /* 新增邊框，確保在深色背景中能看清選單邊界 */
 }
 
 #results-container li a {
   display: block;
   padding: 10px 15px;
   text-decoration: none;
-  color: #333;
+  color: var(--text-color);       /* 改用變數，深色模式下文字會變淺 */
   font-size: 0.85rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color); /* 改用變數分隔線 */
 }
 
 #results-container li a:hover {
-  background-color: #f9f9f9;
-  color: #2d5a27;
+  background-color: var(--footer-bg); /* 滑過時使用變數背景色 */
+  color: var(--heading-color);        /* 滑過時文字變為標題色（綠色） */
+}
+
+.search-date {
+  font-size: 0.75rem;
+  color: var(--grey-text);            /* 讓日期顏色也跟隨模式調整 */
+  float: right;
 }
 
 .search-date {
@@ -336,7 +347,7 @@ body {
 }
 
 .site-footer {
-  background-color: var(--footer-bg);
+  background-color: var(--footer-bg) !important;
   border-top: 1px solid #e8e8e8;
   padding: 3rem 0 1.5rem 0;
   margin-top: 4rem;
