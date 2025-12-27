@@ -45,6 +45,8 @@
       }
     
       #search-input {
+        background-color: var(--bg-color);
+        color: var(--text-color);
         width: 100%;
         box-sizing: border-box;
         padding: 8px 15px;
@@ -68,7 +70,11 @@
         justify-content: center; 
         margin-top: 20px; 
       }
+      .page-content {
+        background-color: var(--bg-color) !important;
+      }
       .main-content { 
+        background-color: var(--bg-color) !important;
         flex: 0 0 800px; 
         max-width: 800px; 
         width: 100%; }
@@ -78,6 +84,7 @@
         max-width: 300px; 
         margin-top: 20px; 
         background-color: var(--bg-color);
+        color: var(--text-color);
       }
       .sidebar-sticky { 
         position: sticky; 
@@ -122,11 +129,26 @@
     
       /* --- 4. 響應式適應 --- */
       @media (max-width: 850px) {
-        .search-container { order: 4 !important; flex: 0 0 100%; margin-top: 10px; }
-        .header-actions { margin-left: auto; }
-        .page-layout { flex-direction: column; }
-        .main-content, .sidebar { max-width: 100%; width: 100%; }
-        .sidebar { order: 2; border-top: 1px solid #eee; padding-top: 30px; }
+        .search-container {
+          order: 4 !important; 
+          flex: 0 0 100%; 
+          margin-top: 10px; 
+        }
+        .header-actions { 
+          margin-left: auto; 
+        }
+        .page-layout {
+          flex-direction: column; 
+        }
+        .main-content, .sidebar { 
+          max-width: 100%;
+          width: 100%; 
+        }
+        .sidebar { 
+          order: 2; 
+          border-top: 1px solid #eee; 
+          padding-top: 30px; 
+        }
       }
     
       /* --- 5. 下拉選單與圖示樣式 --- */
