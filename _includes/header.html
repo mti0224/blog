@@ -9,20 +9,29 @@
       <ul id="results-container"></ul>
     </div>
 
-    <div class="header-dropdown">
-      <button class="dropdown-toggle" onclick="toggleMenu()" aria-label="選單">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="1"></circle>
-          <circle cx="12" cy="5" r="1"></circle>
-          <circle cx="12" cy="19" r="1"></circle>
-        </svg>
-      </button>
-      <div id="headerDropdown" class="dropdown-content">
-        <a href="#">🛠️ 小工具</a>
-        <a href="https://www.instagram.com/ytmit/" target="_blank" rel="noopener">📸 Instagram</a>
-        <a href="https://discord.gg/H8YcgdJtc7" target="_blank" rel="noopener">💬 加入Discord伺服器</a>
-        <a href="https://www.youtube.com/@WarmyCat" target="_blank" rel="noopener">📺 前往蚯蚓貓的頻道</a>
-        <a href="javascript:void(0);" id="dark-mode-toggle">🌓 切換成深色/淺色模式</a>
+    <div class="header-actions">
+      <a class="icon-btn" href="https://www.instagram.com/ytmit/" target="_blank" rel="noopener">
+        <img src="{{ '/assets/icons/ig.svg' | relative_url }}" alt="Instagram">
+      </a>
+      <a class="icon-btn" href="https://discord.gg/H8YcgdJtc7" target="_blank" rel="noopener">
+        <img src="{{ '/assets/icons/discord.svg' | relative_url }}" alt="Discord">
+      </a>
+      <a class="icon-btn" href="https://www.youtube.com/@WarmyCat" target="_blank" rel="noopener">
+        <img src="{{ '/assets/icons/yt.svg' | relative_url }}" alt="YouTube">
+      </a>
+
+      <div class="header-dropdown">
+        <div class="dropdown-trigger" aria-label="選單">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </div>
+        <div class="dropdown-content">
+          <a href="#">🛠️ 小工具</a>
+          <a href="javascript:void(0);" id="dark-mode-toggle">🌓 切換成深色/淺色模式</a>
+        </div>
       </div>
     </div>
   </div>
