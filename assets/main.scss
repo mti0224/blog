@@ -1,40 +1,6 @@
----
----
-/* 強制文章主區塊與所有包裝層變色 */
-body, 
-.page-content, 
-.main-content, 
-.wrapper {
-  background-color: var(--bg-color) !important;
-  color: var(--text-color) !important;
-}
-
-/* 針對文章內文進行細部修正 */
-.post-content {
-  color: var(--text-color) !important;
-  
-  /* 確保文章內的段落、清單文字也是正確顏色 */
-  p, li, span, div {
-    color: var(--text-color) !important;
-  }
-
-  /* 文章內的連結改用變數顏色 */
-  a {
-    color: var(--link-color) !important;
-  }
-}
-
-/* 修正文章標題顏色 */
-.post-title {
-  color: var(--text-color) !important;
-}
-
-/* 修正日期文字顏色 */
-.post-meta {
-  color: var(--grey-text) !important;
-}
-
-/* 1. 定義全站色彩變數 (Light Mode) */
+/* ==========================================================================
+   1. 全站色彩變數定義
+   ========================================================================== */
 :root {
   --bg-color: #ffffff;
   --text-color: #111111;
@@ -47,29 +13,28 @@ body,
   --link-color: #2d5a27;
 }
 
-/* 2. 定義深色模式變數 (Dark Mode) */
 [data-theme="dark"] {
   --bg-color: #1a1a1a;
   --text-color: #e0e0e0;
-  --heading-color: #9cdba2;   /* 深色模式下標題改用淺綠，較易閱讀 */
+  --heading-color: #9cdba2;   /* 深色模式下標題改用淺綠 */
   --border-color: #333333;
   --card-bg: #242424;
   --grey-text: #aaaaaa;
   --header-bg: #1a1a1a;
   --footer-bg: #121212;
-  --link-color: #42b983;
+  --link-color: #42b983;      /* 深色模式下更明亮的綠色 */
 }
 
-/* 套用基礎背景與文字顏色 */
-body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
+/* 基礎設定 */
+body, .page-content, .main-content, .wrapper {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
 }
 
 @import "minima";
 
 /* ==========================================================================
-   1. 基礎卡片列表與樣式
+   2. 首頁文章列表 (卡片樣式)
    ========================================================================== */
 .post-list-cards {
   margin-top: 1.5rem;
@@ -80,485 +45,200 @@ body {
 .post-card {
   padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--border-color);
-  background-color: transparent; /* 讓它透出底下的背景色 */
+  background-color: transparent;
 }
 
-.post-card-meta {
-  font-size: 0.9rem;
-  opacity: 0.75;
-  margin-bottom: 0.4rem;
-}
-
-.post-card-title {
-  margin: 0.2rem 0 0.8rem 0;
-  font-size: 1.8rem;
-  line-height: 1.25;
-}
-
-.post-card-title a {
+/* 文章列表標題：淺色黑字 / 深色白字 */
+.post-card-title a, .post-link {
   text-decoration: none;
-  color: var(--text-color);
+  color: var(--text-color) !important;
 }
 
-.post-card-coverlink {
-  display: block;
-  margin: 0.4rem 0 0.8rem 0;
+.post-card-title a:hover {
+  color: var(--heading-color) !important;
+}
+
+.post-card-excerpt {
+  color: var(--grey-text);
 }
 
 .post-card-cover {
   width: 100%;
-  height: auto;
   border-radius: 16px;
-  border: 3px solid rgba(0,0,0,0);
   display: block;
 }
 
-.post-card-excerpt {
-  margin: 0.2rem 0 0.6rem 0;
-  opacity: 0.9;
-  color: var(--grey-text); /* 新增：讓摘要顏色在深色模式下變淡灰色 */
-}
-
-.post-card-readmore {
-  font-weight: 600;
-  text-decoration: none;
-}
-
 /* ==========================================================================
-   2. 文章內容標題 (紅字粗體版)
-   ========================================================================== */
-/* ==========================================================================
-   2. 文章內容標題 (深色模式相容版)
+   3. 文章內文設定 (紅字粗體標題)
    ========================================================================== */
 .post-content {
   font-size: 1.15rem;
   line-height: 1.7;
   word-wrap: break-word;
-  
-  /* 新增：讓內文文字跟隨深淺模式切換 */
   color: var(--text-color) !important;
 
-  /* 確保文章內所有段落、清單文字都套用變數顏色 */
   p, li, span, div, strong, em {
     color: var(--text-color) !important;
   }
 
-  /* 文章內連結改用定義好的變數色 */
+  /* 文章內連結：維持綠色系 */
   a {
     color: var(--link-color) !important;
     text-decoration: underline;
   }
 
   h3, h4 {
-    color: #e74c3c;        /* 保持醒目紅 */
+    color: #e74c3c;
     font-weight: bold;
     background: none;
     padding: 0;
     border: none;
-    box-shadow: none;
   }
 
-  h3 {
-    font-size: 1.5rem;
-    margin-top: 2.2rem;
-    margin-bottom: 1rem;
-  }
-
-  h4 {
-    font-size: 1.25rem;
-    margin-top: 1.8rem;
-    margin-bottom: 0.8rem;
-  }
+  h3 { font-size: 1.5rem; margin-top: 2.2rem; margin-bottom: 1rem; }
+  h4 { font-size: 1.25rem; margin-top: 1.8rem; margin-bottom: 0.8rem; }
 }
 
-/* 電腦版字體放大 */
 @media screen and (min-width: 800px) {
-  .post-content {
-    font-size: 1.35rem;
-  }
-  .post-content h3 {
-    font-size: 1.7rem;
-  }
+  .post-content { font-size: 1.35rem; }
+  .post-content h3 { font-size: 1.7rem; }
 }
 
 /* ==========================================================================
-   3. Header 導覽列與大頭貼
+   4. Header 導覽列與搜尋
    ========================================================================== */
 .site-header {
   border-bottom: 1px solid var(--border-color);
-  min-height: 56px;
+  background-color: var(--header-bg);
   position: sticky;
   top: 0;
   z-index: 1000;
-  background-color: var(--header-bg);
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .site-header__inner {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  flex-wrap: wrap;             /* 允許空間不足時換行 */
-  margin: 0 auto;
   padding: 0.8rem 16px;
-  box-sizing: border-box;
-}
-
-/* (1) 頭像：順序 1，靠左 */
-.site-header__logo-link {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  transition: opacity 0.2s ease;
-}
-
-.site-header__logo-link:hover {
-  opacity: 0.8;
 }
 
 .header-avatar {
-  width: 48px;
-  height: 48px;
+  width: 48px; height: 48px;
   border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #9cdba2;   /* 淺綠邊框 */
-  display: block;
-}
-
-/* (2) 搜尋：順序 2，緊跟在頭像旁 */
-.search-container {
-  position: relative;
-  flex: 0 1 300px;             /* 最大 300px，視窗縮小時可變窄 */
-  margin-left: 20px;
-  box-sizing: border-box;
+  border: 2px solid #9cdba2;
 }
 
 #search-input {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 8px 15px;
-  border: 1px solid #ddd;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
-  font-size: 0.9rem;
-  outline: none;
-}
-
-#search-input:focus {
-  border-color: #9cdba2;
-}
-
-/* (3) 社群圖示：順序 3，推至最右側 */
-.site-header__icons {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;       /* 關鍵：將此區塊推到右側邊緣 */
-  flex-shrink: 0;
-}
-
-.icon-btn {
-  display: inline-flex;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1px solid rgba(0,0,0,0.12);
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.icon-btn:hover {
-  transform: translateY(-2px);
-  background-color: rgba(0,0,0,0.04);
-}
-
-.icon-btn img {
-  width: 20px;
-  height: 20px;
-  display: block;
+  padding: 8px 15px;
 }
 
 /* ==========================================================================
-   搜尋結果 (支援深色模式版本)
+   5. 側邊欄與精選文章 (修正連結顏色)
    ========================================================================== */
-#results-container {
-  box-sizing: border-box;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 100%;
-  background-color: var(--card-bg); /* 改用變數，深色模式下會變深灰色 */
-  list-style: none;
-  margin: 5px 0 0 0;
-  padding: 0;
-  border-radius: 8px;
-  /* 在深色模式下，稍微加深陰影讓層次更明顯 */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25); 
-  z-index: 1001;
-  overflow: hidden;
-  border: 1px solid var(--border-color); /* 新增邊框，確保在深色背景中能看清選單邊界 */
-}
-
-#results-container li a {
-  display: block;
-  padding: 10px 15px;
-  text-decoration: none;
-  color: var(--text-color);       /* 改用變數，深色模式下文字會變淺 */
-  font-size: 0.85rem;
-  border-bottom: 1px solid var(--border-color); /* 改用變數分隔線 */
-}
-
-#results-container li a:hover {
-  background-color: var(--footer-bg); /* 滑過時使用變數背景色 */
-  color: var(--heading-color);        /* 滑過時文字變為標題色（綠色） */
-}
-
-.search-date {
-  font-size: 0.75rem;
-  color: var(--grey-text);            /* 讓日期顏色也跟隨模式調整 */
-  float: right;
-}
-
-.search-date {
-  font-size: 0.75rem;
-  color: #999;
-  float: right;
-}
-
-/* 隱藏舊標題 */
-.site-header__title {
-  display: none;
-}
-
-/* ==========================================================================
-   4. 媒體與其他物件
-   ========================================================================== */
-.video-container {
-  position: relative;
-  padding-bottom: 56.25%;
-  height: 0;
-  overflow: hidden;
-  margin: 1.5rem 0;
-  border-radius: 12px;
-}
-
-.video-container iframe {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  border: 0;
-}
-
-.mineral-table-img {
-  width: 60%;
-  height: auto;
-  display: block;
-  margin: 1rem auto 1rem 0;
-  border-radius: 8px;
-}
-
-/* ==========================================================================
-   5. 分頁與頁尾
-   ========================================================================== */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 3rem 0;
-  gap: 1rem;
-}
-
-.pagination a, .pagination .disabled {
-  padding: 10px 20px;
-  border-radius: 25px;
-  font-size: 0.9rem;
-  border: 1px solid #eee;
-  text-decoration: none;
-}
-
-.pagination a {
-  color: #333;
-  background-color: #fff;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.pagination a:hover {
-  background-color: #9cdba2;
-  color: white;
-  border-color: #9cdba2;
-  transform: translateY(-2px);
-}
-
-.pagination .disabled {
-  color: #ccc;
-  background-color: #fafafa;
-}
-
-.site-footer {
-  background-color: var(--footer-bg) !important;
-  border-top: 1px solid #e8e8e8;
-  padding: 3rem 0 1.5rem 0;
-  margin-top: 4rem;
-}
-
-.site-footer__inner {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 0 16px;
-}
-
-.footer-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--heading-color);
-  margin-bottom: 1.5rem;
-  border-left: 4px solid #9cdba2;
-  padding-left: 12px;
-}
-
-.footer-post-item {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: var(--link-color) !important;
-  padding: 10px;
-  border-radius: 8px;
-}
-
-.footer-post-item:hover { 
-  background-color: var(--border-color) !important; 
-  text-decoration: underline;
-}
-
-.footer-post-thumb {
-  width: 60px; height: 60px;
-  flex-shrink: 0;
-  margin-right: 15px;
-  overflow: hidden;
-  border-radius: 8px;
-}
-
-.footer-post-thumb img { width: 100%; height: 100%; object-fit: cover; }
-
-.footer-bottom {
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #eee;
-  text-align: center;
-  font-size: 0.85rem;
-  color: #999;
-}
-
-/* ==========================================================================
-   6. 響應式修正 (核心修復區)
-   ========================================================================== */
-/* 提高斷點至 768px，處理電腦版縮小視窗的情況 */
-@media screen and (max-width: 768px) {
-  .site-header__inner {
-    padding: 0.8rem 12px;
-  }
-
-  .header-avatar {
-    width: 40px;
-    height: 40px;
-  }
-
-  /* 強制將搜尋欄順序排在最後並換行，解決擠壓問題 */
-  .search-container {
-    order: 4;             /* 確保排在社群圖示之後 */
-    flex: 0 0 100%;       /* 佔滿 100% 寬度 */
-    max-width: 100%;
-    margin-left: 0;
-    margin-top: 12px;
-  }
-
-  .site-header__icons {
-    order: 2;             /* 圖示緊跟在頭像旁邊（右側） */
-  }
-
-  .post-content h3, .post-content h4 { text-align: left; }
-  .mineral-table-img { width: 80%; }
-  .footer-post-thumb { width: 50px; height: 50px; }
-}
-
-/* 容器：設定為彈性佈局 */
-.site-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  max-width: 1100px;
-  margin: 0 auto;
-  gap: 30px;
-  padding: 20px;
-}
-
-/* 左側主內容區 */
-.main-content {
-  flex: 3; /* 佔比較大 */
-  min-width: 300px;
-}
-
-/* 右側側邊欄 */
 .sidebar {
-  flex: 1; /* 佔比較小 */
+  flex: 1;
   min-width: 250px;
 }
 
 .featured-box {
-  background: #f9f9f9;
+  background: var(--card-bg); /* 改用變數，修正深色模式背景 */
   padding: 20px;
   border-radius: 8px;
-  border: 1px solid #eee;
-  position: sticky; /* 讓側邊欄跟隨捲動 */
+  border: 1px solid var(--border-color);
+  position: sticky;
   top: 20px;
 }
 
 .featured-box h3 {
-  color: #d9534f; /* 使用您的主題紅色 */
+  color: #d9534f;
   border-bottom: 2px solid #d9534f;
   padding-bottom: 10px;
 }
 
-.featured-list {
-  list-style: none;
-  padding: 0;
-}
-
-.featured-list li {
-  margin: 15px 0;
-}
-
+/* 精選文章連結：淺色黑字 / 深色白字 */
 .featured-list a {
   text-decoration: none;
-  color: #333;
+  color: var(--text-color) !important;
   font-weight: bold;
 }
 
 .featured-list a:hover {
-  color: #d9534f;
+  color: var(--heading-color) !important;
 }
 
-/* 下拉選單項目佈局 */
+/* ==========================================================================
+   6. 頁尾與最新文章 (修正連結顏色)
+   ========================================================================== */
+.site-footer {
+  background-color: var(--footer-bg) !important;
+  border-top: 1px solid var(--border-color);
+  padding: 3rem 0 1.5rem 0;
+}
+
+/* 最新文章標題：淺色黑字 / 深色白字 */
+.footer-post-item {
+  color: var(--text-color) !important;
+}
+
+.footer-post-item:hover {
+  background-color: var(--border-color) !important;
+  color: var(--heading-color) !important;
+}
+
+.footer-bottom {
+  border-top: 1px solid var(--border-color);
+  color: var(--grey-text);
+  text-align: center;
+  padding-top: 1.5rem;
+}
+
+/* ==========================================================================
+   7. 搜尋結果與分頁
+   ========================================================================== */
+#results-container {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+#results-container li a {
+  color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.pagination a {
+  color: var(--text-color) !important;
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.pagination .disabled {
+  color: var(--grey-text);
+  background-color: var(--footer-bg);
+}
+
+/* ==========================================================================
+   8. 響應式與小工具
+   ========================================================================== */
 .dropdown-item {
   display: flex !important;
   align-items: center;
   gap: 12px;
-  padding: 12px 20px;
+  color: var(--text-color);
 }
 
-/* 圖示大小控制 */
 .menu-icon {
-  width: 24px;   /* 您可以根據需求調整大小 */
-  height: 24px;
-  object-fit: contain;
-  flex-shrink: 0;
+  width: 24px; height: 24px;
 }
 
-/* 深色模式下若圖片太亮可微調（選用） */
-[data-theme="dark"] .menu-icon {
-  filter: brightness(0.9);
+.aboutme-container a {
+  color: var(--link-color) !important; /* 關於我內的社交連結維持綠色 */
 }
 
-.aboutme-container ul li a,
-.page-content ul li a {
-  color: var(--link-color) !important;
+@media screen and (max-width: 768px) {
+  .search-container { order: 4; flex: 0 0 100%; margin-top: 12px; }
+  .site-header__icons { order: 2; }
 }
