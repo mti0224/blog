@@ -242,24 +242,25 @@
     </main>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        const toggleBtn = document.getElementById('dark-mode-toggle');
-        const toolIcon = document.getElementById('tool-icon');
-        const toggleIcon = document.getElementById('toggle-icon');
-        const toggleText = document.getElementById('toggle-text');
-    
-        // 定義更新 UI 的函式
-        function updateThemeUI(theme) {
-          if (theme === 'dark') {
-            if (toolIcon) toolIcon.src = "{{ '/assets/icons/tool_night.png' | relative_url }}";
-            if (toggleIcon) toggleIcon.src = "{{ '/assets/icons/day.png' | relative_url }}";
-            if (toggleText) toggleText.textContent = "切換淺色模式";
-          } else {
-            if (toolIcon) toolIcon.src = "{{ '/assets/icons/tool_day.png' | relative_url }}";
-            if (toggleIcon) toggleIcon.src = "{{ '/assets/icons/night.png' | relative_url }}";
-            if (toggleText) toggleText.textContent = "切換深色模式";
+          const toggleBtn = document.getElementById('dark-mode-toggle');
+          const aboutmeIcon = document.getElementById('aboutme-icon'); // 新增
+          const toolIcon = document.getElementById('tool-icon');
+          const toggleIcon = document.getElementById('toggle-icon');
+          const toggleText = document.getElementById('toggle-text');
+      
+          function updateThemeUI(theme) {
+            if (theme === 'dark') {
+              if (aboutmeIcon) aboutmeIcon.src = "{{ '/assets/icons/aboutme_night.png' | relative_url }}";
+              if (toolIcon) toolIcon.src = "{{ '/assets/icons/tool_night.png' | relative_url }}";
+              if (toggleIcon) toggleIcon.src = "{{ '/assets/icons/day.png' | relative_url }}";
+              if (toggleText) toggleText.textContent = "切換淺色模式";
+            } else {
+              if (aboutmeIcon) aboutmeIcon.src = "{{ '/assets/icons/aboutme_day.png' | relative_url }}";
+              if (toolIcon) toolIcon.src = "{{ '/assets/icons/tool_day.png' | relative_url }}";
+              if (toggleIcon) toggleIcon.src = "{{ '/assets/icons/night.png' | relative_url }}";
+              if (toggleText) toggleText.textContent = "切換深色模式";
+            }
           }
-        }
-    
         // 初始化 UI (載入頁面時)
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
         updateThemeUI(currentTheme);
