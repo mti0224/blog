@@ -9,32 +9,30 @@
     {% endif %}
 
     <style>
-      /* --- 1. 全站寬度對齊 --- */
+      /* --- 1. 全站寬度與 Header 對齊 --- */
       .site-header__inner, .wrapper {
         max-width: 1200px !important;
         margin: 0 auto;
         padding: 0 20px;
       }
     
-      /* --- 2. Header 佈局核心邏輯 --- */
+      /* --- 2. Header 佈局控制 --- */
       .site-header__inner {
         display: flex;
-        flex-wrap: wrap; /* 允許空間不足時換行 */
+        flex-wrap: wrap;
         align-items: center;
         padding: 10px 20px;
       }
     
-      /* (1) 左側大頭貼：始終排在第 1 個 */
       .site-header__logo-link {
         order: 1 !important;
         margin-right: 20px;
         flex-shrink: 0;
       }
     
-      /* (2) 中間搜尋欄位：預設排在第 2 個，寬度自動填滿 */
       .search-container {
         order: 2 !important;
-        flex: 1 1 200px; /* 彈性增長，最小 200px，解決寬度只剩一半的問題 */
+        flex: 1 1 200px;
         position: relative;
         margin: 5px 0;
       }
@@ -47,65 +45,80 @@
         border-radius: 20px;
       }
     
-      /* (3) 右側圖示群組：始終排在第 3 個，並推至右側 */
       .header-actions {
         order: 3 !important;
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-left: 20px; /* 與搜尋欄保持間距 */
+        margin-left: 20px;
       }
     
-      /* --- 3. 響應式優化：解決縮小時順序錯亂 --- */
-      @media (max-width: 850px) {
-        /* 當寬度不足時，搜尋欄自動跳到下一行並填滿 */
-        .search-container {
-          order: 4 !important; /* 跳到最下方一行 */
-          flex: 0 0 100%;    /* 強制佔滿 100% */
-          margin-top: 10px;
-        }
-        
-        .header-actions {
-          margin-left: auto; /* 在手機版將圖示推至右側邊緣 */
-        }
+      /* --- 3. 精選文章側邊欄 (修正靠左對齊) --- */
+      .page-layout { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 60px; 
+        justify-content: center; 
+        margin-top: 20px; 
+      }
+      .main-content { flex: 0 0 800px; max-width: 800px; width: 100%; }
+      .sidebar { flex: 1; min-width: 250px; max-width: 300px; margin-top: 20px; }
+      .sidebar-sticky { position: sticky; top: 40px; }
     
-        /* 雙欄佈局轉單欄 */
+      /* 標題風格：4px 邊框 + 12px 內距 = 16px 的文字起始點 */
+      .featured-title { 
+        font-size: 1.25rem; 
+        font-weight: 700; 
+        color: #2d5a27; 
+        margin-bottom: 1.5rem; 
+        border-left: 4px solid #9cdba2; 
+        padding-left: 12px; 
+        line-height: 1.2;
+        text-align: left; /* 確保標題靠左 */
+      }
+    
+      .featured-list { 
+        list-style: none; 
+        padding: 0; 
+        margin: 0; 
+        text-align: left !important; /* 強制列表文字靠左 */
+      }
+    
+      .featured-list li { 
+        /* 設定左側內距為 16px，使其與上方標題文字完美對齊 */
+        padding: 12px 0 12px 16px; 
+        border-bottom: 1px solid #eee; 
+      }
+    
+      .featured-list li:last-child { border-bottom: none; }
+    
+      .featured-list a { 
+        text-decoration: none; 
+        color: #000; 
+        font-size: 1.05rem; 
+        font-weight: 500; 
+        display: block; 
+        line-height: 1.4;
+      }
+      .featured-list a:hover { color: #2d5a27; }
+    
+      /* --- 4. 響應式適應 --- */
+      @media (max-width: 850px) {
+        .search-container { order: 4 !important; flex: 0 0 100%; margin-top: 10px; }
+        .header-actions { margin-left: auto; }
         .page-layout { flex-direction: column; }
         .main-content, .sidebar { max-width: 100%; width: 100%; }
         .sidebar { order: 2; border-top: 1px solid #eee; padding-top: 30px; }
       }
     
-      /* --- 4. 圖示與下拉選單樣式 --- */
-      .icon-btn, .dropdown-trigger {
-        width: 40px; height: 40px;
-        display: flex; align-items: center; justify-content: center;
-        border-radius: 50%; transition: 0.2s; color: #828282;
-      }
+      /* --- 5. 下拉選單與圖示樣式 --- */
+      .icon-btn, .dropdown-trigger { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; color: #828282; }
       .icon-btn:hover, .dropdown-trigger:hover { background: rgba(0,0,0,0.05); }
       .icon-btn img { width: 24px; height: 24px; }
-    
       .header-dropdown { position: relative; }
       .header-dropdown:hover .dropdown-content { display: block; opacity: 1; visibility: visible; transform: translateY(0); }
-      .dropdown-content {
-        display: none; position: absolute; right: 0; top: 100%;
-        background: #fff; min-width: 200px; box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        border-radius: 12px; border: 1px solid #eee; z-index: 1001;
-        opacity: 0; visibility: hidden; transform: translateY(10px); transition: 0.3s;
-      }
+      .dropdown-content { display: none; position: absolute; right: 0; top: 100%; background: #fff; min-width: 200px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); border-radius: 12px; border: 1px solid #eee; z-index: 1001; opacity: 0; visibility: hidden; transform: translateY(10px); transition: 0.3s; }
       .dropdown-content a { color: #333; padding: 12px 20px; text-decoration: none; display: block; border-bottom: 1px solid #f9f9f9; }
-      .dropdown-content a:hover { background: #f0f7f0; color: #2d5a27; }
-    
-      /* --- 5. 精選文章樣式 (保持您最滿意的版本) --- */
-      .page-layout { display: flex; flex-wrap: wrap; gap: 60px; justify-content: center; margin-top: 20px; }
-      .main-content { flex: 0 0 800px; max-width: 800px; width: 100%; }
-      .sidebar { flex: 1; min-width: 250px; max-width: 300px; margin-top: 20px; }
-      .sidebar-sticky { position: sticky; top: 40px; }
-      .featured-title { font-size: 1.25rem; font-weight: 700; color: #2d5a27; border-left: 4px solid #9cdba2; padding-left: 12px; margin-bottom: 1.5rem; line-height: 1.2; }
-      .featured-list { list-style: none; padding: 0; }
-      .featured-list li { padding: 12px 16px; border-bottom: 1px solid #eee; }
-      .featured-list li:last-child { border-bottom: none; }
-      .featured-list a { text-decoration: none; color: #000; font-weight: 500; display: block; }
-      .featured-list a:hover { color: #2d5a27; }
     </style>
   </head>
 
