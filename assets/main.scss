@@ -2,7 +2,7 @@
 ---
 
 /* ==========================================================================
-   1. 色彩變數定義 (與 JS 對接)
+   1. 色彩變數定義 (與 JS 切換功能對接)
    ========================================================================== */
 :root {
   --bg-color: #ffffff;
@@ -28,7 +28,7 @@
   --link-color: #42b983;
 }
 
-/* 強制基礎背景與文字顏色 */
+/* 強制全域背景與文字顏色 */
 body, .page-content, .main-content, .wrapper {
   background-color: var(--bg-color) !important;
   color: var(--text-color) !important;
@@ -37,48 +37,20 @@ body, .page-content, .main-content, .wrapper {
 @import "minima";
 
 /* ==========================================================================
-   2. 首頁文章列表 (最新文章 CSS 修復)
+   2. 通用標題風格 (綠色左邊線)
    ========================================================================== */
-.post-list-cards {
-  margin-top: 1.5rem;
-  display: grid;
-  gap: 2rem;
-}
-
-.post-card {
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid var(--border-color);
-  background-color: transparent;
-}
-
-.post-card-title {
-  margin: 0.2rem 0 0.8rem 0;
-  font-size: 1.8rem;
-  line-height: 1.25;
-}
-
-/* 首頁文章標題連結顏色修正 */
-.post-card-title a {
-  text-decoration: none;
-  color: var(--text-color) !important;
-}
-
-.post-card-cover {
-  width: 100%;
-  height: auto;
-  border-radius: 16px;
-  border: 3px solid rgba(0,0,0,0);
-  display: block;
-}
-
-.post-card-excerpt {
-  margin: 0.2rem 0 0.6rem 0;
-  opacity: 0.9;
-  color: var(--grey-text);
+.footer-title, .featured-box h3, .section-title {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: var(--heading-color) !important;
+  margin-bottom: 1.5rem !important;
+  border-left: 4px solid #9cdba2 !important; /* 淺綠色小直線 */
+  padding-left: 12px !important;
+  text-align: left !important;
 }
 
 /* ==========================================================================
-   3. 文章內文樣式 (恢復字級與標題顏色)
+   3. 文章內文細節 (字級、連結與礦物表)
    ========================================================================== */
 .post-content {
   font-size: 1.15rem;
@@ -91,40 +63,38 @@ body, .page-content, .main-content, .wrapper {
   }
 
   a {
-    color: var(--link-color) !important;
+    color: var(--link-color) !important; /* 文章內連結：綠色系 */
     text-decoration: underline;
   }
 
   h3, h4 {
-    color: #e74c3c;
+    color: #e74c3c; /* 醒目紅 */
     font-weight: bold;
-    background: none;
-    padding: 0;
   }
 
   h3 { font-size: 1.5rem; margin-top: 2.2rem; margin-bottom: 1rem; }
   h4 { font-size: 1.25rem; margin-top: 1.8rem; margin-bottom: 0.8rem; }
 }
 
+/* 礦物表圖片大小修復 (預設 60%) */
+.mineral-table-img {
+  width: 60%;
+  height: auto;
+  display: block;
+  margin: 1rem auto 1rem 0;
+  border-radius: 8px;
+}
+
 @media screen and (min-width: 800px) {
   .post-content { font-size: 1.35rem; }
-  .post-content h3 { font-size: 1.7rem; }
 }
 
 /* ==========================================================================
-   4. Header 導覽列與垂直對齊修正
+   4. Header 導覽列 (垂直對齊與尺寸鎖定)
    ========================================================================== */
-.site-header {
-  border-bottom: 1px solid var(--border-color);
-  background-color: var(--header-bg);
-  position: sticky; top: 0; z-index: 1000;
-}
-
 .site-header__inner {
   display: flex;
-  align-items: center; /* 關鍵：確保搜尋欄垂直對齊 */
-  justify-content: flex-start;
-  flex-wrap: wrap;
+  align-items: center; /* 修正搜尋欄垂直對齊 */
   padding: 0.8rem 16px;
 }
 
@@ -135,30 +105,11 @@ body, .page-content, .main-content, .wrapper {
   border: 2px solid #9cdba2;
 }
 
-/* 搜尋容器對齊修復 */
-.search-container {
-  position: relative;
-  flex: 0 1 300px;
-  margin-left: 20px;
-  display: flex;
-  align-items: center; /* 確保內部 input 對齊 */
-}
-
-#search-input {
-  width: 100%;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 8px 15px;
-  outline: none;
-}
-
 /* 下拉選單間距與圖示修復 */
 .dropdown-item {
   display: flex !important;
   align-items: center;
-  gap: 12px !important; /* 恢復圖示與文字間距 */
+  gap: 12px !important; /* 圖示與文字間隔修復 */
   padding: 12px 20px;
   color: var(--text-color) !important;
 }
@@ -166,17 +117,33 @@ body, .page-content, .main-content, .wrapper {
 .menu-icon {
   width: 24px !important;
   height: 24px !important;
-  object-shrink: 0;
 }
 
 /* ==========================================================================
-   5. 媒體與 Youtube 影片比例修復
+   5. 首頁文章列表與媒體物件
    ========================================================================== */
+.post-list-cards {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 2rem;
+}
+
+.post-card-title a {
+  text-decoration: none;
+  color: var(--text-color) !important;
+}
+
+.post-card-cover {
+  width: 100% !important;
+  border-radius: 16px;
+  display: block;
+}
+
+/* Youtube 比例修復 */
 .video-container {
-  position: relative;
-  padding-bottom: 56.25%; /* 恢復 16:9 比例 */
-  height: 0; overflow: hidden;
-  margin: 1.5rem 0; border-radius: 12px;
+  position: relative; padding-bottom: 56.25%;
+  height: 0; overflow: hidden; margin: 1.5rem 0;
+  border-radius: 12px;
 }
 
 .video-container iframe {
@@ -185,76 +152,55 @@ body, .page-content, .main-content, .wrapper {
 }
 
 /* ==========================================================================
-   6. 側邊欄與頁尾樣式恢復
+   6. Footer 全員置中與側邊欄
    ========================================================================== */
-.site-wrapper {
-  display: flex; flex-wrap: wrap;
-  max-width: 1100px; margin: 0 auto; gap: 30px; padding: 20px;
+.site-footer {
+  background-color: var(--footer-bg) !important;
+  border-top: 1px solid var(--border-color);
+  padding: 3rem 0 1.5rem 0;
+  text-align: center; /* 文字置中 */
 }
 
-.sidebar { flex: 1; min-width: 250px; }
+.site-footer__inner {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 內容塊居中 */
+}
+
+.footer-post-item {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 讓最新文章列表項置中 */
+  width: 100%;
+}
+
+.footer-bottom {
+  margin-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--grey-text);
+}
 
 .featured-box {
-  background: var(--card-bg); /* 背景隨模式變換 */
+  background: var(--card-bg);
   padding: 20px; border-radius: 8px;
   border: 1px solid var(--border-color);
   position: sticky; top: 20px;
 }
 
-.featured-box h3 {
-  color: #d9534f;
-  border-bottom: 2px solid #d9534f;
-  padding-bottom: 10px;
-}
-
-.featured-list a {
-  color: var(--text-color) !important;
-  text-decoration: none; font-weight: bold;
-}
-
-.site-footer {
-  background-color: var(--footer-bg) !important;
-  border-top: 1px solid var(--border-color);
-  padding: 3rem 0 1.5rem 0; margin-top: 4rem;
-}
-
-.footer-post-item {
-  display: flex; align-items: center;
-  color: var(--text-color) !important;
-  padding: 10px; border-radius: 8px;
-}
-
-.footer-post-thumb {
-  width: 60px; height: 60px;
-  flex-shrink: 0; margin-right: 15px;
-  overflow: hidden; border-radius: 8px;
-}
-
-.footer-post-thumb img { width: 100%; height: 100%; object-fit: cover; }
-
 /* ==========================================================================
-   7. 搜尋結果與分頁樣式恢復
+   7. 響應式修正 (手機版寬度調整)
    ========================================================================== */
-#results-container {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-}
-
-.pagination a {
-  color: var(--text-color) !important;
-  background-color: var(--card-bg) !important;
-  border: 1px solid var(--border-color) !important;
-  padding: 10px 20px; border-radius: 25px;
-}
-
-.pagination .disabled {
-  color: var(--grey-text);
-  background-color: var(--footer-bg);
-}
-
-/* 響應式修正 */
 @media screen and (max-width: 768px) {
+  /* 手機版礦物表寬度調整為 80% */
+  .mineral-table-img { width: 80%; }
+
   .search-container { order: 4; flex: 0 0 100%; margin-top: 12px; }
   .site-header__icons { order: 2; }
+  .footer-post-thumb { width: 50px; height: 50px; }
 }
