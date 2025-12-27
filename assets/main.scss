@@ -1,5 +1,39 @@
 ---
 ---
+/* 強制文章主區塊與所有包裝層變色 */
+body, 
+.page-content, 
+.main-content, 
+.wrapper {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* 針對文章內文進行細部修正 */
+.post-content {
+  color: var(--text-color) !important;
+  
+  /* 確保文章內的段落、清單文字也是正確顏色 */
+  p, li, span, div {
+    color: var(--text-color) !important;
+  }
+
+  /* 文章內的連結改用變數顏色 */
+  a {
+    color: var(--link-color) !important;
+  }
+}
+
+/* 修正文章標題顏色 */
+.post-title {
+  color: var(--text-color) !important;
+}
+
+/* 修正日期文字顏色 */
+.post-meta {
+  color: var(--grey-text) !important;
+}
 
 /* 1. 定義全站色彩變數 (Light Mode) */
 :root {
@@ -95,13 +129,31 @@ body {
 /* ==========================================================================
    2. 文章內容標題 (紅字粗體版)
    ========================================================================== */
+/* ==========================================================================
+   2. 文章內容標題 (深色模式相容版)
+   ========================================================================== */
 .post-content {
   font-size: 1.15rem;
   line-height: 1.7;
   word-wrap: break-word;
+  
+  /* 新增：讓內文文字跟隨深淺模式切換 */
+  color: var(--text-color) !important;
+  transition: color 0.3s ease;
+
+  /* 確保文章內所有段落、清單文字都套用變數顏色 */
+  p, li, span, div, strong, em {
+    color: var(--text-color) !important;
+  }
+
+  /* 文章內連結改用定義好的變數色 */
+  a {
+    color: var(--link-color) !important;
+    text-decoration: underline;
+  }
 
   h3, h4 {
-    color: #e74c3c;        /* 醒目紅 */
+    color: #e74c3c;        /* 保持醒目紅 */
     font-weight: bold;
     background: none;
     padding: 0;
