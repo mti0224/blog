@@ -536,3 +536,24 @@ body {
 .featured-list a:hover {
   color: #d9534f;
 }
+
+/* 下拉選單項目佈局 */
+.dropdown-item {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+}
+
+/* 圖示大小控制 */
+.menu-icon {
+  width: 24px;   /* 您可以根據需求調整大小 */
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* 深色模式下若圖片太亮可微調（選用） */
+[data-theme="dark"] .menu-icon {
+  filter: brightness(0.9);
+}
