@@ -266,14 +266,14 @@
           }
         }
     
-        // 初始化 UI
+        // 初始化主題
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
         updateThemeUI(currentTheme);
     
         if (toggleBtn && dropdownContent) {
-          // 1. 執行切換模式與強制隱藏
+          // 1. 按下「切換模式」：更換主題並強制隱藏
           toggleBtn.addEventListener('click', function(e) {
-            e.stopPropagation(); // 阻止事件冒泡
+            e.stopPropagation(); // 阻止事件冒泡到 parentDropdown 和 document
     
             const nowTheme = document.documentElement.getAttribute('data-theme');
             const targetTheme = nowTheme === 'dark' ? 'light' : 'dark';
@@ -281,30 +281,29 @@
             localStorage.setItem('theme', targetTheme);
             updateThemeUI(targetTheme);
     
-            // 立即強制收回選單
+            // 強制隱藏鎖定
             dropdownContent.classList.add('force-hide');
           });
     
-          // 2. 智慧解鎖邏輯 (關鍵修復)
-          const unlockMenu = (e) => {
-            // 如果滑鼠不在下拉選單區域內，或是點擊了其他地方
-            if (parentDropdown && !parentDropdown.contains(e.target)) {
-              dropdownContent.classList.remove('force-hide');
-            }
-          };
-    
-          // 電腦版：只要滑鼠在畫面上移動，就檢查是否已經離開漢堡包範圍
-          window.addEventListener('mousemove', unlockMenu);
+          // 2. 解鎖機制：
           
-          // 手機與電腦通用：點擊頁面任何地方也同步解鎖
-          document.addEventListener('click', unlockMenu);
-    
-          // 滑鼠完全移開時的雙重保險
+          // 當點擊「漢堡包區域」本身時，立刻移除隱藏鎖定
+          // 這樣當您想再次開啟選單時，只要點一下漢堡包，它就一定會出來
           if (parentDropdown) {
-            parentDropdown.addEventListener('mouseleave', () => {
+            parentDropdown.addEventListener('click', function() {
+              dropdownContent.classList.remove('force-hide');
+            });
+    
+            // 電腦版額外保險：滑鼠移開時也自動解鎖
+            parentDropdown.addEventListener('mouseleave', function() {
               dropdownContent.classList.remove('force-hide');
             });
           }
+    
+          // 全域解鎖：點擊頁面任何其他地方
+          document.addEventListener('click', function() {
+            dropdownContent.classList.remove('force-hide');
+          });
         }
       });
     </script>
