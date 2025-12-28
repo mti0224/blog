@@ -265,28 +265,34 @@
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
         updateThemeUI(currentTheme);
     
-        if (toggleBtn) {
-              toggleBtn.addEventListener('click', function() {
-                // 1. 執行原有的主題切換邏輯
-                const nowTheme = document.documentElement.getAttribute('data-theme');
-                const targetTheme = nowTheme === 'dark' ? 'light' : 'dark';
-                document.documentElement.setAttribute('data-theme', targetTheme);
-                localStorage.setItem('theme', targetTheme);
-                updateThemeUI(targetTheme);
-        
-                // 2. 新增：強制收回選單
-                if (dropdownContent) {
-                  dropdownContent.style.display = 'none'; // 立即隱藏
-                  
-                  // 為了確保下一次滑鼠移入時選單還能正常開啟，我們在短暫延遲後移除 display: none
-                  setTimeout(() => {
-                    dropdownContent.style.display = ''; 
-                  }, 300);
-                }
-              });
+        if (toggleBtn && dropdownContent) {
+          toggleBtn.addEventListener('click', function() {
+            // 1. 執行主題切換
+            const nowTheme = document.documentElement.getAttribute('data-theme');
+            const targetTheme = nowTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', targetTheme);
+            localStorage.setItem('theme', targetTheme);
+            updateThemeUI(targetTheme);
+    
+            // 2. 強制收回選單
+            dropdownContent.classList.add('force-hide');
+    
+            // 3. 恢復機制
+            // (A) 電腦端：當滑鼠離開整個選單區域時，移除強制隱藏，讓 :hover 恢復正常運作
+            if (parentDropdown) {
+              parentDropdown.addEventListener('mouseleave', function() {
+                dropdownContent.classList.remove('force-hide');
+              }, { once: true }); // 只執行一次
             }
+    
+            // (B) 手機端：設定較長的延遲，確保點擊後選單消失，直到下一次主動開啟
+            setTimeout(() => {
+              dropdownContent.classList.remove('force-hide');
+            }, 1000); 
           });
-        </script>
+        }
+      });
+    </script>
     
     {% include footer.html %}
   </body>
