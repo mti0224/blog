@@ -246,6 +246,7 @@
         const dropdownContent = document.querySelector('.dropdown-content');
         const parentDropdown = document.querySelector('.dropdown');
         
+        // 取得圖示元素
         const aboutmeIcon = document.getElementById('aboutme-icon');
         const toolIcon = document.getElementById('tool-icon');
         const toggleIcon = document.getElementById('toggle-icon');
@@ -265,34 +266,41 @@
           }
         }
     
+        // 初始化主題
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
         updateThemeUI(currentTheme);
     
         if (toggleBtn && dropdownContent) {
+          // 點擊切換模式
           toggleBtn.addEventListener('click', function(e) {
-            // 1. 阻止事件冒泡，防止觸發下方的 document 點擊事件
-            e.stopPropagation();
+            e.stopPropagation(); // 防止立即觸發 document 的點擊重置
     
-            // 2. 執行主題切換
             const nowTheme = document.documentElement.getAttribute('data-theme');
             const targetTheme = nowTheme === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', targetTheme);
             localStorage.setItem('theme', targetTheme);
             updateThemeUI(targetTheme);
     
-            // 3. 強制關閉選單 (不再使用 setTimeout)
+            // 強制收回選單
             dropdownContent.classList.add('force-hide');
           });
     
-          // 電腦端重置：滑鼠移開整個選單區域時，移除強制隱藏
+          // --- 智慧重置邏輯 ---
+          
+          // 1. 當滑鼠「再次進入」整個下拉選單區域時，移除強制隱藏
+          // 這解決了「滑鼠沒移開就無法再次打開」的問題
           if (parentDropdown) {
+            parentDropdown.addEventListener('mouseenter', function() {
+              dropdownContent.classList.remove('force-hide');
+            });
+    
+            // 原有的移開重置也保留，作為雙重保險
             parentDropdown.addEventListener('mouseleave', function() {
               dropdownContent.classList.remove('force-hide');
             });
           }
     
-          // 手機端/全域重置：點擊頁面任何其他地方時，移除強制隱藏狀態
-          // 這樣可以確保下次想打開選單時它是正常的
+          // 2. 點擊頁面任何地方也重置（對手機版友善）
           document.addEventListener('click', function() {
             dropdownContent.classList.remove('force-hide');
           });
