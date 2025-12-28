@@ -562,3 +562,7 @@ body {
 .page-content ul li a {
   color: var(--link-color);
 }
+
+.dropdown-content.force-hide {
+  display: none !important;
+}
