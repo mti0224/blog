@@ -246,7 +246,7 @@
         const dropdownContent = document.querySelector('.dropdown-content');
         const parentDropdown = document.querySelector('.dropdown');
         
-        // 取得圖示元素
+        // 圖示與文字元素
         const aboutmeIcon = document.getElementById('aboutme-icon');
         const toolIcon = document.getElementById('tool-icon');
         const toggleIcon = document.getElementById('toggle-icon');
@@ -266,14 +266,14 @@
           }
         }
     
-        // 初始化主題
+        // 初始化 UI
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
         updateThemeUI(currentTheme);
     
         if (toggleBtn && dropdownContent) {
-          // 點擊切換模式
+          // 1. 點擊切換模式
           toggleBtn.addEventListener('click', function(e) {
-            e.stopPropagation(); // 防止立即觸發 document 的點擊重置
+            e.stopPropagation(); // 阻止冒泡，避免觸發 document 的 click
     
             const nowTheme = document.documentElement.getAttribute('data-theme');
             const targetTheme = nowTheme === 'dark' ? 'light' : 'dark';
@@ -281,26 +281,27 @@
             localStorage.setItem('theme', targetTheme);
             updateThemeUI(targetTheme);
     
-            // 強制收回選單
+            // 強制隱藏選單
             dropdownContent.classList.add('force-hide');
           });
     
-          // --- 智慧重置邏輯 ---
-          
-          // 1. 當滑鼠「再次進入」整個下拉選單區域時，移除強制隱藏
-          // 這解決了「滑鼠沒移開就無法再次打開」的問題
+          // 2. 智慧重置邏輯 (解決電腦版鎖死)
           if (parentDropdown) {
-            parentDropdown.addEventListener('mouseenter', function() {
-              dropdownContent.classList.remove('force-hide');
+            // 當滑鼠在漢堡包容器上「移動」時，就檢查是否要解除鎖定
+            parentDropdown.addEventListener('mousemove', function() {
+              if (dropdownContent.classList.contains('force-hide')) {
+                // 只要滑鼠有在移動，就移除強制隱藏，讓 CSS 的 :hover 重新接管
+                dropdownContent.classList.remove('force-hide');
+              }
             });
     
-            // 原有的移開重置也保留，作為雙重保險
+            // 滑鼠離開容器時也確保重置
             parentDropdown.addEventListener('mouseleave', function() {
               dropdownContent.classList.remove('force-hide');
             });
           }
     
-          // 2. 點擊頁面任何地方也重置（對手機版友善）
+          // 3. 全域點擊重置 (對手機版友善)
           document.addEventListener('click', function() {
             dropdownContent.classList.remove('force-hide');
           });
