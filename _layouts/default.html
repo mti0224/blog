@@ -242,43 +242,51 @@
     </main>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-          const toggleBtn = document.getElementById('dark-mode-toggle');
-          const aboutmeIcon = document.getElementById('aboutme-icon'); // 新增
-          const toolIcon = document.getElementById('tool-icon');
-          const toggleIcon = document.getElementById('toggle-icon');
-          const toggleText = document.getElementById('toggle-text');
-      
-          function updateThemeUI(theme) {
-            if (theme === 'dark') {
-              if (aboutmeIcon) aboutmeIcon.src = "{{ '/assets/icons/aboutme_night.png' | relative_url }}";
-              if (toolIcon) toolIcon.src = "{{ '/assets/icons/tool_night.png' | relative_url }}";
-              if (toggleIcon) toggleIcon.src = "{{ '/assets/icons/day.png' | relative_url }}";
-              if (toggleText) toggleText.textContent = "切換淺色模式";
-            } else {
-              if (aboutmeIcon) aboutmeIcon.src = "{{ '/assets/icons/aboutme_day.png' | relative_url }}";
-              if (toolIcon) toolIcon.src = "{{ '/assets/icons/tool_day.png' | relative_url }}";
-              if (toggleIcon) toggleIcon.src = "{{ '/assets/icons/night.png' | relative_url }}";
-              if (toggleText) toggleText.textContent = "切換深色模式";
-            }
+        const toggleBtn = document.getElementById('dark-mode-toggle');
+        const aboutmeIcon = document.getElementById('aboutme-icon'); // 新增
+        const toolIcon = document.getElementById('tool-icon');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const toggleText = document.getElementById('toggle-text');
+    
+        function updateThemeUI(theme) {
+          if (theme === 'dark') {
+            if (aboutmeIcon) aboutmeIcon.src = "{{ '/assets/icons/aboutme_night.png' | relative_url }}";
+            if (toolIcon) toolIcon.src = "{{ '/assets/icons/tool_night.png' | relative_url }}";
+            if (toggleIcon) toggleIcon.src = "{{ '/assets/icons/day.png' | relative_url }}";
+            if (toggleText) toggleText.textContent = "切換淺色模式";
+          } else {
+            if (aboutmeIcon) aboutmeIcon.src = "{{ '/assets/icons/aboutme_day.png' | relative_url }}";
+            if (toolIcon) toolIcon.src = "{{ '/assets/icons/tool_day.png' | relative_url }}";
+            if (toggleIcon) toggleIcon.src = "{{ '/assets/icons/night.png' | relative_url }}";
+            if (toggleText) toggleText.textContent = "切換深色模式";
           }
+        }
         // 初始化 UI (載入頁面時)
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
         updateThemeUI(currentTheme);
     
         if (toggleBtn) {
-          toggleBtn.addEventListener('click', function() {
-            const nowTheme = document.documentElement.getAttribute('data-theme');
-            const targetTheme = nowTheme === 'dark' ? 'light' : 'dark';
-            
-            document.documentElement.setAttribute('data-theme', targetTheme);
-            localStorage.setItem('theme', targetTheme);
-            
-            // 切換時立即更新圖示與文字
-            updateThemeUI(targetTheme);
+              toggleBtn.addEventListener('click', function() {
+                // 1. 執行原有的主題切換邏輯
+                const nowTheme = document.documentElement.getAttribute('data-theme');
+                const targetTheme = nowTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', targetTheme);
+                localStorage.setItem('theme', targetTheme);
+                updateThemeUI(targetTheme);
+        
+                // 2. 新增：強制收回選單
+                if (dropdownContent) {
+                  dropdownContent.style.display = 'none'; // 立即隱藏
+                  
+                  // 為了確保下一次滑鼠移入時選單還能正常開啟，我們在短暫延遲後移除 display: none
+                  setTimeout(() => {
+                    dropdownContent.style.display = ''; 
+                  }, 300);
+                }
+              });
+            }
           });
-        }
-      });
-    </script>
+        </script>
     
     {% include footer.html %}
   </body>
