@@ -243,15 +243,14 @@
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         const toggleBtn = document.getElementById('dark-mode-toggle');
-        const dropdownContent = document.querySelector('.dropdown-content');
-        const parentDropdown = document.querySelector('.dropdown');
         
-        // 圖示與文字元素
+        // 獲取所有需要變換的圖示與文字元素
         const aboutmeIcon = document.getElementById('aboutme-icon');
         const toolIcon = document.getElementById('tool-icon');
         const toggleIcon = document.getElementById('toggle-icon');
         const toggleText = document.getElementById('toggle-text');
     
+        // 定義 UI 更新函式 (純粹切換圖示與文字)
         function updateThemeUI(theme) {
           if (theme === 'dark') {
             if (aboutmeIcon) aboutmeIcon.src = "{{ '/assets/icons/aboutme_night.png' | relative_url }}";
@@ -266,43 +265,23 @@
           }
         }
     
-        // 初始化主題
+        // 初始化 UI (載入頁面時讀取目前主題)
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
         updateThemeUI(currentTheme);
     
-        if (toggleBtn && dropdownContent) {
-          // 1. 按下「切換模式」：更換主題並強制隱藏
-          toggleBtn.addEventListener('click', function(e) {
-            e.stopPropagation(); // 阻止事件冒泡到 parentDropdown 和 document
-    
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', function() {
+            // 執行主題切換邏輯
             const nowTheme = document.documentElement.getAttribute('data-theme');
             const targetTheme = nowTheme === 'dark' ? 'light' : 'dark';
+            
             document.documentElement.setAttribute('data-theme', targetTheme);
             localStorage.setItem('theme', targetTheme);
+            
+            // 更新圖示與文字
             updateThemeUI(targetTheme);
-    
-            // 強制隱藏鎖定
-            dropdownContent.classList.add('force-hide');
-          });
-    
-          // 2. 解鎖機制：
-          
-          // 當點擊「漢堡包區域」本身時，立刻移除隱藏鎖定
-          // 這樣當您想再次開啟選單時，只要點一下漢堡包，它就一定會出來
-          if (parentDropdown) {
-            parentDropdown.addEventListener('click', function() {
-              dropdownContent.classList.remove('force-hide');
-            });
-    
-            // 電腦版額外保險：滑鼠移開時也自動解鎖
-            parentDropdown.addEventListener('mouseleave', function() {
-              dropdownContent.classList.remove('force-hide');
-            });
-          }
-    
-          // 全域解鎖：點擊頁面任何其他地方
-          document.addEventListener('click', function() {
-            dropdownContent.classList.remove('force-hide');
+            
+            // 注意：這裡移除了所有強制收回選單 (force-hide) 的程式碼
           });
         }
       });
