@@ -246,7 +246,7 @@
         const dropdownContent = document.querySelector('.dropdown-content');
         const parentDropdown = document.querySelector('.dropdown');
         
-        // 圖示更新邏輯
+        // 圖示更新相關元素
         const aboutmeIcon = document.getElementById('aboutme-icon');
         const toolIcon = document.getElementById('tool-icon');
         const toggleIcon = document.getElementById('toggle-icon');
@@ -279,30 +279,32 @@
           });
         }
     
-        // --- 強制收回邏輯 ---
+        // --- 強化版收回邏輯 ---
         if (dropdownContent && parentDropdown) {
           
           const hideMenu = () => {
+            // 只有當選單目前是顯示狀態時才加上 force-hide
             dropdownContent.classList.add('force-hide');
           };
     
-          const showMenu = () => {
+          const resetMenu = () => {
             dropdownContent.classList.remove('force-hide');
           };
     
-          // 1. 監聽捲動事件：只要螢幕動了，選單就消失
+          // (A) 監聽滑動：包含捲動與手指移動
           window.addEventListener('scroll', hideMenu, { passive: true });
+          window.addEventListener('touchmove', hideMenu, { passive: true });
     
-          // 2. 監聽點擊事件：點擊非選單區域就消失
+          // (B) 監聽點擊：點擊選單外部時關閉
           document.addEventListener('click', function(e) {
             if (!parentDropdown.contains(e.target)) {
               hideMenu();
             }
           });
     
-          // 3. 恢復機制：滑鼠移入或點擊漢堡包時，重新啟用 CSS :hover 功能
-          parentDropdown.addEventListener('mouseenter', showMenu);
-          parentDropdown.addEventListener('click', showMenu);
+          // (C) 恢復機制：當滑鼠重新移入或點擊漢堡包時，解除隱藏鎖定
+          parentDropdown.addEventListener('mouseenter', resetMenu);
+          parentDropdown.addEventListener('click', resetMenu);
         }
       });
     </script>
