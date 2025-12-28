@@ -563,6 +563,7 @@ body {
   color: var(--link-color);
 }
 
-.dropdown-content.force-hide {
+/* 提高 CSS 權重，確保在任何模式下都能強制隱藏 */
+.dropdown .dropdown-content.force-hide {
   display: none !important;
 }
