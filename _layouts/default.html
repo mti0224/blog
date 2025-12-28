@@ -271,9 +271,9 @@
         updateThemeUI(currentTheme);
     
         if (toggleBtn && dropdownContent) {
-          // 1. 點擊切換模式
+          // 1. 執行切換模式與強制隱藏
           toggleBtn.addEventListener('click', function(e) {
-            e.stopPropagation(); // 阻止冒泡，避免觸發 document 的 click
+            e.stopPropagation(); // 阻止事件冒泡
     
             const nowTheme = document.documentElement.getAttribute('data-theme');
             const targetTheme = nowTheme === 'dark' ? 'light' : 'dark';
@@ -281,30 +281,30 @@
             localStorage.setItem('theme', targetTheme);
             updateThemeUI(targetTheme);
     
-            // 強制隱藏選單
+            // 立即強制收回選單
             dropdownContent.classList.add('force-hide');
           });
     
-          // 2. 智慧重置邏輯 (解決電腦版鎖死)
-          if (parentDropdown) {
-            // 當滑鼠在漢堡包容器上「移動」時，就檢查是否要解除鎖定
-            parentDropdown.addEventListener('mousemove', function() {
-              if (dropdownContent.classList.contains('force-hide')) {
-                // 只要滑鼠有在移動，就移除強制隱藏，讓 CSS 的 :hover 重新接管
-                dropdownContent.classList.remove('force-hide');
-              }
-            });
+          // 2. 智慧解鎖邏輯 (關鍵修復)
+          const unlockMenu = (e) => {
+            // 如果滑鼠不在下拉選單區域內，或是點擊了其他地方
+            if (parentDropdown && !parentDropdown.contains(e.target)) {
+              dropdownContent.classList.remove('force-hide');
+            }
+          };
     
-            // 滑鼠離開容器時也確保重置
-            parentDropdown.addEventListener('mouseleave', function() {
+          // 電腦版：只要滑鼠在畫面上移動，就檢查是否已經離開漢堡包範圍
+          window.addEventListener('mousemove', unlockMenu);
+          
+          // 手機與電腦通用：點擊頁面任何地方也同步解鎖
+          document.addEventListener('click', unlockMenu);
+    
+          // 滑鼠完全移開時的雙重保險
+          if (parentDropdown) {
+            parentDropdown.addEventListener('mouseleave', () => {
               dropdownContent.classList.remove('force-hide');
             });
           }
-    
-          // 3. 全域點擊重置 (對手機版友善)
-          document.addEventListener('click', function() {
-            dropdownContent.classList.remove('force-hide');
-          });
         }
       });
     </script>
