@@ -246,7 +246,7 @@
         const dropdownContent = document.querySelector('.dropdown-content');
         const parentDropdown = document.querySelector('.dropdown');
         
-        // 圖示與文字元素
+        // 圖示更新邏輯
         const aboutmeIcon = document.getElementById('aboutme-icon');
         const toolIcon = document.getElementById('tool-icon');
         const toggleIcon = document.getElementById('toggle-icon');
@@ -266,7 +266,6 @@
           }
         }
     
-        // 1. 初始化 UI
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
         updateThemeUI(currentTheme);
     
@@ -280,35 +279,30 @@
           });
         }
     
-        // 2. 手機版收回邏輯：監測滑動與點擊
+        // --- 強制收回邏輯 ---
         if (dropdownContent && parentDropdown) {
           
-          // 函式：關閉選單 (透過 force-hide)
-          const closeMenu = () => {
+          const hideMenu = () => {
             dropdownContent.classList.add('force-hide');
           };
     
-          // 函式：恢復選單狀態 (移除 force-hide，讓 :hover 重新生效)
-          const enableMenu = () => {
+          const showMenu = () => {
             dropdownContent.classList.remove('force-hide');
           };
     
-          // (A) 當螢幕捲動時，立即關閉選單
-          window.addEventListener('scroll', closeMenu, { passive: true });
+          // 1. 監聽捲動事件：只要螢幕動了，選單就消失
+          window.addEventListener('scroll', hideMenu, { passive: true });
     
-          // (B) 當點擊或觸碰頁面任何地方
+          // 2. 監聽點擊事件：點擊非選單區域就消失
           document.addEventListener('click', function(e) {
-            // 如果點擊的地方「不是」漢堡包選單範圍，就關閉它
             if (!parentDropdown.contains(e.target)) {
-              closeMenu();
-            } else {
-              // 如果使用者點擊的是漢堡包本身，則確保解鎖，讓選單能跳出來
-              enableMenu();
+              hideMenu();
             }
           });
     
-          // (C) 電腦端滑動重置：確保滑鼠重新碰到漢堡包時選單依然能開
-          parentDropdown.addEventListener('mouseenter', enableMenu);
+          // 3. 恢復機制：滑鼠移入或點擊漢堡包時，重新啟用 CSS :hover 功能
+          parentDropdown.addEventListener('mouseenter', showMenu);
+          parentDropdown.addEventListener('click', showMenu);
         }
       });
     </script>
