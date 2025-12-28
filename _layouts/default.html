@@ -243,14 +243,15 @@
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         const toggleBtn = document.getElementById('dark-mode-toggle');
+        const dropdownContent = document.querySelector('.dropdown-content');
+        const parentDropdown = document.querySelector('.dropdown');
         
-        // 獲取所有需要變換的圖示與文字元素
+        // 圖示與文字元素
         const aboutmeIcon = document.getElementById('aboutme-icon');
         const toolIcon = document.getElementById('tool-icon');
         const toggleIcon = document.getElementById('toggle-icon');
         const toggleText = document.getElementById('toggle-text');
     
-        // 定義 UI 更新函式 (純粹切換圖示與文字)
         function updateThemeUI(theme) {
           if (theme === 'dark') {
             if (aboutmeIcon) aboutmeIcon.src = "{{ '/assets/icons/aboutme_night.png' | relative_url }}";
@@ -265,24 +266,49 @@
           }
         }
     
-        // 初始化 UI (載入頁面時讀取目前主題)
+        // 1. 初始化 UI
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
         updateThemeUI(currentTheme);
     
         if (toggleBtn) {
           toggleBtn.addEventListener('click', function() {
-            // 執行主題切換邏輯
             const nowTheme = document.documentElement.getAttribute('data-theme');
             const targetTheme = nowTheme === 'dark' ? 'light' : 'dark';
-            
             document.documentElement.setAttribute('data-theme', targetTheme);
             localStorage.setItem('theme', targetTheme);
-            
-            // 更新圖示與文字
             updateThemeUI(targetTheme);
-            
-            // 注意：這裡移除了所有強制收回選單 (force-hide) 的程式碼
           });
+        }
+    
+        // 2. 手機版收回邏輯：監測滑動與點擊
+        if (dropdownContent && parentDropdown) {
+          
+          // 函式：關閉選單 (透過 force-hide)
+          const closeMenu = () => {
+            dropdownContent.classList.add('force-hide');
+          };
+    
+          // 函式：恢復選單狀態 (移除 force-hide，讓 :hover 重新生效)
+          const enableMenu = () => {
+            dropdownContent.classList.remove('force-hide');
+          };
+    
+          // (A) 當螢幕捲動時，立即關閉選單
+          window.addEventListener('scroll', closeMenu, { passive: true });
+    
+          // (B) 當點擊或觸碰頁面任何地方
+          document.addEventListener('click', function(e) {
+            // 如果點擊的地方「不是」漢堡包選單範圍，就關閉它
+            if (!parentDropdown.contains(e.target)) {
+              closeMenu();
+            } else {
+              // 如果使用者點擊的是漢堡包本身，則確保解鎖，讓選單能跳出來
+              enableMenu();
+            }
+          });
+    
+          // (C) 電腦端滑動重置：確保滑鼠重新碰到漢堡包時選單依然能開
+          parentDropdown.addEventListener('mouseenter', enableMenu);
         }
       });
     </script>
