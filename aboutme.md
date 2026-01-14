@@ -24,7 +24,7 @@ permalink: /aboutme/
 
 ## **聯絡我**
 如果您有任何建議或合作提案，歡迎透過以下方式聯繫我
-* **加入LINE:** tykjh67076
+* **加入LINE:** tykjh6706
 * **追蹤Instagram:** [我的ig主頁](https://www.instagram.com/ytmit/)
 * **YouTube:** [蚯蚓貓的頻道](https://www.youtube.com/@WarmyCat)
 * **Discord:** [加入我們的伺服器](https://discord.gg/H8YcgdJtc7)
